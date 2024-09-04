@@ -1,7 +1,6 @@
 // Replace the require with import statements
 import dotenv from 'dotenv';
 import fetch from 'node-fetch';
-
 import { refreshJWTToken } from './refreshJWTToken.mjs';
 
 // Load environment variables from .env file
@@ -23,8 +22,23 @@ export async function initializeRestrictedSKUs() {
         }
 
         fetchedSKUs.forEach(({ baseSku, variantSkus }) => {
-            restrictedSKUs.add(baseSku.trim().toUpperCase()); // Normalize SKUs when adding
-            variantSkus.forEach(sku => restrictedSKUs.add(sku.trim().toUpperCase())); // Normalize SKUs when adding
+            if (baseSku) {
+                restrictedSKUs.add(baseSku.trim().toUpperCase()); // Normalize SKUs when adding
+            } else {
+                console.warn('baseSku is undefined or null:', baseSku);
+            }
+
+            if (variantSkus && Array.isArray(variantSkus)) {
+                variantSkus.forEach(sku => {
+                    if (sku) {
+                        restrictedSKUs.add(sku.trim().toUpperCase()); // Normalize SKUs when adding
+                    } else {
+                        console.warn('variantSku is undefined or null:', sku);
+                    }
+                });
+            } else {
+                console.warn('variantSkus is undefined, null, or not an array:', variantSkus);
+            }
         });
 
         console.log('Restricted SKUs initialized:', Array.from(restrictedSKUs));
@@ -169,6 +183,7 @@ export async function fetchProductsByCategory(categoryId) {
 // Call initializeRestrictedSKUs when this module is loaded
 initializeRestrictedSKUs();
 
+// Export the restricted SKUs set for use in other modules
 export {
     restrictedSKUs
 };
