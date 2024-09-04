@@ -118,30 +118,31 @@ async function fetchProductsByCategory(categoryId) {
   }
 }
 
+// Assuming fetchCartItems and removeItemFromCart are correct
 async function checkAndRemoveRestrictedItems(cartId) {
   const cartItems = await fetchCartItems(cartId);
   let removedItems = [];
 
   if (!cartItems || cartItems.length === 0) {
-    console.error('No items found in cart or error fetching cart.');
-    return { message: 'No items found in cart or error fetching cart.', removedItems };
+      console.error('No items found in cart or error fetching cart.');
+      return { message: 'No items found in cart or error fetching cart.', removedItems };
   }
 
   console.log('Checking for restricted items...');
 
   for (const item of cartItems) {
-    console.log(`Checking item SKU: ${item.sku}`);
-    try {
-      if (restrictedSKUs.has(item.sku.trim().toUpperCase())) {
-        console.log(`Restricted item detected (SKU: ${item.sku}, Name: ${item.name}). Removing from cart.`);
-        await removeItemFromCart(cartId, item.id);
-        removedItems.push({ sku: item.sku, name: item.name });
-      } else {
-        console.log(`Item SKU: ${item.sku} is allowed.`);
+      console.log(`Checking item SKU: ${item.sku}`);
+      try {
+          if (restrictedSKUs.has(item.sku.trim().toUpperCase())) {
+              console.log(`Restricted item detected (SKU: ${item.sku}, Name: ${item.name}). Removing from cart.`);
+              await removeItemFromCart(cartId, item.id);
+              removedItems.push({ sku: item.sku, name: item.name });  // Ensure 'name' is included
+          } else {
+              console.log(`Item SKU: ${item.sku} is allowed.`);
+          }
+      } catch (error) {
+          console.error(`Error processing item with SKU ${item.sku}:`, error);
       }
-    } catch (error) {
-      console.error(`Error processing item with SKU ${item.sku}:`, error);
-    }
   }
 
   console.log('Cart checked for restricted items.');
