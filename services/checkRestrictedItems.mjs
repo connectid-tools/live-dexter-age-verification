@@ -1,7 +1,6 @@
-// Replace the require with import statements
 import dotenv from 'dotenv';
 import fetch from 'node-fetch';
-import { refreshJWTToken } from './refreshJWTToken.mjs';
+import { getJwtToken } from './refreshJWTToken.mjs';  // Import only getJwtToken
 
 // Load environment variables from .env file
 dotenv.config();
@@ -92,12 +91,15 @@ export async function fetchProductsByCategory(categoryId) {
     const allProducts = [];
 
     try {
+        // Get the JWT token before making the request
+        const jwtToken = await getJwtToken();
+
         while (hasNextPage) {
             const response = await fetch(`https://store-${storeHash}.mybigcommerce.com/graphql`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${process.env.TOKEN}`,
+                    'Authorization': `Bearer ${jwtToken}`,
                 },
                 body: JSON.stringify({
                     query: `query ProductsInCategory($categoryId: Int!, $after: String) {

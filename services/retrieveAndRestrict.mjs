@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import fetch from 'node-fetch';
-import { refreshJWTToken } from './refreshJWTToken.mjs';
+import { getJwtToken } from './refreshJWTToken.mjs';  // Import only getJwtToken
 
 dotenv.config();
 
@@ -33,12 +33,15 @@ async function fetchProductsByCategory(categoryId) {
   const allProducts = [];
 
   try {
+    // Ensure the JWT token is valid before making the API call
+    const jwtToken = await getJwtToken();
+
     while (hasNextPage) {
       const response = await fetch(`https://store-${storeHash}.mybigcommerce.com/graphql`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.TOKEN}`,
+          Authorization: `Bearer ${jwtToken}`, // Use the valid JWT token
         },
         body: JSON.stringify({
           query: `query ProductsInCategory($categoryId: Int!, $after: String) {
@@ -77,11 +80,6 @@ async function fetchProductsByCategory(categoryId) {
       console.log('Full response for category fetch:', responseBody);
 
       if (!response.ok) {
-        if (response.status === 401 && responseBody.includes('JWT is expired')) {
-          console.error('JWT expired. Attempting to refresh token...');
-          await refreshJWTToken();
-          return fetchProductsByCategory(categoryId);
-        }
         throw new Error(`HTTP error! status: ${response.status} Response: ${responseBody}`);
       }
 
@@ -233,7 +231,7 @@ async function validateCart(cartId) {
   }
 }
 
-
+// Initialize restricted SKUs when the module is loaded
 initializeRestrictedSKUs();
 
 export default {
