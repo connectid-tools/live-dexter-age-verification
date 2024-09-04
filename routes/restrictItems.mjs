@@ -1,4 +1,3 @@
-// restrictItems.mjs
 import express from 'express';
 import restrictedItemsService from '../services/retrieveAndRestrict.mjs';
 
@@ -15,9 +14,9 @@ router.post('/', async (req, res) => {
 
   try {
     // Call the service method and capture the response
-    const result = await restrictedItemsService.checkAndRemoveRestrictedItems(cartId);
+    const result = await restrictedItemsService.validateCart(cartId);
 
-    // Return the result to the client
+    // Return the validated cart information to the client
     res.status(200).json(result);
   } catch (error) {
     console.error('Error validating cart:', error);

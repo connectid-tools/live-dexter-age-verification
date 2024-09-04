@@ -1,6 +1,5 @@
 import dotenv from 'dotenv';
 import fetch from 'node-fetch';
-
 import { refreshJWTToken } from './refreshJWTToken.mjs';
 
 dotenv.config();
@@ -12,8 +11,16 @@ async function initializeRestrictedSKUs() {
   const fetchedSKUs = await fetchProductsByCategory(knifeCategoryId);
 
   fetchedSKUs.forEach(({ baseSku, variantSkus }) => {
-    restrictedSKUs.add(baseSku);
-    variantSkus.forEach(sku => restrictedSKUs.add(sku));
+    if (baseSku) {
+      restrictedSKUs.add(baseSku.trim().toUpperCase()); // Ensure SKU is normalized
+    }
+    if (variantSkus && Array.isArray(variantSkus)) {
+      variantSkus.forEach(sku => {
+        if (sku) {
+          restrictedSKUs.add(sku.trim().toUpperCase());
+        }
+      });
+    }
   });
 
   console.log('Restricted SKUs initialized:', Array.from(restrictedSKUs));
@@ -113,7 +120,6 @@ async function fetchProductsByCategory(categoryId) {
   }
 }
 
-
 async function checkAndRemoveRestrictedItems(cartId) {
   const cartItems = await fetchCartItems(cartId);
   let removedItems = [];
@@ -128,7 +134,7 @@ async function checkAndRemoveRestrictedItems(cartId) {
   for (const item of cartItems) {
     console.log(`Checking item SKU: ${item.sku}`);
     try {
-      if (restrictedSKUs.has(item.sku)) {
+      if (restrictedSKUs.has(item.sku.trim().toUpperCase())) {
         console.log(`Restricted item detected (SKU: ${item.sku}, Name: ${item.name}). Removing from cart.`);
         await removeItemFromCart(cartId, item.id);
         removedItems.push({ sku: item.sku, name: item.name });
@@ -145,7 +151,6 @@ async function checkAndRemoveRestrictedItems(cartId) {
 
   return { message: 'Cart checked and updated for restricted items.', removedItems };
 }
-
 
 async function fetchCartItems(cartId) {
   const storeHash = process.env.STORE_HASH;
@@ -214,34 +219,10 @@ async function removeItemFromCart(cartId, itemId) {
 const endpoint_domain = process.env.ENDPOINT_DOMAIN;
 
 async function validateCart(cartId) {
-
-  const validateCartUrl = `https://${endpoint_domain}.ondigitalocean.app/`;
-
   try {
     const removedItems = await checkAndRemoveRestrictedItems(cartId);
-
-    const response = await fetch(validateCartUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        cartId: cartId,
-        restrictedSKUs: Array.from(restrictedSKUs),
-        removedItems: removedItems,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`Failed to validate cart: ${errorData.message}`);
-    }
-
-    const responseData = await response.json();
-    console.log('Cart validated successfully:', responseData);
-
-    responseData.removedItems = removedItems;
-    return responseData;
+    console.log('Cart validated successfully:', removedItems);
+    return removedItems; // Return the result directly after validation
   } catch (error) {
     console.error('Error validating cart:', error);
     throw error;
