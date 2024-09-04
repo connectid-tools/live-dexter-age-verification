@@ -221,13 +221,18 @@ const endpoint_domain = process.env.ENDPOINT_DOMAIN;
 async function validateCart(cartId) {
   try {
     const removedItems = await checkAndRemoveRestrictedItems(cartId);
-    console.log('Cart validated successfully:', removedItems);
-    return removedItems; // Return the result directly after validation
+
+    // Fetch the updated cart after removing restricted items
+    const updatedCartItems = await fetchCartItems(cartId);
+
+    console.log('Cart validated successfully:', { removedItems, updatedCartItems });
+    return { removedItems, updatedCartItems };  // Return both removed items and updated cart items
   } catch (error) {
     console.error('Error validating cart:', error);
     throw error;
   }
 }
+
 
 initializeRestrictedSKUs();
 
