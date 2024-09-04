@@ -8,7 +8,7 @@ import cors from 'cors';
 
 // Import routes
 import indexRouter from './routes/index.mjs';
-import validateCartRouter from './routes/validateCart.mjs'; // Route for cart validation
+import validateCartRouter from './routes/restrictItems.mjs'; // Route for cart validation
 import getRestrictedItemsRouter from './routes/getRestrictedItems.mjs'; // Correct path to the route file
 
 // Load environment variables

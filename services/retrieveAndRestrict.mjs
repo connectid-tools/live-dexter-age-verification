@@ -113,18 +113,17 @@ async function fetchProductsByCategory(categoryId) {
   }
 }
 
+
 async function checkAndRemoveRestrictedItems(cartId) {
   const cartItems = await fetchCartItems(cartId);
   let removedItems = [];
 
   if (!cartItems || cartItems.length === 0) {
     console.error('No items found in cart or error fetching cart.');
-    return removedItems;
+    return { message: 'No items found in cart or error fetching cart.', removedItems };
   }
 
   console.log('Checking for restricted items...');
-
-  console.log('Restricted SKUs:', Array.from(restrictedSKUs));
 
   for (const item of cartItems) {
     console.log(`Checking item SKU: ${item.sku}`);
@@ -144,8 +143,9 @@ async function checkAndRemoveRestrictedItems(cartId) {
   console.log('Cart checked for restricted items.');
   console.log('Removed Items:', removedItems);
 
-  return removedItems;
+  return { message: 'Cart checked and updated for restricted items.', removedItems };
 }
+
 
 async function fetchCartItems(cartId) {
   const storeHash = process.env.STORE_HASH;
