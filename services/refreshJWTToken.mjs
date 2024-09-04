@@ -14,8 +14,6 @@ export async function refreshJWTToken() {
         const storeHash = process.env.STORE_HASH;
         const accessToken = process.env.ACCESS_TOKEN;
 
-        console.log('Environment Variables:', { storeHash, accessToken });
-
         if (!storeHash || !accessToken) {
             throw new Error('Missing required environment variables: STORE_HASH or ACCESS_TOKEN');
         }
