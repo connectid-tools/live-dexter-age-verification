@@ -1,10 +1,12 @@
-import express from 'express'; 
-import restrictedItemsService from '../services/retrieveAndRestrict.mjs'; 
+// validateCart.mjs
+import express from 'express';
+import restrictedItemsService from '../services/retrieveAndRestrict.mjs';
 
-const router = express.Router(); 
+const router = express.Router();
 
-// Define POST route to validate cart and remove restricted items if needed
+// POST route to validate cart and remove restricted items if needed
 router.post('/', async (req, res) => {
+  console.log('POST /validate-cart route hit');
   const { cartId } = req.body;
 
   if (!cartId) {
@@ -23,4 +25,10 @@ router.post('/', async (req, res) => {
   }
 });
 
-export default router; 
+// Optional GET route for testing or status checking
+router.get('/', (req, res) => {
+  console.log('GET /validate-cart route hit');
+  res.status(200).json({ message: 'GET method on /validate-cart is working' });
+});
+
+export default router;
