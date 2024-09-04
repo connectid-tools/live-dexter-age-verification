@@ -1,0 +1,8 @@
+block content
+  h1= message
+  if error
+    h2= error.status || 'Unknown Error'
+    pre #{error.stack || 'No stack trace available'}
+  else
+    h2 Unknown Error 
+    p No additional information is available.
