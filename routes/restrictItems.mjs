@@ -1,4 +1,4 @@
-// validateCart.mjs
+// restrictItems.mjs
 import express from 'express';
 import restrictedItemsService from '../services/retrieveAndRestrict.mjs';
 
