@@ -13,7 +13,7 @@ let restrictedSKUs = new Set();
 // Function to initialize and refresh restricted SKUs
 export async function initializeRestrictedSKUs() {
     console.log('Starting to initialize restricted SKUs...');
-    const knifeCategoryId = process.env.CATEGORY_ID;
+    const knifeCategoryId = parseInt(process.env.CATEGORY_ID, 10);
     try {
         const fetchedSKUs = await fetchProductsByCategory(knifeCategoryId);
 

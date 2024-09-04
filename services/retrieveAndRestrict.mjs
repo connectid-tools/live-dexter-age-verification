@@ -8,7 +8,7 @@ dotenv.config();
 let restrictedSKUs = new Set(); // Use a Set to store unique SKUs and their variants
 
 async function initializeRestrictedSKUs() {
-  const knifeCategoryId = process.env.CATEGORY_ID;
+  const knifeCategoryId = parseInt(process.env.CATEGORY_ID, 10);
   const fetchedSKUs = await fetchProductsByCategory(knifeCategoryId);
 
   fetchedSKUs.forEach(({ baseSku, variantSkus }) => {
