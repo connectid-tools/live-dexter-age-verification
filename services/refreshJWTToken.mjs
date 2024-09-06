@@ -13,6 +13,8 @@ export async function refreshJWTToken() {
         console.log('Refreshing JWT token...');
         const storeHash = process.env.STORE_HASH;
         const accessToken = process.env.ACCESS_TOKEN;
+        const storeDomain = process.env.STORE_DOMAIN;
+        const endPoinDomain = process.env.ENDPOINT_DOMAIN;
 
         if (!storeHash || !accessToken) {
             throw new Error('Missing required environment variables: STORE_HASH or ACCESS_TOKEN');
@@ -28,8 +30,8 @@ export async function refreshJWTToken() {
             },
             body: JSON.stringify({
                 allowed_cors_origins: [
-                    "https://connectid-demo-k3.mybigcommerce.com",
-                    "https://sh-checkout-validator-qud6t.ondigitalocean.app"
+                    `https://${storeDomain}.mybigcommerce.com`,
+                    `https://${endPoinDomain}.ondigitalocean.app`
                 ],
                 channel_id: 1,
                 expires_at: Math.floor(Date.now() / 1000) + 3600, // Expire in one hour
