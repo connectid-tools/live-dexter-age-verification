@@ -16,18 +16,31 @@ router.get('/', (req, res) => {
 });
 
 // Route to check for restricted items (POST request)
-router.post('/', (req, res) => {
-  try {
-    const { cartId } = req.body;
-    // Logic to check for restricted items in the cart based on cartId
-    const restrictedItems = Array.from(restrictedSKUs); // Example logic, replace with actual check logic
+// Route to check for restricted items in the cart (POST request)
+router.post('/', async (req, res) => {
+  const { cartId } = req.body;
 
-    // Respond with restricted items if found
-    res.status(200).json({ restrictedItems });
+  try {
+      if (!restrictedSKUs || restrictedSKUs.size === 0) {
+          await initializeRestrictedSKUs(); // Ensure restricted SKUs are initialized
+      }
+
+      const cartItems = await fetchCartItems(cartId);
+      const cartSKUs = cartItems.map(item => item.sku.toUpperCase());  // Normalize cart SKUs
+
+      // Check for restricted SKUs in the cart
+      const restrictedItemsInCart = cartSKUs.filter(sku => restrictedSKUs.has(sku));
+
+      if (restrictedItemsInCart.length > 0) {
+          res.status(200).json({ restrictedSKUs: restrictedItemsInCart });
+      } else {
+          res.status(200).json({ restrictedSKUs: [] });  // No restricted items
+      }
   } catch (error) {
-    console.error('Error fetching restricted items:', error.message);
-    res.status(500).json({ error: 'An error occurred while fetching restricted items' });
+      console.error('Error checking restricted items:', error);
+      res.status(500).json({ error: 'Failed to check restricted items' });
   }
 });
+
 
 export default router;
