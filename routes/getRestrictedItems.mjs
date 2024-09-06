@@ -1,6 +1,8 @@
 // getRestrictedItems.mjs
 import express from 'express';
 import { restrictedSKUs } from '../services/checkRestrictedItems.mjs';
+import { fetchCartItems } from '../services/checkRestrictedItems.mjs';
+
 
 const router = express.Router();
 

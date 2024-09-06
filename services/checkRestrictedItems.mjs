@@ -211,5 +211,5 @@ initializeRestrictedSKUs();
 
 // Export the restricted SKUs set for use in other modules
 export {
-    restrictedSKUs
+    restrictedSKUs,
 };
