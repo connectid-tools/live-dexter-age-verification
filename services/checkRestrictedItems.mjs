@@ -83,6 +83,31 @@ export async function fetchCartItems(cartId) {
     }
 }
 
+// Function to handle the restricted-items endpoint
+export async function handleRestrictedItemsRequest(req, res) {
+    const { cartId } = req.body;
+    
+    try {
+        if (!restrictedSKUs || restrictedSKUs.size === 0) {
+            await initializeRestrictedSKUs();
+        }
+
+        const cartItems = await fetchCartItems(cartId);
+        const cartSKUs = cartItems.map(item => item.sku.toUpperCase());  // Normalize cart SKUs
+
+        const restrictedItemsInCart = cartSKUs.filter(sku => restrictedSKUs.has(sku));
+
+        if (restrictedItemsInCart.length > 0) {
+            res.status(200).json({ restrictedItems: restrictedItemsInCart });
+        } else {
+            res.status(200).json({ restrictedItems: [] });
+        }
+    } catch (error) {
+        console.error('Error handling restricted items request:', error);
+        res.status(500).json({ error: 'Failed to retrieve restricted items' });
+    }
+}
+
 // Function to fetch products by category ID using GraphQL with pagination
 export async function fetchProductsByCategory(categoryId) {
     const storeHash = process.env.STORE_HASH;
@@ -91,7 +116,6 @@ export async function fetchProductsByCategory(categoryId) {
     const allProducts = [];
 
     try {
-        // Get the JWT token before making the request
         const jwtToken = await getJwtToken();
 
         while (hasNextPage) {
