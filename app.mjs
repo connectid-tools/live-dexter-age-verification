@@ -5,11 +5,19 @@ import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import createError from 'http-errors';
 import cors from 'cors';
+import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
+import { config } from './config.js';
+
+// Initialize RelyingPartyClientSdk
+const rpClient = new RelyingPartyClientSdk(config);
 
 // Import routes
 import indexRouter from './routes/index.mjs';
-import validateCartRouter from './routes/restrictItems.mjs'; // Route for cart validation
-import getRestrictedItemsRouter from './routes/getRestrictedItems.mjs'; // Correct path to the route file
+import validateCartRouter from './routes/restrictItems.mjs';
+import getRestrictedItemsRouter from './routes/getRestrictedItems.mjs';
+import participantsRouter from './routes/participants.mjs';
+import selectBankRouter from './routes/select-bank.mjs';
+import retrieveTokensRouter from './routes/retrieve-tokens.mjs';
 
 // Load environment variables
 dotenv.config();
@@ -22,29 +30,32 @@ const port = 3001;
 const storeDomain = process.env.STORE_DOMAIN;
 
 app.use(cors({
-  origin: [
-    `https://${storeDomain}`, // First allowed domain
-  ],
-  methods: ['GET', 'POST'],  // Allow these methods
-  allowedHeaders: ['Content-Type', 'Authorization'], // Allow these headers
-  credentials: true // Allow credentials to be sent with requests
+  origin: [`https://${storeDomain}`],
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
 
 // View engine setup
-app.set('views', path.join(path.resolve(), 'views')); // Adjust path joining for ES Modules
+app.set('views', path.join(path.resolve(), 'views'));
 app.set('view engine', 'pug');
 
 // Middleware setup
 app.use(logger('dev'));
-app.use(express.json()); // Parse JSON bodies
-app.use(express.urlencoded({ extended: false })); // Parse URL-encoded bodies
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(path.resolve(), 'public'))); // Adjust path joining for ES Modules
+app.use(express.static(path.join(path.resolve(), 'public')));
 
 // Use routers
-app.use('/', indexRouter); // Main router for root path
-app.use('/validate-cart', validateCartRouter); // Route for cart validation
+app.use('/', indexRouter);
+app.use('/validate-cart', validateCartRouter);
 app.use('/restricted-items', getRestrictedItemsRouter);
+
+// Add the new routes
+app.use('/participants', participantsRouter(rpClient));
+app.use('/select-bank', selectBankRouter(rpClient));
+app.use('/retrieve-tokens', retrieveTokensRouter(rpClient));
 
 // Catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -55,12 +66,9 @@ app.use(function(req, res, next) {
 app.use(function(err, req, res, next) {
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
-
   const statusCode = err.status || 500;
-  console.error(err.stack); // Ensure stack trace is logged for debugging
-
-  res.status(statusCode);
-  res.render('error', { error: err });
+  console.error(err.stack);
+  res.status(statusCode).render('error', { error: err });
 });
 
 // Start the Express server
@@ -68,4 +76,4 @@ app.listen(port, () => {
   console.log(`Server is listening on port ${port}`);
 });
 
-export default app; // Use export default instead of module.exports
+export default app;
