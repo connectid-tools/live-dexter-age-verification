@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node ./bin/www.mjs",
+    "start": "doppler run -- node ./bin/www.mjs",
     "dev": "nodemon app.js",
     "browser-sync": "browser-sync start --proxy 'localhost:3000' --files 'views/*, public/*'"
   },

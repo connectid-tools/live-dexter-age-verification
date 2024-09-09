@@ -9,14 +9,14 @@ export const config = {
     signing_kid: process.env.SIGNING_KID,
 
     // Use the environment variables for the certificates and keys directly
-    transport_key_content: fs.readFileSync('./certs/transport.key').toString(),
-    transport_pem_content: fs.readFileSync('./certs/transport.pem').toString(),
+    transport_key_content: process.env.TRANSPORT_KEY,
+    transport_pem_content: process.env.TRANSPORT_PEM,
     
-    signing_key_content: fs.readFileSync('./certs/signing.key').toString(),
-    signing_pem_content: fs.readFileSync('./certs/signing.pem').toString(),
+    signing_key_content: process.env.SIGNING_KEY,
+    signing_pem_content: process.env.SIGNING_PEM,
 
     // The location of the root certificate for the trust authority
-    ca_pem_content: fs.readFileSync('./certs/connectid-sandbox-ca.pem').toString(),
+    ca_pem_content: process.env.CA_PEM,
 
     // Application callback URL
     application_redirect_uri: `https://${process.env.STORE_DOMAIN}/checkout`,
