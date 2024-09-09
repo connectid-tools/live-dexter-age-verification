@@ -1,4 +1,6 @@
 import dotenv from 'dotenv';
+dotenv.config();  // Load the environment variables
+
 import express from 'express';
 import path from 'path';
 import cookieParser from 'cookie-parser';
@@ -8,8 +10,9 @@ import cors from 'cors';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from './config.js';
 
-// Initialize RelyingPartyClientSdk
 const rpClient = new RelyingPartyClientSdk(config);
+
+
 
 // Import routes
 import indexRouter from './routes/index.mjs';
@@ -18,9 +21,6 @@ import getRestrictedItemsRouter from './routes/getRestrictedItems.mjs';
 import participantsRouter from './routes/participants.mjs';
 import selectBankRouter from './routes/select-bank.mjs';
 import retrieveTokensRouter from './routes/retrieve-tokens.mjs';
-
-// Load environment variables
-dotenv.config();
 
 // Initialize Express app
 const app = express();
