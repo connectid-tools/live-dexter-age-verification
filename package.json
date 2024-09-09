@@ -9,6 +9,7 @@
     "browser-sync": "browser-sync start --proxy 'localhost:3000' --files 'views/*, public/*'"
   },
   "dependencies": {
+    "@connectid-tools/rp-nodejs-sdk": "^4.0.0",
     "clean-css": "^4.1.11",
     "constantinople": "^3.1.1",
     "cookie-parser": "~1.4.4",
