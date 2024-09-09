@@ -10,11 +10,11 @@ export const config = {
     transport_pem_content: process.env.TRANSPORT_PEM,
 
     // The location of the signing certificate and key that are used for signing purposes
-   signing_key_content: process.env.SIGNING_KEY_CONTENT,
+    signing_key_content: process.env.SIGNING_KEY_CONTENT,
     signing_pem_content: process.env.SIGNING_PEM,
 
     // The location of the root certificate for the trust authority
-    ca_pem: './certs/connectid-sandbox-ca.pem',
+    ca_pem: process.env.CA_PEM,
 
     // This is the URL that this application is running on and using for callbacks
     application_redirect_uri: `https://${process.env.STORE_DOMAIN}/checkout`,
