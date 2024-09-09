@@ -23,7 +23,7 @@ const storeDomain = process.env.STORE_DOMAIN;
 
 app.use(cors({
   origin: [
-    `https://${storeDomain}.mybigcommerce.com`, // First allowed domain
+    `https://${storeDomain}`, // First allowed domain
   ],
   methods: ['GET', 'POST'],  // Allow these methods
   allowedHeaders: ['Content-Type', 'Authorization'], // Allow these headers

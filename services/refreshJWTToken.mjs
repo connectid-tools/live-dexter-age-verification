@@ -30,7 +30,7 @@ export async function refreshJWTToken() {
             },
             body: JSON.stringify({
                 allowed_cors_origins: [
-                    `https://${storeDomain}.mybigcommerce.com`,
+                    `https://${storeDomain}`,
                     `https://${endPoinDomain}.ondigitalocean.app`
                 ],
                 channel_id: 1,
