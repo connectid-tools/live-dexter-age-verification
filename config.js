@@ -30,15 +30,15 @@ export const config = {
     registry_participants_uri: 'https://data.directory.sandbox.connectid.com.au/participants',
     include_uncertified_participants: true,
 
-    purpose: process.env.PURPOSE || 'Verifying your identity',
+    purpose: 'Verifying you are over 18',
 
     client: {
       client_id: `https://${process.env.CLIENT_ID}`,
       organisation_id: process.env.ORGANISATION_ID,
       jwks_uri: process.env.JWKS_URI,
       redirect_uris: [`https://${process.env.STORE_DOMAIN}/checkout`],
-      organisation_name: process.env.ORGANISATION_NAME || 'My Organisation',
-      software_description: process.env.SOFTWARE_DESCRIPTION || 'App to demonstrate ConnectID flows.',
+      organisation_name: 'Sheldon and Hammond',
+      software_description: 'App to verify age and restrict knives from checkout.',
     },
   },
 };

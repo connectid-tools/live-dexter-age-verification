@@ -12,8 +12,6 @@ import { config } from './config.js';
 
 const rpClient = new RelyingPartyClientSdk(config);
 
-
-
 // Import routes
 import indexRouter from './routes/index.mjs';
 import validateCartRouter from './routes/restrictItems.mjs';
