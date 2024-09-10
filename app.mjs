@@ -47,7 +47,7 @@ app.use('/restricted-items', getRestrictedItemsRouter);
 // Token management
 function generateAndStoreToken(cartId) {
   const token = Math.random().toString(36).substring(2);
-  const expiresAt = Date.now() + 5 * 60 * 1000;  // Token expiration set to 5 minutes
+  const expiresAt = Date.now() + 60 * 60 * 1000;  // Token expiration set to 1 hour
   tokenStore.set(cartId, { token, expiresAt });
   console.log(`Token for cartId ${cartId} generated. Expires at ${new Date(expiresAt).toISOString()}. Token: ${token}`);
   return token;
@@ -104,24 +104,22 @@ app.post('/select-bank', async (req, res) => {
 
     console.log(`PAR sent to authorisationServerId='${authServerId}', returning authUrl='${authUrl}'`);
 
-    // Generate and store token for the cart session
-    const token = generateAndStoreToken(cartId);
-
-    // Return the authorization URL and token back to the frontend
-    return res.json({ authUrl, token });
+    // Return the authorization URL back to the frontend
+    return res.json({ authUrl });
   } catch (error) {
     console.error('Error during PAR request:', error);
     return res.status(500).json({ error: 'Failed to send PAR request', details: error.message });
   }
 });
 
-// Token retrieval route
 app.get('/retrieve-tokens', async (req, res) => {
-  if (!req.query.code) {
-    return res.status(400).json({ error: 'No code parameter in query string' });
+  const cartId = req.query.cartId; // Ensure cartId is passed to identify the session
+  if (!req.query.code || !cartId) {
+    return res.status(400).json({ error: 'Code parameter and cartId are required' });
   }
 
   try {
+    // Retrieve the tokens using the OIDC flow
     const tokenSet = await rpClient.retrieveTokens(
       req.cookies.authorisation_server_id,
       req.query,
@@ -130,14 +128,20 @@ app.get('/retrieve-tokens', async (req, res) => {
       req.cookies.nonce
     );
 
-    const claims = tokenSet.claims();
-    const token = { raw: tokenSet.id_token };
+    const claims = tokenSet.claims(); // Extract claims from the token set
 
-    // Return claims and token to the client
-    return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId });
+    // Verify if the user has met the required claims (e.g., 'over18')
+    if (claims.over18 && claims.over18 === true) {
+      // Generate and store the session token only after successful verification
+      const token = generateAndStoreToken(cartId); // Token now generated after successful verification
+      console.log(`Verification successful for cartId ${cartId}. Token generated.`);
+      return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId });
+    } else {
+      return res.status(400).json({ error: 'User verification failed. Age requirement not met.' });
+    }
   } catch (error) {
     console.error('Error retrieving tokens:', error);
-    return res.status(500).json({ error: 'Failed to retrieve tokens' });
+    return res.status(500).json({ error: 'Failed to retrieve tokens', details: error.message });
   }
 });
 
