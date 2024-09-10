@@ -20,10 +20,10 @@ import getRestrictedItemsRouter from './routes/getRestrictedItems.mjs';
 // Initialize Express app
 const app = express();
 const port = 3001;
+const tokenStore = new Map();  // Store tokens with cartId as the key
 
 // Use CORS middleware
 const storeDomain = process.env.STORE_DOMAIN;
-
 app.use(cors({
   origin: [`https://${storeDomain}`],
   methods: ['GET', 'POST'],
@@ -46,14 +46,13 @@ app.use(express.static(path.join(path.resolve(), 'public')));
 app.use('/', indexRouter);
 app.use('/validate-cart', validateCartRouter);
 app.use('/restricted-items', getRestrictedItemsRouter);
-export const tokenStore = new Map(); // Store tokens with cartId as the key
 
 // Generate and store token for a cartId
 function generateAndStoreToken(cartId) {
-  const token = Math.random().toString(36).substring(2);  // Using substring instead of substr
-  const expiresAt = Date.now() + 10 * 60 * 1000;  // Token expiration time set to 10 minutes
+  const token = Math.random().toString(36).substring(2);
+  const expiresAt = Date.now() + 10 * 60 * 1000;  // Token expiration set to 10 minutes
   tokenStore.set(cartId, { token, expiresAt });
-  console.log(`Token for cartId ${cartId} set. Token: ${token}`);
+  console.log(`Token for cartId ${cartId} set. Expires at ${new Date(expiresAt).toISOString()}. Token: ${token}`);
   return token;
 }
 
@@ -93,10 +92,10 @@ app.post('/select-bank', async (req, res) => {
     const isProduction = process.env.NODE_ENV === 'production';
     const cookieOptions = {
       path: '/',
-      sameSite: 'None', 
+      sameSite: 'None',
       secure: isProduction,
       httpOnly: true,
-      maxAge: 10 * 60 * 1000
+      maxAge: 10 * 60 * 1000  // 10-minute expiration
     };
 
     res.cookie('state', state, cookieOptions);
@@ -104,7 +103,7 @@ app.post('/select-bank', async (req, res) => {
     res.cookie('code_verifier', code_verifier, cookieOptions);
     res.cookie('authorisation_server_id', authServerId, cookieOptions);
 
-    const token = generateAndStoreToken(cartId); // Store token on server
+    const token = generateAndStoreToken(cartId);  // Store token on server
     console.log(`Token generated for cartId ${cartId}: ${token}`);
 
     return res.json({ authUrl, token });
@@ -113,7 +112,6 @@ app.post('/select-bank', async (req, res) => {
     return res.status(500).json({ error: 'Failed to send PAR request' });
   }
 });
-
 
 // Handle the token retrieval after user authentication
 app.get('/retrieve-tokens', async (req, res) => {
@@ -127,11 +125,11 @@ app.get('/retrieve-tokens', async (req, res) => {
   try {
     // Retrieve the tokens using the OIDC flow
     const tokenSet = await rpClient.retrieveTokens(
-      req.cookies.authorisation_server_id, 
-      req.query,                           
-      req.cookies.code_verifier,           
-      req.cookies.state,                    
-      req.cookies.nonce                     
+      req.cookies.authorisation_server_id,  // Authorization server ID from cookies
+      req.query,                            // Query parameters (e.g., code)
+      req.cookies.code_verifier,            // Code verifier from cookies
+      req.cookies.state,                    // State from cookies
+      req.cookies.nonce                     // Nonce from cookies
     );
 
     const claims = tokenSet.claims();
@@ -149,7 +147,7 @@ app.get('/retrieve-tokens', async (req, res) => {
       sameSite: 'None',
       secure: isProduction,
       httpOnly: true,
-      maxAge: 10 * 60 * 1000
+      maxAge: 10 * 60 * 1000  // 10-minute expiration
     };
 
     res.cookie('validation_done', 'true', cookieOptions);
@@ -162,8 +160,6 @@ app.get('/retrieve-tokens', async (req, res) => {
     return res.status(500).json({ error: 'Failed to retrieve tokens' });
   }
 });
-
-
 
 // Catch 404 and forward to error handler
 app.use(function(req, res, next) {
