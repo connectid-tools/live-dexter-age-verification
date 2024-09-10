@@ -49,7 +49,6 @@ app.use('/restricted-items', getRestrictedItemsRouter);
 
 
 // Handle the user's bank selection and start the OIDC flow
-// Handle the user's bank selection and start the OIDC flow
 app.post('/select-bank', async (req, res) => {
   const essentialClaims = ['over18']; // Only requesting the over18 claim
   const voluntaryClaims = [];
@@ -83,14 +82,13 @@ app.post('/select-bank', async (req, res) => {
     };
 
     // Set validation_done cookie to indicate validation is complete
-    res.cookie('validation_done', true, { ...cookieOptions, maxAge: 10 * 60 * 1000 }); // Expires in 10 minutes
+    res.cookie('validation_done', 'true', { ...cookieOptions, maxAge: 10 * 60 * 1000 }); // Expires in 10 minutes
+
+    console.log('validation_done cookie set successfully.');
     res.cookie('state', state, cookieOptions);
     res.cookie('nonce', nonce, cookieOptions);
     res.cookie('code_verifier', code_verifier, cookieOptions);
     res.cookie('authorisation_server_id', authServerId, cookieOptions);
-
-    // Log the validation_done cookie after setting it
-    console.log('validation_done cookie set to:', req.cookies.validation_done);
 
     console.log(`PAR sent to authorisationServerId='${authServerId}', returning URL '${authUrl}'`);
 
@@ -102,8 +100,16 @@ app.post('/select-bank', async (req, res) => {
   }
 });
 
+
+
+
+
+
 // Handle the token retrieval after user authentication
 app.get('/retrieve-tokens', async (req, res) => {
+  // Log the validation_done cookie
+  console.log('validation_done cookie:', req.cookies.validation_done);
+
   if (!req.query.code) {
     console.error('No code parameter in query string');
     return res.status(400).json({ error: 'No code parameter in query string' });
