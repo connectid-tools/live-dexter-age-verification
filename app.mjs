@@ -85,11 +85,15 @@ app.post('/select-bank', async (req, res) => {
     res.cookie('validation_done', 'true', { ...cookieOptions, maxAge: 10 * 60 * 1000 }); // Expires in 10 minutes
     console.log('validation_done cookie set successfully.');
 
-    console.log('validation_done cookie set successfully.');
     res.cookie('state', state, cookieOptions);
     res.cookie('nonce', nonce, cookieOptions);
     res.cookie('code_verifier', code_verifier, cookieOptions);
     res.cookie('authorisation_server_id', authServerId, cookieOptions);
+
+        // Log the actual headers being sent, including the cookies
+        res.on('finish', () => {
+          console.log('Response headers:', res.getHeaders()); // This will include Set-Cookie headers
+        });
 
     console.log(`PAR sent to authorisationServerId='${authServerId}', returning URL '${authUrl}'`);
 
