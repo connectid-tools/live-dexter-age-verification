@@ -48,12 +48,10 @@ app.use('/validate-cart', validateCartRouter);
 app.use('/restricted-items', getRestrictedItemsRouter);
 
 
-// Handle the user's bank selection and start the OIDC flow.
-// Create a Pushed Authorization Request (PAR) with the claims
-// required and then return the bank redirect url to authenticate.
+// Handle the user's bank selection and start the OIDC flow
 app.post('/select-bank', async (req, res) => {
-  const essentialClaims = req.body.essentialClaims || [];
-  const voluntaryClaims = req.body.voluntaryClaims || [];
+  const essentialClaims = ['over18']; // Only requesting the over18 claim
+  const voluntaryClaims = [];
   const purpose = req.body.purpose || config.data.purpose;
   const authServerId = req.body.authorisationServerId;
 
@@ -64,11 +62,7 @@ app.post('/select-bank', async (req, res) => {
   }
 
   try {
-    console.log(
-      `Processing request to send PAR with authorisationServerId='${authServerId}' essentialClaims='${essentialClaims.join(
-        ','
-      )}' voluntaryClaims='${voluntaryClaims.join(',')}', purpose='${purpose}'`
-    );
+    console.log(`Processing request to send PAR with authorisationServerId='${authServerId}', essentialClaim='over18'`);
 
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
       authServerId,
@@ -82,22 +76,19 @@ app.post('/select-bank', async (req, res) => {
     res.cookie('code_verifier', code_verifier, { path: '/', sameSite: 'none', secure: true });
     res.cookie('authorisation_server_id', authServerId, { path: '/', sameSite: 'none', secure: true });
 
-    console.log(`PAR sent to authorisationServerId='${authServerId}', returning url='${authUrl}', x-fapi-interaction-id='${xFapiInteractionId}'`);
+    console.log(`PAR sent to authorisationServerId='${authServerId}', returning URL '${authUrl}'`);
 
     return res.json({ authUrl });
   } catch (error) {
-    console.error(error);
+    console.error('Error during PAR request:', error);
     return res.status(500).json({ error: error.toString() });
   }
 });
 
-// Following successful authentication and consent at the bank, the user's browser will be redirected
-// back to the callback URL using a get request, with the auth code contained as in the query string
-// parameter `code`. Exchange the auth token for an ID Token.
+
+// Handle the token retrieval after user authentication
 app.get('/retrieve-tokens', async (req, res) => {
   if (!req.query.code) {
-    // If the callback url was requested without a code token, just clear any
-    // stale cookies and load the default landing page
     console.error('No code parameter in query string');
     return res.status(400).json({ error: 'No code parameter in query string' });
   }
@@ -118,16 +109,13 @@ app.get('/retrieve-tokens', async (req, res) => {
     };
 
     console.log(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
-    console.log(`Returned raw id_token: ${token.raw}`);
-    console.log(`Returned decoded id_token: ${token.decoded}`);
-    console.log(`Returned xFapiInteractionId: ${tokenSet.xFapiInteractionId}`);
-
     return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId });
   } catch (error) {
-    console.error('Error retrieving tokenset: ' + error);
+    console.error('Error retrieving tokens:', error);
     return res.status(500).json({ error: error.toString() });
   }
 });
+
 
 
 
