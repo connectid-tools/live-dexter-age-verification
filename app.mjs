@@ -65,29 +65,53 @@ function clearExpiredTokens() {
 
 setInterval(clearExpiredTokens, 5 * 60 * 1000);  // Clear expired tokens every 5 minutes
 
-// Select bank route and OIDC flow
 app.post('/select-bank', async (req, res) => {
-  const essentialClaims = ['over18'];
+  const essentialClaims = ['over18']; // Only requesting the over18 claim
+  const voluntaryClaims = [];
+  const purpose = req.body.purpose || 'Age verification required'; // Default purpose if not provided
   const authServerId = req.body.authorisationServerId;
   const cartId = req.body.cartId;
 
+  // Validate that both the authorisationServerId and cartId are provided
   if (!authServerId || !cartId) {
     return res.status(400).json({ error: 'authorisationServerId and cartId are required' });
   }
 
   try {
-    const { authUrl } = await rpClient.sendPushedAuthorisationRequest(
+    console.log(`Processing request to send PAR with authorisationServerId='${authServerId}', essentialClaim='over18', cartId='${cartId}'`);
+
+    // Send the Pushed Authorization Request (PAR) to the authorization server
+    const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
       authServerId,
       essentialClaims,
-      [],
-      req.body.purpose
+      voluntaryClaims,
+      purpose
     );
 
-    const token = generateAndStoreToken(cartId);  // Generate and store token
+    // Set cookies for state, nonce, and code_verifier to maintain session integrity
+    const cookieOptions = {
+      path: '/',
+      sameSite: 'None',  // Required for cross-origin requests
+      secure: true,      // Cookies must be secure (HTTPS)
+      httpOnly: true,    // Prevent JavaScript from accessing cookies
+      maxAge: 10 * 60 * 1000 // 10 minutes
+    };
+
+    res.cookie('state', state, cookieOptions);
+    res.cookie('nonce', nonce, cookieOptions);
+    res.cookie('code_verifier', code_verifier, cookieOptions);
+    res.cookie('authorisation_server_id', authServerId, cookieOptions);
+
+    console.log(`PAR sent to authorisationServerId='${authServerId}', returning authUrl='${authUrl}'`);
+
+    // Generate and store token for the cart session
+    const token = generateAndStoreToken(cartId);
+
+    // Return the authorization URL and token back to the frontend
     return res.json({ authUrl, token });
   } catch (error) {
     console.error('Error during PAR request:', error);
-    return res.status(500).json({ error: 'Failed to send PAR request' });
+    return res.status(500).json({ error: 'Failed to send PAR request', details: error.message });
   }
 });
 
