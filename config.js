@@ -36,6 +36,7 @@ export const config = {
       client_id: `https://${process.env.CLIENT_ID}`,
       organisation_id: process.env.ORGANISATION_ID,
       jwks_uri: process.env.JWKS_URI,
+      token_endpoint_auth_method: 'private_key_jwt',
       redirect_uris: [`https://${process.env.STORE_DOMAIN}/checkout`],
       organisation_name: 'Sheldon and Hammond',
       software_description: 'App to verify age and restrict knives from checkout.',
