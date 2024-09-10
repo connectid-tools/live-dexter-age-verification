@@ -7,15 +7,19 @@ import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import createError from 'http-errors';
 import cors from 'cors';
-import https from 'https';
-import { Buffer } from 'buffer';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from './config.js';
 
 const rpClient = new RelyingPartyClientSdk(config);
 
+// Import routes
+import indexRouter from './routes/index.mjs';
+import validateCartRouter from './routes/restrictItems.mjs';
+import getRestrictedItemsRouter from './routes/getRestrictedItems.mjs';
+
 // Initialize Express app
 const app = express();
+const port = 3001;
 
 // Use CORS middleware
 const storeDomain = process.env.STORE_DOMAIN;
@@ -43,7 +47,10 @@ app.use('/', indexRouter);
 app.use('/validate-cart', validateCartRouter);
 app.use('/restricted-items', getRestrictedItemsRouter);
 
-// Handle the user's bank selection and start the OIDC flow
+
+// Handle the user's bank selection and start the OIDC flow.
+// Create a Pushed Authorization Request (PAR) with the claims
+// required and then return the bank redirect url to authenticate.
 app.post('/select-bank', async (req, res) => {
   const essentialClaims = req.body.essentialClaims || [];
   const voluntaryClaims = req.body.voluntaryClaims || [];
@@ -84,9 +91,13 @@ app.post('/select-bank', async (req, res) => {
   }
 });
 
-// Following successful authentication and consent at the bank, exchange the auth token for an ID Token
+// Following successful authentication and consent at the bank, the user's browser will be redirected
+// back to the callback URL using a get request, with the auth code contained as in the query string
+// parameter `code`. Exchange the auth token for an ID Token.
 app.get('/retrieve-tokens', async (req, res) => {
   if (!req.query.code) {
+    // If the callback url was requested without a code token, just clear any
+    // stale cookies and load the default landing page
     console.error('No code parameter in query string');
     return res.status(400).json({ error: 'No code parameter in query string' });
   }
@@ -118,6 +129,9 @@ app.get('/retrieve-tokens', async (req, res) => {
   }
 });
 
+
+
+
 // Catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));
@@ -132,12 +146,9 @@ app.use(function(err, req, res, next) {
   res.status(statusCode).render('error', { error: err });
 });
 
-// Set up HTTPS server with the key and certificate from the environment variables
-const key = Buffer.from(config.data.transport_key_content, 'base64');
-const cert = Buffer.from(config.data.transport_pem_content, 'base64');
-
-https.createServer({ key, cert }, app).listen(config.data.server_port, config.data.listen_address, () => {
-  console.log(`Server is listening on ${config.data.listen_address} on port ${config.data.server_port}`);
+// Start the Express server
+app.listen(port, () => {
+  console.log(`Server is listening on port ${port}`);
 });
 
 export default app;
