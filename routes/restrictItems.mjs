@@ -6,23 +6,17 @@ const router = express.Router();
 
 // POST route to validate cart and remove restricted items if needed
 router.post('/', async (req, res) => {
-  console.log('POST /validate-cart route hit');
-  console.log('Cookies received:', req.cookies);
-  console.log('Headers:', req.headers);
-
   const { cartId } = req.body;
 
-  if (!cartId) {
-    console.error('Cart ID is missing in the request.');
-    return res.status(400).json({ error: 'Cart ID is required' });
-  }
+  console.log('POST /restricted-items hit');
+  console.log('Cookies received:', req.cookies);
 
   // Check if the validation_done cookie is set
   const validationCookie = req.cookies.validation_done;
   console.log('Validation done cookie:', validationCookie);
 
   if (!validationCookie) {
-    console.warn('Validation not completed. Missing validation_done cookie.');
+    console.warn('Validation not completed. Validation done cookie is missing.');
     return res.status(403).json({ message: 'Validation not completed.' });
   }
 
@@ -36,12 +30,29 @@ router.post('/', async (req, res) => {
   console.log(`Token for cartId ${cartId} is valid.`);
 
   try {
-    const result = await restrictedItemsService.validateCart(cartId);
-    console.log(`Cart ${cartId} validated successfully.`);
-    res.status(200).json(result);
+    if (!restrictedSKUs || restrictedSKUs.size === 0) {
+      console.log('Initializing restricted SKUs...');
+      await initializeRestrictedSKUs();
+    }
+
+    const cartItems = await fetchCartItems(cartId);
+    const cartSKUs = cartItems.map(item => item.sku.toUpperCase()); // Normalize cart SKUs
+
+    console.log(`Fetched cart items for cartId ${cartId}:`, cartSKUs);
+
+    // Check for restricted SKUs in the cart
+    const restrictedItemsInCart = cartSKUs.filter(sku => restrictedSKUs.has(sku));
+
+    if (restrictedItemsInCart.length > 0) {
+      console.log(`Restricted items found in cart ${cartId}:`, restrictedItemsInCart);
+      return res.status(200).json({ restrictedSKUs: restrictedItemsInCart });
+    } else {
+      console.log(`No restricted items found in cart ${cartId}.`);
+      return res.status(200).json({ restrictedSKUs: [] });
+    }
   } catch (error) {
-    console.error('Error validating cart:', error);
-    res.status(500).json({ error: 'Failed to validate and update cart.' });
+    console.error('Error checking restricted items:', error);
+    res.status(500).json({ error: 'Failed to check restricted items' });
   }
 });
 

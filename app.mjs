@@ -141,17 +141,17 @@ app.get('/retrieve-tokens', async (req, res) => {
 
     console.log(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
 
-    // Only now, after successful verification, set the validation_done cookie
+    // Set validation_done cookie only after successful authentication
     const isProduction = process.env.NODE_ENV === 'production';
     const cookieOptions = {
       path: '/',
-      sameSite: 'None', 
+      sameSite: 'None',
       secure: isProduction,
       httpOnly: true,
-      maxAge: 10 * 60 * 1000 // Set expiration for 10 minutes
+      maxAge: 10 * 60 * 1000  // 10 minutes
     };
 
-    res.cookie('validation_done', 'true', cookieOptions);
+    res.cookie('validation_done', 'true', cookieOptions);  // Set cookie here
     console.log('Validation_done cookie set after successful authentication.');
 
     // Return the claims and tokens to the client
