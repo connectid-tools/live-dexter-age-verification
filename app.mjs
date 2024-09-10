@@ -70,7 +70,7 @@ function clearExpiredTokens() {
 // Periodically clean up expired tokens every 5 minutes
 setInterval(clearExpiredTokens, 5 * 60 * 1000); // Run every 5 minutes
 
-// Route to handle bank selection and OIDC flow (your existing code)
+// Route to handle bank selection and OIDC flow
 app.post('/select-bank', async (req, res) => {
   const essentialClaims = ['over18'];
   const authServerId = req.body.authorisationServerId;
@@ -89,7 +89,7 @@ app.post('/select-bank', async (req, res) => {
       req.body.purpose
     );
 
-    // Store state, nonce, and other tokens in cookies (but NOT validation_done yet)
+    // Store tokens in cookies (not the validation_done cookie yet)
     const isProduction = process.env.NODE_ENV === 'production';
     const cookieOptions = {
       path: '/',
@@ -114,6 +114,7 @@ app.post('/select-bank', async (req, res) => {
   }
 });
 
+
 // Handle the token retrieval after user authentication
 app.get('/retrieve-tokens', async (req, res) => {
   console.log('validation_done cookie:', req.cookies.validation_done);
@@ -126,11 +127,11 @@ app.get('/retrieve-tokens', async (req, res) => {
   try {
     // Retrieve the tokens using the OIDC flow
     const tokenSet = await rpClient.retrieveTokens(
-      req.cookies.authorisation_server_id,
-      req.query,
-      req.cookies.code_verifier,
-      req.cookies.state,
-      req.cookies.nonce
+      req.cookies.authorisation_server_id, 
+      req.query,                           
+      req.cookies.code_verifier,           
+      req.cookies.state,                    
+      req.cookies.nonce                     
     );
 
     const claims = tokenSet.claims();
@@ -141,26 +142,27 @@ app.get('/retrieve-tokens', async (req, res) => {
 
     console.log(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
 
-    // Set validation_done cookie only after successful authentication
+    // Set the validation_done cookie after successful authentication
     const isProduction = process.env.NODE_ENV === 'production';
     const cookieOptions = {
       path: '/',
       sameSite: 'None',
       secure: isProduction,
       httpOnly: true,
-      maxAge: 10 * 60 * 1000  // 10 minutes
+      maxAge: 10 * 60 * 1000
     };
 
-    res.cookie('validation_done', 'true', cookieOptions);  // Set cookie here
+    res.cookie('validation_done', 'true', cookieOptions);
     console.log('Validation_done cookie set after successful authentication.');
 
-    // Return the claims and tokens to the client
+    // Return claims and tokens to the client
     return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId });
   } catch (error) {
     console.error('Error retrieving tokens:', error);
     return res.status(500).json({ error: 'Failed to retrieve tokens' });
   }
 });
+
 
 
 // Catch 404 and forward to error handler
