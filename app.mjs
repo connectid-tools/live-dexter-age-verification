@@ -64,6 +64,7 @@ app.post('/select-bank', async (req, res) => {
   try {
     console.log(`Processing request to send PAR with authorisationServerId='${authServerId}', essentialClaim='over18'`);
 
+    // Send the Pushed Authorization Request (PAR)
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
       authServerId,
       essentialClaims,
@@ -71,20 +72,29 @@ app.post('/select-bank', async (req, res) => {
       purpose
     );
 
-    res.cookie('state', state, { path: '/', sameSite: 'none', secure: true });
-    res.cookie('nonce', nonce, { path: '/', sameSite: 'none', secure: true });
-    res.cookie('code_verifier', code_verifier, { path: '/', sameSite: 'none', secure: true });
-    res.cookie('authorisation_server_id', authServerId, { path: '/', sameSite: 'none', secure: true });
+    // Set cookies for state, nonce, and other data
+    const isProduction = process.env.NODE_ENV === 'production';
+    const cookieOptions = {
+      path: '/',
+      sameSite: isProduction ? 'none' : 'lax',
+      secure: isProduction,  // Cookies must be secure in production
+      httpOnly: true,  // Ensure the cookies are not accessible via client-side JavaScript
+    };
+
+    res.cookie('state', state, cookieOptions);
+    res.cookie('nonce', nonce, cookieOptions);
+    res.cookie('code_verifier', code_verifier, cookieOptions);
+    res.cookie('authorisation_server_id', authServerId, cookieOptions);
 
     console.log(`PAR sent to authorisationServerId='${authServerId}', returning URL '${authUrl}'`);
 
+    // Return the authorization URL to the client
     return res.json({ authUrl });
   } catch (error) {
     console.error('Error during PAR request:', error);
-    return res.status(500).json({ error: error.toString() });
+    return res.status(500).json({ error: 'Failed to send PAR request' });
   }
 });
-
 
 // Handle the token retrieval after user authentication
 app.get('/retrieve-tokens', async (req, res) => {
@@ -94,6 +104,7 @@ app.get('/retrieve-tokens', async (req, res) => {
   }
 
   try {
+    // Retrieve the tokens using the OIDC flow
     const tokenSet = await rpClient.retrieveTokens(
       req.cookies.authorisation_server_id,
       req.query,
@@ -102,6 +113,7 @@ app.get('/retrieve-tokens', async (req, res) => {
       req.cookies.nonce
     );
 
+    // Extract claims and tokens
     const claims = tokenSet.claims();
     const token = {
       decoded: JSON.stringify(jwtDecode(tokenSet.id_token), null, 2),
@@ -109,10 +121,12 @@ app.get('/retrieve-tokens', async (req, res) => {
     };
 
     console.log(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
+
+    // Return the claims and tokens to the client
     return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId });
   } catch (error) {
     console.error('Error retrieving tokens:', error);
-    return res.status(500).json({ error: error.toString() });
+    return res.status(500).json({ error: 'Failed to retrieve tokens' });
   }
 });
 
