@@ -89,6 +89,9 @@ app.post('/select-bank', async (req, res) => {
     res.cookie('code_verifier', code_verifier, cookieOptions);
     res.cookie('authorisation_server_id', authServerId, cookieOptions);
 
+    // Log the validation_done cookie after setting it
+    console.log('validation_done cookie set to:', req.cookies.validation_done);
+
     console.log(`PAR sent to authorisationServerId='${authServerId}', returning URL '${authUrl}'`);
 
     // Return the authorization URL to the client

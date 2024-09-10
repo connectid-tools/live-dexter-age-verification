@@ -18,6 +18,8 @@ router.get('/', (req, res) => {
 router.post('/', async (req, res) => {
   const { cartId } = req.body;
 
+  console.log('Validation done cookie:', req.cookies.validation_done);
+
   // Check if the validation_done cookie is set, indicating that validation was already completed
   if (req.cookies.validation_done) {
     console.log('Validation already performed, skipping cart validation.');

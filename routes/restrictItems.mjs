@@ -12,6 +12,9 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'Cart ID is required' });
   }
 
+  console.log('Validation done cookie:', req.cookies.validation_done);
+
+
   // Check if the validation_done cookie is set, indicating that validation was already completed
   if (req.cookies.validation_done) {
     console.log('Validation already performed, skipping cart validation.');
