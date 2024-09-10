@@ -7,33 +7,34 @@ const router = express.Router();
 // POST route to validate cart and remove restricted items if needed
 router.post('/', async (req, res) => {
   console.log('POST /validate-cart route hit');
+  console.log('Cookies received:', req.cookies);
+  console.log('Headers:', req.headers);
+
   const { cartId } = req.body;
 
   if (!cartId) {
+    console.error('Cart ID is missing in the request.');
     return res.status(400).json({ error: 'Cart ID is required' });
   }
 
   console.log('Validation done cookie:', req.cookies.validation_done);
 
-  // Check if the validation_done cookie is set
   if (!req.cookies.validation_done) {
+    console.warn('Validation not completed. Missing validation_done cookie.');
     return res.status(403).json({ message: 'Validation not completed.' });
   }
 
-  // Check if the token for the cartId is valid
   const tokenData = tokenStore.get(cartId);
   if (!tokenData) {
+    console.warn(`No token found or token expired for cartId: ${cartId}`);
     return res.status(403).json({ message: 'No token found or token expired.' });
   }
 
-  // Validate token (if necessary, depending on your flow)
   console.log(`Token for cartId ${cartId} is valid.`);
 
   try {
-    // Call the service method and capture the response
     const result = await restrictedItemsService.validateCart(cartId);
-
-    // Return the validated cart information to the client
+    console.log(`Cart ${cartId} validated successfully.`);
     res.status(200).json(result);
   } catch (error) {
     console.error('Error validating cart:', error);
