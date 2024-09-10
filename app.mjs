@@ -72,13 +72,12 @@ app.post('/select-bank', async (req, res) => {
       purpose
     );
 
-    // Set cookies for state, nonce, and other data
     const isProduction = process.env.NODE_ENV === 'production';
     const cookieOptions = {
       path: '/',
-      sameSite: 'lax', // or 'none' if you're using cross-origin requests and HTTPS
-      secure: false,   // Set to 'false' for local development, true in production
-      httpOnly: false, // Optional, remove this if you need client-side access to the cookie
+      sameSite: 'None',  // Required for cross-site cookies
+      secure: isProduction,  // Ensures secure transmission in production
+      httpOnly: true,  // Prevents JavaScript access
     };
 
     // Set validation_done cookie to indicate validation is complete
