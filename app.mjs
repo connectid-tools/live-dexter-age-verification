@@ -19,13 +19,20 @@ import getRestrictedItemsRouter from './routes/getRestrictedItems.mjs';
 const app = express();
 const port = 3001;
 
-// Use CORS middleware
+// CORS configuration
 const storeDomain = process.env.STORE_DOMAIN;
 app.use(cors({
-  origin: [`https://${storeDomain}`],
+  origin: [`https://${storeDomain}`],  // Your BigCommerce store domain
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,  // Enable credentials
 }));
+
+// Set Access-Control-Allow-Credentials in the response headers
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  next();
+});
 
 // Middleware setup
 app.use(logger('dev'));
