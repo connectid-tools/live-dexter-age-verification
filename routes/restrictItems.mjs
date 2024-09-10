@@ -12,6 +12,12 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'Cart ID is required' });
   }
 
+  // Check if the validation_done cookie is set, indicating that validation was already completed
+  if (req.cookies.validation_done) {
+    console.log('Validation already performed, skipping cart validation.');
+    return res.status(200).json({ message: 'Validation already completed. Skipping cart validation.' });
+  }
+
   try {
     // Call the service method and capture the response
     const result = await restrictedItemsService.validateCart(cartId);

@@ -82,6 +82,8 @@ app.post('/select-bank', async (req, res) => {
       httpOnly: true,  // Ensure the cookies are not accessible via client-side JavaScript
     };
 
+    // Set validation_done cookie to indicate validation is complete
+    res.cookie('validation_done', true, { ...cookieOptions, maxAge: 10 * 60 * 1000 }); // Expires in 10 minutes
     res.cookie('state', state, cookieOptions);
     res.cookie('nonce', nonce, cookieOptions);
     res.cookie('code_verifier', code_verifier, cookieOptions);
@@ -123,6 +125,9 @@ app.get('/retrieve-tokens', async (req, res) => {
 
     console.log(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
 
+    // Clear the validation_done cookie after successful retrieval (optional)
+    res.clearCookie('validation_done', { path: '/' });
+
     // Return the claims and tokens to the client
     return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId });
   } catch (error) {
@@ -130,6 +135,7 @@ app.get('/retrieve-tokens', async (req, res) => {
     return res.status(500).json({ error: 'Failed to retrieve tokens' });
   }
 });
+
 
 
 
