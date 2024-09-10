@@ -76,13 +76,14 @@ app.post('/select-bank', async (req, res) => {
     const isProduction = process.env.NODE_ENV === 'production';
     const cookieOptions = {
       path: '/',
-      sameSite: isProduction ? 'none' : 'lax',
-      secure: isProduction,  // Cookies must be secure in production
-      httpOnly: true,  // Ensure the cookies are not accessible via client-side JavaScript
+      sameSite: isProduction ? 'none' : 'lax',  // SameSite set based on environment
+      secure: isProduction,  // Secure cookies for production
+      httpOnly: true,  // Ensure cookies are not accessible via JavaScript
     };
 
     // Set validation_done cookie to indicate validation is complete
     res.cookie('validation_done', 'true', { ...cookieOptions, maxAge: 10 * 60 * 1000 }); // Expires in 10 minutes
+    console.log('validation_done cookie set successfully.');
 
     console.log('validation_done cookie set successfully.');
     res.cookie('state', state, cookieOptions);
