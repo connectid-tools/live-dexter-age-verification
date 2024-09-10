@@ -1,16 +1,13 @@
 import dotenv from 'dotenv';
-dotenv.config();  // Load the environment variables
+dotenv.config();
 
 import express from 'express';
 import path from 'path';
-import cookieParser from 'cookie-parser';
 import logger from 'morgan';
-import createError from 'http-errors';
 import cors from 'cors';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from './config.js';
-export const tokenStore = new Map(); // Export tokenStore here
-
+export const tokenStore = new Map(); // Token store to keep track of tokens and their expiration
 
 const rpClient = new RelyingPartyClientSdk(config);
 
@@ -19,7 +16,6 @@ import indexRouter from './routes/index.mjs';
 import validateCartRouter from './routes/restrictItems.mjs';
 import getRestrictedItemsRouter from './routes/getRestrictedItems.mjs';
 
-// Initialize Express app
 const app = express();
 const port = 3001;
 
@@ -29,31 +25,24 @@ app.use(cors({
   origin: [`https://${storeDomain}`],
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
 }));
-
-// View engine setup
-app.set('views', path.join(path.resolve(), 'views'));
-app.set('view engine', 'pug');
 
 // Middleware setup
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
 app.use(express.static(path.join(path.resolve(), 'public')));
 
-// Use routers
 app.use('/', indexRouter);
 app.use('/validate-cart', validateCartRouter);
 app.use('/restricted-items', getRestrictedItemsRouter);
 
-// Generate and store token for a cartId
+// Token management
 function generateAndStoreToken(cartId) {
   const token = Math.random().toString(36).substring(2);
-  const expiresAt = Date.now() + 10 * 60 * 1000;  // Token expiration set to 10 minutes
+  const expiresAt = Date.now() + 5 * 60 * 1000;  // Token expiration set to 5 minutes
   tokenStore.set(cartId, { token, expiresAt });
-  console.log(`Token for cartId ${cartId} set. Expires at ${new Date(expiresAt).toISOString()}. Token: ${token}`);
+  console.log(`Token for cartId ${cartId} generated. Expires at ${new Date(expiresAt).toISOString()}. Token: ${token}`);
   return token;
 }
 
@@ -62,15 +51,14 @@ function clearExpiredTokens() {
   tokenStore.forEach((tokenData, cartId) => {
     if (tokenData.expiresAt < now) {
       tokenStore.delete(cartId);
-      console.log(`Expired token for cartId ${cartId} has been removed.`);
+      console.log(`Expired token for cartId ${cartId} removed.`);
     }
   });
 }
 
-// Periodically clean up expired tokens every 5 minutes
-setInterval(clearExpiredTokens, 5 * 60 * 1000); // Run every 5 minutes
+setInterval(clearExpiredTokens, 5 * 60 * 1000);  // Clear expired tokens every 5 minutes
 
-// Route to handle bank selection and OIDC flow
+// Select bank route and OIDC flow
 app.post('/select-bank', async (req, res) => {
   const essentialClaims = ['over18'];
   const authServerId = req.body.authorisationServerId;
@@ -81,32 +69,14 @@ app.post('/select-bank', async (req, res) => {
   }
 
   try {
-    // Send the Pushed Authorization Request (PAR)
-    const { authUrl, code_verifier, state, nonce } = await rpClient.sendPushedAuthorisationRequest(
+    const { authUrl } = await rpClient.sendPushedAuthorisationRequest(
       authServerId,
       essentialClaims,
       [],
       req.body.purpose
     );
 
-    // Store tokens in cookies (not the validation_done cookie yet)
-    const isProduction = process.env.NODE_ENV === 'production';
-    const cookieOptions = {
-      path: '/',
-      sameSite: 'None',
-      secure: isProduction,
-      httpOnly: true,
-      maxAge: 10 * 60 * 1000  // 10-minute expiration
-    };
-
-    res.cookie('state', state, cookieOptions);
-    res.cookie('nonce', nonce, cookieOptions);
-    res.cookie('code_verifier', code_verifier, cookieOptions);
-    res.cookie('authorisation_server_id', authServerId, cookieOptions);
-
-    const token = generateAndStoreToken(cartId);  // Store token on server
-    console.log(`Token generated for cartId ${cartId}: ${token}`);
-
+    const token = generateAndStoreToken(cartId);  // Generate and store token
     return res.json({ authUrl, token });
   } catch (error) {
     console.error('Error during PAR request:', error);
@@ -114,47 +84,25 @@ app.post('/select-bank', async (req, res) => {
   }
 });
 
-// Handle the token retrieval after user authentication
+// Token retrieval route
 app.get('/retrieve-tokens', async (req, res) => {
-  console.log('validation_done cookie:', req.cookies.validation_done);
-
   if (!req.query.code) {
-    console.error('No code parameter in query string');
     return res.status(400).json({ error: 'No code parameter in query string' });
   }
 
   try {
-    // Retrieve the tokens using the OIDC flow
     const tokenSet = await rpClient.retrieveTokens(
-      req.cookies.authorisation_server_id,  // Authorization server ID from cookies
-      req.query,                            // Query parameters (e.g., code)
-      req.cookies.code_verifier,            // Code verifier from cookies
-      req.cookies.state,                    // State from cookies
-      req.cookies.nonce                     // Nonce from cookies
+      req.cookies.authorisation_server_id,
+      req.query,
+      req.cookies.code_verifier,
+      req.cookies.state,
+      req.cookies.nonce
     );
 
     const claims = tokenSet.claims();
-    const token = {
-      decoded: JSON.stringify(jwtDecode(tokenSet.id_token), null, 2),
-      raw: tokenSet.id_token,
-    };
+    const token = { raw: tokenSet.id_token };
 
-    console.log(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
-
-    // Set the validation_done cookie after successful authentication
-    const isProduction = process.env.NODE_ENV === 'production';
-    const cookieOptions = {
-      path: '/',
-      sameSite: 'None',
-      secure: isProduction,
-      httpOnly: true,
-      maxAge: 10 * 60 * 1000  // 10-minute expiration
-    };
-
-    res.cookie('validation_done', 'true', cookieOptions);
-    console.log('Validation_done cookie set after successful authentication.');
-
-    // Return claims and tokens to the client
+    // Return claims and token to the client
     return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId });
   } catch (error) {
     console.error('Error retrieving tokens:', error);
@@ -162,23 +110,20 @@ app.get('/retrieve-tokens', async (req, res) => {
   }
 });
 
-// Catch 404 and forward to error handler
+// Catch 404 and error handler
 app.use(function(req, res, next) {
   next(createError(404));
 });
 
-// Error handler
 app.use(function(err, req, res, next) {
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
-  const statusCode = err.status || 500;
-  console.error(err.stack);
-  res.status(statusCode).render('error', { error: err });
+  res.status(err.status || 500).json({ error: err.message });
 });
 
-// Start the Express server
+// Start server
 app.listen(port, () => {
-  console.log(`Server is listening on port ${port}`);
+  console.log(`Server listening on port ${port}`);
 });
 
 export default app;
