@@ -51,9 +51,10 @@ export const tokenStore = new Map(); // Store tokens with cartId as the key
 
 // Generate and store token for a cartId
 function generateAndStoreToken(cartId) {
-  const token = Math.random().toString(36).substr(2); // Generate a random token
-  const expiresAt = Date.now() + 10 * 60 * 1000; // Set expiration for 10 minutes
+  const token = Math.random().toString(36).substring(2);  // Using substring instead of substr
+  const expiresAt = Date.now() + 10 * 60 * 1000;  // Token expiration time set to 10 minutes
   tokenStore.set(cartId, { token, expiresAt });
+  console.log(`Token for cartId ${cartId} set. Token: ${token}`);
   return token;
 }
 
@@ -68,7 +69,7 @@ function clearExpiredTokens() {
 }
 
 // Periodically clean up expired tokens every 60 seconds
-setInterval(clearExpiredTokens, 60 * 1000);
+setInterval(clearExpiredTokens, 5 * 60 * 1000); // Run every 5 minutes
 
 // Route to handle bank selection and OIDC flow (your existing code)
 app.post('/select-bank', async (req, res) => {
