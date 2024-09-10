@@ -22,7 +22,6 @@ import getRestrictedItemsRouter from './routes/getRestrictedItems.mjs';
 // Initialize Express app
 const app = express();
 const port = 3001;
-const tokenStore = new Map();  // Store tokens with cartId as the key
 
 // Use CORS middleware
 const storeDomain = process.env.STORE_DOMAIN;
