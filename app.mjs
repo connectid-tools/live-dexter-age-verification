@@ -47,71 +47,76 @@ app.use('/', indexRouter);
 app.use('/validate-cart', validateCartRouter);
 app.use('/restricted-items', getRestrictedItemsRouter);
 
+export const tokenStore = new Map(); // Store tokens with cartId as the key
 
-// Handle the user's bank selection and start the OIDC flow
+// Generate and store token for a cartId
+function generateAndStoreToken(cartId) {
+  const token = Math.random().toString(36).substr(2); // Generate a random token
+  const expiresAt = Date.now() + 10 * 60 * 1000; // Set expiration for 10 minutes
+  tokenStore.set(cartId, { token, expiresAt });
+  return token;
+}
+
+function clearExpiredTokens() {
+  const now = Date.now();
+  tokenStore.forEach((tokenData, cartId) => {
+    if (tokenData.expiresAt < now) {
+      tokenStore.delete(cartId);
+      console.log(`Expired token for cartId ${cartId} has been removed.`);
+    }
+  });
+}
+
+// Periodically clean up expired tokens every 60 seconds
+setInterval(clearExpiredTokens, 60 * 1000);
+
+// Route to handle bank selection and OIDC flow (your existing code)
 app.post('/select-bank', async (req, res) => {
-  const essentialClaims = ['over18']; // Only requesting the over18 claim
-  const voluntaryClaims = [];
-  const purpose = req.body.purpose || config.data.purpose;
+  const essentialClaims = ['over18'];
   const authServerId = req.body.authorisationServerId;
+  const cartId = req.body.cartId;
 
-  if (!authServerId) {
-    const error = 'authorisationServerId parameter is required';
-    console.error(error);
-    return res.status(400).json({ error });
+  if (!authServerId || !cartId) {
+    return res.status(400).json({ error: 'authorisationServerId and cartId are required' });
   }
 
   try {
-    console.log(`Processing request to send PAR with authorisationServerId='${authServerId}', essentialClaim='over18'`);
-
     // Send the Pushed Authorization Request (PAR)
-    const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
+    const { authUrl, code_verifier, state, nonce } = await rpClient.sendPushedAuthorisationRequest(
       authServerId,
       essentialClaims,
-      voluntaryClaims,
-      purpose
+      [],
+      req.body.purpose
     );
 
+    // Set cookies and store the token for the cartId
     const isProduction = process.env.NODE_ENV === 'production';
     const cookieOptions = {
       path: '/',
-      sameSite: 'None',  // Required for cross-site cookies
-      secure: isProduction,  // Ensures secure transmission in production
-      httpOnly: true,  // Prevents JavaScript access
+      sameSite: 'None', 
+      secure: isProduction,
+      httpOnly: true,
+      maxAge: 10 * 60 * 1000
     };
 
-    // Set validation_done cookie to indicate validation is complete
-    res.cookie('validation_done', 'true', { ...cookieOptions, maxAge: 10 * 60 * 1000 }); // Expires in 10 minutes
-    console.log('validation_done cookie set successfully.');
-
+    res.cookie('validation_done', 'true', cookieOptions);
     res.cookie('state', state, cookieOptions);
     res.cookie('nonce', nonce, cookieOptions);
     res.cookie('code_verifier', code_verifier, cookieOptions);
     res.cookie('authorisation_server_id', authServerId, cookieOptions);
 
-        // Log the actual headers being sent, including the cookies
-        res.on('finish', () => {
-          console.log('Response headers:', res.getHeaders()); // This will include Set-Cookie headers
-        });
+    const token = generateAndStoreToken(cartId); // Store token on server
+    console.log(`Token generated for cartId ${cartId}: ${token}`);
 
-    console.log(`PAR sent to authorisationServerId='${authServerId}', returning URL '${authUrl}'`);
-
-    // Return the authorization URL to the client
-    return res.json({ authUrl });
+    return res.json({ authUrl, token });
   } catch (error) {
-    console.error('Error during PAR request:', error);  // Log full error details
-    return res.status(500).json({ error: 'Failed to send PAR request', details: error.message });
+    console.error('Error during PAR request:', error);
+    return res.status(500).json({ error: 'Failed to send PAR request' });
   }
 });
 
-
-
-
-
-
 // Handle the token retrieval after user authentication
 app.get('/retrieve-tokens', async (req, res) => {
-  // Log the validation_done cookie
   console.log('validation_done cookie:', req.cookies.validation_done);
 
   if (!req.query.code) {
@@ -129,7 +134,6 @@ app.get('/retrieve-tokens', async (req, res) => {
       req.cookies.nonce
     );
 
-    // Extract claims and tokens
     const claims = tokenSet.claims();
     const token = {
       decoded: JSON.stringify(jwtDecode(tokenSet.id_token), null, 2),
@@ -141,18 +145,12 @@ app.get('/retrieve-tokens', async (req, res) => {
     // Clear the validation_done cookie after successful retrieval (optional)
     res.clearCookie('validation_done', { path: '/' });
 
-    // Return the claims and tokens to the client
     return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId });
   } catch (error) {
     console.error('Error retrieving tokens:', error);
     return res.status(500).json({ error: 'Failed to retrieve tokens' });
   }
 });
-
-
-
-
-
 
 // Catch 404 and forward to error handler
 app.use(function(req, res, next) {

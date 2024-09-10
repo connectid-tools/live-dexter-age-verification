@@ -1,3 +1,4 @@
+import { tokenStore } from '../app.mjs';  // Ensure you import the tokenStore
 import express from 'express';
 import restrictedItemsService from '../services/retrieveAndRestrict.mjs';
 
@@ -14,12 +15,19 @@ router.post('/', async (req, res) => {
 
   console.log('Validation done cookie:', req.cookies.validation_done);
 
-
-  // Check if the validation_done cookie is set, indicating that validation was already completed
-  if (req.cookies.validation_done) {
-    console.log('Validation already performed, skipping cart validation.');
-    return res.status(200).json({ message: 'Validation already completed. Skipping cart validation.' });
+  // Check if the validation_done cookie is set
+  if (!req.cookies.validation_done) {
+    return res.status(403).json({ message: 'Validation not completed.' });
   }
+
+  // Check if the token for the cartId is valid
+  const tokenData = tokenStore.get(cartId);
+  if (!tokenData) {
+    return res.status(403).json({ message: 'No token found or token expired.' });
+  }
+
+  // Validate token (if necessary, depending on your flow)
+  console.log(`Token for cartId ${cartId} is valid.`);
 
   try {
     // Call the service method and capture the response
