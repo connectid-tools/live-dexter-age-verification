@@ -46,7 +46,6 @@ app.use(express.static(path.join(path.resolve(), 'public')));
 app.use('/', indexRouter);
 app.use('/validate-cart', validateCartRouter);
 app.use('/restricted-items', getRestrictedItemsRouter);
-
 export const tokenStore = new Map(); // Store tokens with cartId as the key
 
 // Generate and store token for a cartId
@@ -68,7 +67,7 @@ function clearExpiredTokens() {
   });
 }
 
-// Periodically clean up expired tokens every 60 seconds
+// Periodically clean up expired tokens every 5 minutes
 setInterval(clearExpiredTokens, 5 * 60 * 1000); // Run every 5 minutes
 
 // Route to handle bank selection and OIDC flow (your existing code)
@@ -90,7 +89,7 @@ app.post('/select-bank', async (req, res) => {
       req.body.purpose
     );
 
-    // Set cookies and store the token for the cartId
+    // Store state, nonce, and other tokens in cookies (but NOT validation_done yet)
     const isProduction = process.env.NODE_ENV === 'production';
     const cookieOptions = {
       path: '/',
@@ -100,7 +99,6 @@ app.post('/select-bank', async (req, res) => {
       maxAge: 10 * 60 * 1000
     };
 
-    res.cookie('validation_done', 'true', cookieOptions);
     res.cookie('state', state, cookieOptions);
     res.cookie('nonce', nonce, cookieOptions);
     res.cookie('code_verifier', code_verifier, cookieOptions);
@@ -143,15 +141,27 @@ app.get('/retrieve-tokens', async (req, res) => {
 
     console.log(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
 
-    // Clear the validation_done cookie after successful retrieval (optional)
-    res.clearCookie('validation_done', { path: '/' });
+    // Only now, after successful verification, set the validation_done cookie
+    const isProduction = process.env.NODE_ENV === 'production';
+    const cookieOptions = {
+      path: '/',
+      sameSite: 'None', 
+      secure: isProduction,
+      httpOnly: true,
+      maxAge: 10 * 60 * 1000 // Set expiration for 10 minutes
+    };
 
+    res.cookie('validation_done', 'true', cookieOptions);
+    console.log('Validation_done cookie set after successful authentication.');
+
+    // Return the claims and tokens to the client
     return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId });
   } catch (error) {
     console.error('Error retrieving tokens:', error);
     return res.status(500).json({ error: 'Failed to retrieve tokens' });
   }
 });
+
 
 // Catch 404 and forward to error handler
 app.use(function(req, res, next) {

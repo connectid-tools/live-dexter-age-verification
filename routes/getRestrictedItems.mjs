@@ -23,11 +23,10 @@ router.post('/', async (req, res) => {
   console.log('Cookies received:', req.cookies);
   console.log('Headers:', req.headers);
 
-  // Log cookie specifically
+  // Check if the validation_done cookie is set
   const validationCookie = req.cookies.validation_done;
   console.log('Validation done cookie:', validationCookie);
 
-  // Check if the validation_done cookie is set
   if (!validationCookie) {
     console.warn('Validation not completed. Validation done cookie is missing.');
     return res.status(403).json({ message: 'Validation not completed.' });

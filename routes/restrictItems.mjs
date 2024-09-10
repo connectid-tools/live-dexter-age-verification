@@ -17,13 +17,16 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'Cart ID is required' });
   }
 
-  console.log('Validation done cookie:', req.cookies.validation_done);
+  // Check if the validation_done cookie is set
+  const validationCookie = req.cookies.validation_done;
+  console.log('Validation done cookie:', validationCookie);
 
-  if (!req.cookies.validation_done) {
+  if (!validationCookie) {
     console.warn('Validation not completed. Missing validation_done cookie.');
     return res.status(403).json({ message: 'Validation not completed.' });
   }
 
+  // Check if the token for the cartId is valid
   const tokenData = tokenStore.get(cartId);
   if (!tokenData) {
     console.warn(`No token found or token expired for cartId: ${cartId}`);
