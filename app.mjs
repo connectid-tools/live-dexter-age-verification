@@ -49,6 +49,7 @@ app.use('/restricted-items', getRestrictedItemsRouter);
 
 
 // Handle the user's bank selection and start the OIDC flow
+// Handle the user's bank selection and start the OIDC flow
 app.post('/select-bank', async (req, res) => {
   const essentialClaims = ['over18']; // Only requesting the over18 claim
   const voluntaryClaims = [];
@@ -91,8 +92,8 @@ app.post('/select-bank', async (req, res) => {
     // Return the authorization URL to the client
     return res.json({ authUrl });
   } catch (error) {
-    console.error('Error during PAR request:', error);
-    return res.status(500).json({ error: 'Failed to send PAR request' });
+    console.error('Error during PAR request:', error);  // Log full error details
+    return res.status(500).json({ error: 'Failed to send PAR request', details: error.message });
   }
 });
 
