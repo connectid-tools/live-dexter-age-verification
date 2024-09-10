@@ -76,9 +76,9 @@ app.post('/select-bank', async (req, res) => {
     const isProduction = process.env.NODE_ENV === 'production';
     const cookieOptions = {
       path: '/',
-      sameSite: isProduction ? 'none' : 'lax',  // SameSite set based on environment
-      secure: isProduction,  // Secure cookies for production
-      httpOnly: true,  // Ensure cookies are not accessible via JavaScript
+      sameSite: 'lax', // or 'none' if you're using cross-origin requests and HTTPS
+      secure: false,   // Set to 'false' for local development, true in production
+      httpOnly: false, // Optional, remove this if you need client-side access to the cookie
     };
 
     // Set validation_done cookie to indicate validation is complete
