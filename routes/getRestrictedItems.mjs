@@ -27,10 +27,14 @@ router.post('/', async (req, res) => {
   const validationCookie = req.cookies.validation_done;
   console.log('Validation done cookie:', validationCookie);
 
-  if (!validationCookie) {
-    console.warn('Validation not completed. Validation done cookie is missing.');
-    return res.status(403).json({ message: 'Validation not completed.' });
+  // If the validation_done cookie exists, skip the validation and proceed
+  if (validationCookie) {
+    console.log('Validation already completed, skipping the restricted items check.');
+    return res.status(200).json({ message: 'Validation already completed. No need to check for restricted items.' });
   }
+
+  // If no validation_done cookie, proceed with validation
+  console.log('No validation_done cookie found. Proceeding with validation...');
 
   // Check if the token for the cartId is valid
   const tokenData = tokenStore.get(cartId);

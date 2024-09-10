@@ -9,6 +9,8 @@ import createError from 'http-errors';
 import cors from 'cors';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from './config.js';
+export const tokenStore = new Map(); // Export tokenStore here
+
 
 const rpClient = new RelyingPartyClientSdk(config);
 
