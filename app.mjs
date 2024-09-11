@@ -18,24 +18,22 @@ import getRestrictedItemsRouter from './routes/getRestrictedItems.mjs';
 
 const app = express();
 const port = 3001;
-
 const storeDomain = process.env.STORE_DOMAIN;
 const endpointDomain = process.env.ENDPOINT_DOMAIN;
 
 // Define allowed origins (both the BigCommerce store and the DigitalOcean app)
 const allowedOrigins = [
-  `https://${storeDomain}`,  // Corrected template literal syntax
-  `https://${endpointDomain}.ondigitalocean.app`  // Corrected template literal syntax
+  `https://${storeDomain}`,  
+  `https://${endpointDomain}.ondigitalocean.app`
 ];
 
 // Set up CORS for all routes
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow the request if the origin is in the allowedOrigins list or is undefined (e.g., server-side request)
     if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-      callback(null, true);  // Allow the request
+      callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));  // Block the request if the origin is not allowed
+      callback(new Error('Not allowed by CORS'));
     }
   },
   methods: ['GET', 'POST', 'OPTIONS'],  // Allow specific methods
@@ -44,13 +42,13 @@ app.use(cors({
 }));
 
 // Add OPTIONS route to handle preflight requests globally for all routes
-app.options('*', cors()); // This will ensure preflight requests are handled
+app.options('*', cors());
 
 // Set additional CORS headers globally if needed for specific cases
 app.use((req, res, next) => {
-  // Set the necessary headers for credentials and allow specific origins
-  if (allowedOrigins.includes(req.headers.origin)) {
-    res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
   }
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
