@@ -23,8 +23,8 @@ const endpointDomain = process.env.ENDPOINT_DOMAIN;
 
 // Define allowed origins (both the BigCommerce store and the DigitalOcean app)
 const allowedOrigins = [
-  `https://${storeDomain}`,  
-  `https://${endpointDomain}.ondigitalocean.app`
+'https://connectid-demo-k3.mybigcommerce.com',  // BigCommerce Store Domain
+  'https://sh-checkout-validator-qud6t.ondigitalocean.app' 
 ];
 
 // Set up CORS for all routes
