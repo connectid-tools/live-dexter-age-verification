@@ -21,34 +21,46 @@ const port = 3001;
 
 // CORS configuration
 const storeDomain = process.env.STORE_DOMAIN;
+const endpointDomain = process.env.ENDPOINT_DOMAIN;
 
 // Define allowed origins (both the BigCommerce store and the DigitalOcean app)
 const allowedOrigins = [
-  'https://connectid-demo-k3.mybigcommerce.com',
-  'https://sh-checkout-validator-qud6t.ondigitalocean.app'
+  `https://${storeDomain}`
+  `https://${endpointDomain}.ondigitalocean.app`
 ];
 
 // Set up CORS for all routes
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow the request if the origin is in the allowedOrigins list or no origin (server-side requests)
+    // Allow the request if the origin is in the allowedOrigins list or is undefined (e.g., server-side request)
     if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
       callback(null, true);  // Allow the request
     } else {
-      callback(new Error('Not allowed by CORS'));  // Block the request
+      callback(new Error('Not allowed by CORS'));  // Block the request if the origin is not allowed
     }
   },
-  methods: ['GET', 'POST', 'OPTIONS'],  // Allow GET, POST, and OPTIONS methods
+  methods: ['GET', 'POST', 'OPTIONS'],  // Allow specific methods
   allowedHeaders: ['Content-Type', 'Authorization'],  // Allow specific headers
   credentials: true  // Enable credentials (cookies)
 }));
 
+// Add OPTIONS route to handle preflight requests globally for all routes
+app.options('*', cors()); // This will ensure preflight requests are handled
+
 // Set additional CORS headers globally if needed for specific cases
 app.use((req, res, next) => {
-  // The cors middleware already sets the necessary headers, no need to set them manually here.
-  // If you need to add custom headers, you can do so, but avoid overriding CORS headers set by cors middleware.
+  // Set the necessary headers for credentials and allow specific origins
+  if (allowedOrigins.includes(req.headers.origin)) {
+    res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   next();
 });
+
+// Other route and middleware configurations below
+
 
 // Middleware setup
 app.use(logger('dev'));
