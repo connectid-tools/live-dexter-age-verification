@@ -21,21 +21,34 @@ const port = 3001;
 
 // CORS configuration
 const storeDomain = process.env.STORE_DOMAIN;
+
+// Define allowed origins (both the BigCommerce store and the DigitalOcean app)
+const allowedOrigins = [
+  'https://connectid-demo-k3.mybigcommerce.com',
+  'https://sh-checkout-validator-qud6t.ondigitalocean.app'
+];
+
+// Set up CORS for all routes
 app.use(cors({
-  origin: [`https://${storeDomain}`],  // Your BigCommerce store domain
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,  // Enable credentials
+  origin: function (origin, callback) {
+    // Allow the request if the origin is in the allowedOrigins list or no origin (server-side requests)
+    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      callback(null, true);  // Allow the request
+    } else {
+      callback(new Error('Not allowed by CORS'));  // Block the request
+    }
+  },
+  methods: ['GET', 'POST', 'OPTIONS'],  // Allow GET, POST, and OPTIONS methods
+  allowedHeaders: ['Content-Type', 'Authorization'],  // Allow specific headers
+  credentials: true  // Enable credentials (cookies)
 }));
 
-// Set Access-Control-Allow-Credentials in the response headers
+// Set additional CORS headers globally if needed for specific cases
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', `https://${storeDomain}`);
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  // The cors middleware already sets the necessary headers, no need to set them manually here.
+  // If you need to add custom headers, you can do so, but avoid overriding CORS headers set by cors middleware.
   next();
 });
-
 
 // Middleware setup
 app.use(logger('dev'));
