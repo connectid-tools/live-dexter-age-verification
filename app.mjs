@@ -111,39 +111,54 @@ app.post('/select-bank', async (req, res) => {
     return res.status(500).json({ error: 'Failed to send PAR request', details: error.message });
   }
 });
-
 app.get('/retrieve-tokens', async (req, res) => {
-  const cartId = req.query.cartId; // Ensure cartId is passed to identify the session
-  if (!req.query.code || !cartId) {
+  const cartId = req.query.cartId;
+  const code = req.query.code;
+
+  if (!code || !cartId) {
     return res.status(400).json({ error: 'Code parameter and cartId are required' });
   }
 
+  // Check if required cookies are present
+  if (!req.cookies.authorisation_server_id || !req.cookies.code_verifier || !req.cookies.state || !req.cookies.nonce) {
+    return res.status(400).json({ error: 'Missing required cookies for token exchange.' });
+  }
+
   try {
-    // Retrieve the tokens using the OIDC flow
+    console.log(`Attempting to retrieve tokens for cartId: ${cartId}`);
+
+    // Call the SDK to retrieve tokens
     const tokenSet = await rpClient.retrieveTokens(
       req.cookies.authorisation_server_id,
-      req.query,
+      { code },  // The code returned from the bank
       req.cookies.code_verifier,
       req.cookies.state,
       req.cookies.nonce
     );
 
+    console.log('TokenSet received:', tokenSet);
+
     const claims = tokenSet.claims(); // Extract claims from the token set
+    console.log('Claims extracted:', claims);
 
     // Verify if the user has met the required claims (e.g., 'over18')
     if (claims.over18 && claims.over18 === true) {
       // Generate and store the session token only after successful verification
-      const token = generateAndStoreToken(cartId); // Token now generated after successful verification
-      console.log(`Verification successful for cartId ${cartId}. Token generated.`);
+      const token = generateAndStoreToken(cartId); 
+      console.log(`Verification successful for cartId ${cartId}. Token generated: ${token}`);
+
       return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId });
     } else {
+      console.log('User verification failed: Age requirement not met');
       return res.status(400).json({ error: 'User verification failed. Age requirement not met.' });
     }
   } catch (error) {
-    console.error('Error retrieving tokens:', error);
+    // Log the full error details
+    console.error('Error retrieving tokens:', error.message);
     return res.status(500).json({ error: 'Failed to retrieve tokens', details: error.message });
   }
 });
+
 
 // Catch 404 and error handler
 app.use(function(req, res, next) {
