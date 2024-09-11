@@ -25,8 +25,8 @@ const endpointDomain = process.env.ENDPOINT_DOMAIN;
 
 // Define allowed origins (both the BigCommerce store and the DigitalOcean app)
 const allowedOrigins = [
-  `https://${storeDomain}`
-  `https://${endpointDomain}.ondigitalocean.app`
+  `https://$(storeDomain)`
+  `https://$(endpointDomain).ondigitalocean.app`
 ];
 
 // Set up CORS for all routes
