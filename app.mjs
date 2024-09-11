@@ -69,15 +69,17 @@ app.post('/select-bank', async (req, res) => {
   const essentialClaims = ['over18']; // Only requesting the over18 claim
   const voluntaryClaims = [];
   const purpose = req.body.purpose || 'Age verification required'; // Default purpose if not provided
-  const authServerId = req.body.authorisationServerId;
-  const cartId = req.body.cartId;
+  const authServerId = req.body.authorisationServerId;  // Fetching the authorization server ID
+  const cartId = req.body.cartId;  // Fetching the cart ID
 
-  // Validate that both the authorisationServerId and cartId are provided
+  // Validate that both the authorizationServerId and cartId are provided
   if (!authServerId || !cartId) {
+    // Return a 400 error if the necessary IDs are missing
     return res.status(400).json({ error: 'authorisationServerId and cartId are required' });
   }
 
   try {
+    // Log the beginning of the PAR request process for debugging
     console.log(`Processing request to send PAR with authorisationServerId='${authServerId}', essentialClaim='over18', cartId='${cartId}'`);
 
     // Send the Pushed Authorization Request (PAR) to the authorization server
@@ -88,29 +90,35 @@ app.post('/select-bank', async (req, res) => {
       purpose
     );
 
-    // Set cookies for state, nonce, and code_verifier to maintain session integrity
+    // Define cookie options with necessary attributes for cross-origin requests
     const cookieOptions = {
-      path: '/',
-      sameSite: 'None',  // Required for cross-origin requests
-      secure: true,      // Cookies must be secure (HTTPS)
-      httpOnly: true,    // Prevent JavaScript from accessing cookies
-      maxAge: 10 * 60 * 1000 // 10 minutes
+      path: '/',              // Set the path to root so the cookie is available site-wide
+      sameSite: 'None',       // Required for cross-origin requests (i.e., frontend and backend on different domains)
+      secure: true,           // Cookies must be sent over HTTPS
+      httpOnly: true,         // Prevent JavaScript from accessing cookies for security
+      maxAge: 10 * 60 * 1000  // Cookies expire after 10 minutes
     };
 
+    // Set cookies for state, nonce, and code_verifier to maintain session integrity
     res.cookie('state', state, cookieOptions);
     res.cookie('nonce', nonce, cookieOptions);
     res.cookie('code_verifier', code_verifier, cookieOptions);
     res.cookie('authorisation_server_id', authServerId, cookieOptions);
 
+    // Log successful sending of the PAR request and returning the authorization URL
     console.log(`PAR sent to authorisationServerId='${authServerId}', returning authUrl='${authUrl}'`);
 
     // Return the authorization URL back to the frontend
     return res.json({ authUrl });
   } catch (error) {
+    // Log any error that occurs during the PAR request process
     console.error('Error during PAR request:', error);
     return res.status(500).json({ error: 'Failed to send PAR request', details: error.message });
   }
 });
+
+
+
 app.get('/retrieve-tokens', async (req, res) => {
   const cartId = req.query.cartId;
   const code = req.query.code;
@@ -119,31 +127,41 @@ app.get('/retrieve-tokens', async (req, res) => {
     return res.status(400).json({ error: 'Code parameter and cartId are required' });
   }
 
-  // Check if required cookies are present
-  if (!req.cookies.authorisation_server_id || !req.cookies.code_verifier || !req.cookies.state || !req.cookies.nonce) {
+  // Check if the required cookies are present
+  const authorisationServerId = req.cookies.authorisation_server_id;
+  const codeVerifier = req.cookies.code_verifier;
+  const state = req.cookies.state;
+  const nonce = req.cookies.nonce;
+
+  if (!authorisationServerId || !codeVerifier || !state || !nonce) {
+    console.error('Missing one or more required cookies:', {
+      authorisationServerId,
+      codeVerifier,
+      state,
+      nonce
+    });
     return res.status(400).json({ error: 'Missing required cookies for token exchange.' });
   }
 
   try {
     console.log(`Attempting to retrieve tokens for cartId: ${cartId}`);
 
-    // Call the SDK to retrieve tokens
+    // Retrieve tokens using the OIDC flow
     const tokenSet = await rpClient.retrieveTokens(
-      req.cookies.authorisation_server_id,
+      authorisationServerId,
       { code },  // The code returned from the bank
-      req.cookies.code_verifier,
-      req.cookies.state,
-      req.cookies.nonce
+      codeVerifier,
+      state,
+      nonce
     );
 
     console.log('TokenSet received:', tokenSet);
 
-    const claims = tokenSet.claims(); // Extract claims from the token set
+    const claims = tokenSet.claims();
     console.log('Claims extracted:', claims);
 
     // Verify if the user has met the required claims (e.g., 'over18')
     if (claims.over18 && claims.over18 === true) {
-      // Generate and store the session token only after successful verification
       const token = generateAndStoreToken(cartId); 
       console.log(`Verification successful for cartId ${cartId}. Token generated: ${token}`);
 
@@ -153,11 +171,11 @@ app.get('/retrieve-tokens', async (req, res) => {
       return res.status(400).json({ error: 'User verification failed. Age requirement not met.' });
     }
   } catch (error) {
-    // Log the full error details
-    console.error('Error retrieving tokens:', error.message);
+    console.error('Error retrieving tokens:', error);
     return res.status(500).json({ error: 'Failed to retrieve tokens', details: error.message });
   }
 });
+
 
 
 // Catch 404 and error handler
