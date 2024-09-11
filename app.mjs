@@ -30,9 +30,12 @@ app.use(cors({
 
 // Set Access-Control-Allow-Credentials in the response headers
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Origin', `https://${storeDomain}`);
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   next();
 });
+
 
 // Middleware setup
 app.use(logger('dev'));
