@@ -145,6 +145,7 @@ app.post('/select-bank', async (req, res) => {
 
 
 app.get('/retrieve-tokens', async (req, res) => {
+  console.log('Cookies:', req.cookies);  // Log all cookies for debugging
   const cartId = req.query.cartId;
   const code = req.query.code;
 
@@ -169,9 +170,7 @@ app.get('/retrieve-tokens', async (req, res) => {
   }
 
   try {
-    console.log(`Attempting to retrieve tokens for cartId: ${cartId}`);
-
-    // Retrieve tokens using the OIDC flow
+    // Proceed with token retrieval if cookies are present
     const tokenSet = await rpClient.retrieveTokens(
       authorisationServerId,
       { code },  // The code returned from the bank
@@ -200,6 +199,7 @@ app.get('/retrieve-tokens', async (req, res) => {
     return res.status(500).json({ error: 'Failed to retrieve tokens', details: error.message });
   }
 });
+
 
 
 
