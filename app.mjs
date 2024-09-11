@@ -19,14 +19,13 @@ import getRestrictedItemsRouter from './routes/getRestrictedItems.mjs';
 const app = express();
 const port = 3001;
 
-// CORS configuration
 const storeDomain = process.env.STORE_DOMAIN;
 const endpointDomain = process.env.ENDPOINT_DOMAIN;
 
 // Define allowed origins (both the BigCommerce store and the DigitalOcean app)
 const allowedOrigins = [
-  `https://$(storeDomain)`
-  `https://$(endpointDomain).ondigitalocean.app`
+  `https://${storeDomain}`,  // Corrected template literal syntax
+  `https://${endpointDomain}.ondigitalocean.app`  // Corrected template literal syntax
 ];
 
 // Set up CORS for all routes
