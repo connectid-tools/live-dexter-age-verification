@@ -72,7 +72,7 @@ app.use('/restricted-items', getRestrictedItemsRouter);
 // Token management
 function generateAndStoreToken(cartId) {
   const token = Math.random().toString(36).substring(2);
-  const expiresAt = Date.now() + 60 * 60 * 1000;  // Token expiration set to 1 hour
+  const expiresAt = Date.now() + 3 * 60 * 1000;  // Token expiration set to 1 hour
   tokenStore.set(cartId, { token, expiresAt });
   console.log(`Token for cartId ${cartId} generated. Expires at ${new Date(expiresAt).toISOString()}. Token: ${token}`);
   return token;
