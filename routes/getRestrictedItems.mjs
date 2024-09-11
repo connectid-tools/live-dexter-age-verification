@@ -4,26 +4,17 @@ import { restrictedSKUs, initializeRestrictedSKUs, fetchCartItems } from '../ser
 
 const router = express.Router();
 
-router.get('/', (req, res) => {
-  try {
-    res.status(200).json({ restrictedSKUs: Array.from(restrictedSKUs) });
-  } catch (error) {
-    console.error('Error fetching restricted items:', error.message);
-    res.status(500).json({ error: 'An error occurred while fetching restricted items' });
-  }
-});
-
 router.post('/', async (req, res) => {
-  const { cartId } = req.body;
+  const { cartId, code } = req.body;  // Extract both cartId and code
   const tokenData = tokenStore.get(cartId);
 
-  // Check if the token is valid and has not expired
-  if (tokenData && tokenData.expiresAt > Date.now()) {
-    console.log('Token valid, skipping restricted item checks.');
-    return res.status(200).json({ message: 'User authenticated, restricted items check skipped.' });
+  // Check if a valid token or a code exists, and skip validation if true
+  if ((tokenData && tokenData.expiresAt > Date.now()) || code) {
+    console.log('Token valid or code found, skipping restricted item checks.');
+    return res.status(200).json({ message: 'User authenticated or code provided, restricted items check skipped.' });
   }
 
-  console.log('No valid token, proceeding with restricted item checks.');
+  console.log('No valid token or code, proceeding with restricted item checks.');
 
   try {
     if (!restrictedSKUs || restrictedSKUs.size === 0) {
