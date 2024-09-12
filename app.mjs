@@ -112,7 +112,7 @@ app.post('/select-bank', async (req, res) => {
 
   try {
     console.log(`Processing request to send PAR with authorisationServerId='${authServerId}', essentialClaim='over18', cartId='${cartId}'`);
-    console.log("Claims being sent:", claims);
+    console.log("Claims being sent:", essentialClaims);
 
     // Send the Pushed Authorization Request (PAR) to the authorization server
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
