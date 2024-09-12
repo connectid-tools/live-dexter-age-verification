@@ -120,7 +120,6 @@ app.post('/select-bank', async (req, res) => {
       essentialClaims,
       voluntaryClaims,
       purpose,
-      claims // Pass the claims object
     );
 
     // Define cookie options with necessary attributes for cross-origin requests
