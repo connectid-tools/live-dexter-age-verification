@@ -30,7 +30,7 @@ export const config = {
     registry_participants_uri: 'https://data.directory.sandbox.connectid.com.au/participants',
     include_uncertified_participants: true,
 
-    purpose: 'Verifying you are over 18',
+    purpose: 'Your details will be shared for the purpose of verifying you are over 18 to prevent sale of knives to minors this information is shared with Sheldon and Hammond',
 
     client: {
       client_id: `https://${process.env.CLIENT_ID}`,
@@ -38,7 +38,7 @@ export const config = {
       jwks_uri: process.env.JWKS_URI,
       redirect_uris: [`https://${process.env.STORE_DOMAIN}/checkout`],
       organisation_name: 'Sheldon and Hammond',
-      software_description: 'App to verify age and restrict knives from checkout.',
+      software_description: 'verifying you are over 18 to prevent sale of knives to minors',
       
       application_type: 'web',
       grant_types: ['client_credentials', 'authorization_code', 'implicit'],
