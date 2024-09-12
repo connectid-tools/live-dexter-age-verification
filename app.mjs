@@ -101,7 +101,7 @@ app.post('/select-bank', async (req, res) => {
     return res.status(400).json({ error: 'authorisationServerId and cartId are required' });
   }
 
-  const claims = {
+  const essentialClaims = {
     id_token: {
       over18: { essential: true }  // Requesting 'over18' as an essential claim
     },
