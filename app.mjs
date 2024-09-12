@@ -106,7 +106,7 @@ app.post('/select-bank', async (req, res) => {
       over18: { essential: true }  // Requesting 'over18' as an essential claim
     },
     userinfo: {
-      over18: null  // Voluntary 'over18' claim in the userinfo response
+      over18: { essential: true } // Voluntary 'over18' claim in the userinfo response
     }
   };
 
