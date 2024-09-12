@@ -103,12 +103,10 @@ app.post('/select-bank', async (req, res) => {
 
   const essentialClaims = {
     id_token: {
-      over18: { essential: true }  // Requesting 'over18' as an essential claim
-    },
-    userinfo: {
-      over18: { essential: true } // Voluntary 'over18' claim in the userinfo response
+      over18: { essential: true }  // Requesting 'over18' as an essential claim in the ID token
     }
   };
+  
 
   try {
     console.log(`Processing request to send PAR with authorisationServerId='${authServerId}', essentialClaim='over18', cartId='${cartId}'`);
