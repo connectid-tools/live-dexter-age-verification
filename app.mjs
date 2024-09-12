@@ -189,7 +189,13 @@ app.get('/retrieve-tokens', async (req, res) => {
       const token = generateAndStoreToken(cartId); 
       console.log(`Verification successful for cartId ${cartId}. Token generated: ${token}`);
 
-      return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId });
+      // Call the userinfo endpoint using the access token
+      const accessToken = tokenSet.access_token;
+      const userInfo = await callUserInfoEndpoint(accessToken);
+
+      console.log('UserInfo received:', userInfo);
+
+      return res.json({ claims, token, userInfo, xFapiInteractionId: tokenSet.xFapiInteractionId });
     } else {
       console.log('User verification failed: Age requirement not met');
       return res.status(400).json({ error: 'User verification failed. Age requirement not met.' });
@@ -199,6 +205,33 @@ app.get('/retrieve-tokens', async (req, res) => {
     return res.status(500).json({ error: 'Failed to retrieve tokens', details: error.message });
   }
 });
+
+// Function to call the userinfo endpoint
+async function callUserInfoEndpoint(accessToken) {
+  try {
+    const response = await fetch('https://[your-userinfo-endpoint]', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    // Check if the response is successful
+    if (response.ok) {
+      const userInfo = await response.json();
+      console.log('User Info:', userInfo);
+      return userInfo;
+    } else {
+      console.error('Failed to fetch user info', response.status, response.statusText);
+      throw new Error('Failed to fetch user info');
+    }
+  } catch (error) {
+    console.error('Error calling userinfo endpoint:', error);
+    throw error;
+  }
+}
+
 
 
 
