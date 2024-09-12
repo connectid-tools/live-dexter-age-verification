@@ -91,7 +91,6 @@ function clearExpiredTokens() {
 setInterval(clearExpiredTokens, 5 * 60 * 1000);  // Clear expired tokens every 5 minutes
 
 app.post('/select-bank', async (req, res) => {
-  const essentialClaims = ['over18']; // Only requesting the over18 claim
   const voluntaryClaims = [];
   const purpose = 'Age verification required'; // Default purpose if not provided
   const authServerId = req.body.authorisationServerId;  // Fetching the authorization server ID
@@ -99,36 +98,38 @@ app.post('/select-bank', async (req, res) => {
 
   // Validate that both the authorizationServerId and cartId are provided
   if (!authServerId || !cartId) {
-    // Return a 400 error if the necessary IDs are missing
     return res.status(400).json({ error: 'authorisationServerId and cartId are required' });
   }
 
+  const claims = {
+    id_token: {
+      over18: { essential: true }  // Requesting 'over18' as an essential claim
+    },
+    userinfo: {
+      over18: null  // Voluntary 'over18' claim in the userinfo response
+    }
+  };
+
   try {
-    // Log the beginning of the PAR request process for debugging
     console.log(`Processing request to send PAR with authorisationServerId='${authServerId}', essentialClaim='over18', cartId='${cartId}'`);
-    
-    console.log({
-      authServerId,
-      essentialClaims,
-      voluntaryClaims,
-      purpose
-    });
-    
+    console.log("Claims being sent:", claims);
+
     // Send the Pushed Authorization Request (PAR) to the authorization server
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
       authServerId,
       essentialClaims,
       voluntaryClaims,
-      purpose
+      purpose,
+      claims // Pass the claims object
     );
 
     // Define cookie options with necessary attributes for cross-origin requests
     const cookieOptions = {
-      path: '/',              // Set the path to root so the cookie is available site-wide
-      sameSite: 'None',       // Required for cross-origin requests (i.e., frontend and backend on different domains)
-      secure: true,           // Cookies must be sent over HTTPS
-      httpOnly: true,         // Prevent JavaScript from accessing cookies for security
-      maxAge: 10 * 60 * 1000  // Cookies expire after 10 minutes
+      path: '/',              
+      sameSite: 'None',       
+      secure: true,           
+      httpOnly: true,         
+      maxAge: 10 * 60 * 1000  
     };
 
     // Set cookies for state, nonce, and code_verifier to maintain session integrity
@@ -143,11 +144,11 @@ app.post('/select-bank', async (req, res) => {
     // Return the authorization URL back to the frontend
     return res.json({ authUrl });
   } catch (error) {
-    // Log any error that occurs during the PAR request process
     console.error('Error during PAR request:', error);
     return res.status(500).json({ error: 'Failed to send PAR request', details: error.message });
   }
 });
+
 
 
 
