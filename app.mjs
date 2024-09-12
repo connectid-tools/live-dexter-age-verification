@@ -93,7 +93,6 @@ setInterval(clearExpiredTokens, 5 * 60 * 1000);  // Clear expired tokens every 5
 app.post('/select-bank', async (req, res) => {
   const essentialClaims = ['over18']; // Only requesting the over18 claim
   const voluntaryClaims = [];
-  const purpose = 'Age verification required'; // Default purpose if not provided
   const authServerId = req.body.authorisationServerId;  // Fetching the authorization server ID
   const cartId = req.body.cartId;  // Fetching the cart ID
 
@@ -106,7 +105,14 @@ app.post('/select-bank', async (req, res) => {
   try {
     // Log the beginning of the PAR request process for debugging
     console.log(`Processing request to send PAR with authorisationServerId='${authServerId}', essentialClaim='over18', cartId='${cartId}'`);
-
+    
+    console.log({
+      authServerId,
+      essentialClaims,
+      voluntaryClaims,
+      purpose
+    });
+    
     // Send the Pushed Authorization Request (PAR) to the authorization server
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
       authServerId,
