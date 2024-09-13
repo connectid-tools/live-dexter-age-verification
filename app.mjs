@@ -100,12 +100,17 @@ app.post('/select-bank', async (req, res) => {
     return res.status(400).json({ error: 'authorisationServerId and cartId are required' });
   }
 
-  // Define the essential claims object directly, as per OpenID Connect specification
-  const essentialClaims = {
+  // Original object structure for essential claims
+  const essentialClaimsObject = {
     id_token: {
       over18: { essential: true }  // Requesting 'over18' as an essential claim in the ID token
     }
   };
+
+   // Translate the object into an array of keys where 'essential' is true
+   const essentialClaims = Object.keys(essentialClaimsObject.id_token).map(
+    (claim) => claim  // Get only the claim names (in this case, "over18")
+  );
 
   try {
     console.log(`Processing request to send PAR with authorisationServerId='${authServerId}', essentialClaim='over18', cartId='${cartId}'`);
