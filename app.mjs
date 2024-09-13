@@ -208,11 +208,9 @@ app.get('/retrieve-tokens', async (req, res) => {
     return res.status(500).json({ error: 'Failed to retrieve tokens', details: error.message });
   }
 });
-
 // Middleware to validate the token for restricted access
-app.get('/restricted-resource', (req, res) => {
-  const cartId = req.query.cartId;
-  const token = req.query.token;
+app.post('/restricted-resource', (req, res) => {
+  const { cartId, token } = req.body;  // Get cartId and token from request body
 
   console.log(`Received request for cartId: ${cartId} with token: ${token}`);
 
@@ -232,6 +230,7 @@ app.get('/restricted-resource', (req, res) => {
   console.log(`Token validated successfully for cartId ${cartId}.`);
   res.json({ message: 'Access granted to restricted resource' });
 });
+
 
 // Catch 404 and error handler
 app.use(function(req, res, next) {
