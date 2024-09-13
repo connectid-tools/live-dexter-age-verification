@@ -101,22 +101,22 @@ app.post('/select-bank', async (req, res) => {
     return res.status(400).json({ error: 'authorisationServerId and cartId are required' });
   }
 
-  // Define the essential claims as an object as per OIDC guidelines
-  const essentialClaimsObject = {
-    id_token: {
-      over18: { essential: true },  // Requesting 'over18' as an essential claim in the ID token
-      txn: null // Requesting 'txn' in the default voluntary format (null)
-    }
-  };
+  // // Define the essential claims as an object as per OIDC guidelines
+  // const essentialClaimsObject = {
+  //   id_token: {
+  //     over18: { essential: true },  // Requesting 'over18' as an essential claim in the ID token
+  //     txn: null // Requesting 'txn' in the default voluntary format (null)
+  //   }
+  // };
 
-  const essentialClaimsArray = ['over18', 'txn'];
+  const essentialClaims = ['over18'];
 
   try {
     console.log(`Processing request to send PAR with authorisationServerId='${authServerId}', essentialClaim='over18', cartId='${cartId}'`);
 
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
       authServerId, 
-      essentialClaimsArray,  
+      essentialClaims,  
       [],  
       purpose 
     );
