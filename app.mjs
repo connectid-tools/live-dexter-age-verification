@@ -8,6 +8,8 @@ import cors from 'cors';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from './config.js';
 
+export const tokenStore = new Map(); // Token store to keep track of tokens and their expiration
+
 const rpClient = new RelyingPartyClientSdk(config);
 
 // Import routes
@@ -65,6 +67,30 @@ app.use('/', indexRouter);
 app.use('/validate-cart', validateCartRouter);
 app.use('/restricted-items', getRestrictedItemsRouter);
 
+// Token management
+function generateAndStoreToken(cartId) {
+  const token = Math.random().toString(36).substring(2); // Generate random token
+  const expiresAt = Date.now() + 3 * 60 * 1000;  // Token expiration set to 3 minutes
+  tokenStore.set(cartId, { token, expiresAt });
+  console.log(`Token for cartId ${cartId} generated. Expires at ${new Date(expiresAt).toISOString()}. Token: ${token}`);
+  return token;
+}
+
+// Clear expired tokens from tokenStore
+function clearExpiredTokens() {
+  const now = Date.now();
+  tokenStore.forEach((tokenData, cartId) => {
+    if (tokenData.expiresAt < now) {
+      tokenStore.delete(cartId);
+      console.log(`Expired token for cartId ${cartId} removed.`);
+    }
+  });
+}
+
+// Set up interval to clear expired tokens every 5 minutes
+setInterval(clearExpiredTokens, 5 * 60 * 1000);
+
+// Route: Pushed Authorization Request (PAR) handling
 app.post('/select-bank', async (req, res) => {
   const purpose = 'Age verification required'; // Default purpose
   const authServerId = req.body.authorisationServerId;  // Fetching the authorization server ID
@@ -93,7 +119,7 @@ app.post('/select-bank', async (req, res) => {
     console.log("Essential claims as object:", essentialClaimsObject);
     console.log("Essential claims as iterable (array):", essentialClaimsArray);
 
-    // Send the Pushed Authorization Request (PAR) to the authorization server using the object format
+    // Send the Pushed Authorization Request (PAR) to the authorization server
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
       authServerId, 
       essentialClaimsArray,  // Essential claims as an array
@@ -167,13 +193,14 @@ app.get('/retrieve-tokens', async (req, res) => {
 
     // Check if the user meets the required claim (e.g., 'over18')
     if (claims.over18 && claims.over18 === true) {
-      console.log(`Verification successful for cartId ${cartId}`);
+      const token = generateAndStoreToken(cartId);  // Server-side token generation and storage
+      console.log(`Verification successful for cartId ${cartId}. Token generated: ${token}`);
 
       // Now call the userinfo endpoint using the access token
       const userInfo = await rpClient.getUserInfo(authorisationServerId, tokenSet.access_token);
       console.log('UserInfo received:', userInfo);
 
-      return res.json({ claims, userInfo, xFapiInteractionId: tokenSet.xFapiInteractionId });
+      return res.json({ claims, token, userInfo, xFapiInteractionId: tokenSet.xFapiInteractionId });
     } else {
       return res.status(400).json({ error: 'User verification failed. Age requirement not met.' });
     }
