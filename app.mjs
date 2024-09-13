@@ -91,7 +91,7 @@ function clearExpiredTokens() {
 setInterval(clearExpiredTokens, 5 * 60 * 1000);  // Clear expired tokens every 5 minutes
 
 app.post('/select-bank', async (req, res) => {
-  const purpose = 'Age verification required';  // Default purpose
+  const purpose = 'Age verification required'; // Default purpose
   const authServerId = req.body.authorisationServerId;  // Fetching the authorization server ID
   const cartId = req.body.cartId;  // Fetching the cart ID
 
@@ -100,15 +100,16 @@ app.post('/select-bank', async (req, res) => {
     return res.status(400).json({ error: 'authorisationServerId and cartId are required' });
   }
 
-  // Ensure essential claims are correctly structured
+  // Define the essential claims as an object as per OIDC guidelines
   const essentialClaimsObject = {
     id_token: {
-      over18: { essential: true }  // Correctly structured claim for over18
+      over18: { essential: true },  // Requesting 'over18' as an essential claim in the ID token
+      txn: null // Requesting 'txn' in the default voluntary format (null)
     }
   };
 
-  // Convert essential claims to an array for the SDK
-  const essentialClaimsArray = Object.keys(essentialClaimsObject.id_token);
+  // Convert the essentialClaimsObject into an array format for compatibility
+  const essentialClaimsArray = ['over18', 'txn'];
 
   try {
     console.log(`Processing request to send PAR with authorisationServerId='${authServerId}', essentialClaim='over18', cartId='${cartId}'`);
@@ -117,12 +118,12 @@ app.post('/select-bank', async (req, res) => {
     console.log("Essential claims as object:", essentialClaimsObject);
     console.log("Essential claims as iterable (array):", essentialClaimsArray);
 
-    // Send the Pushed Authorization Request (PAR) to the authorization server
+    // Send the Pushed Authorization Request (PAR) to the authorization server using the object format
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
-      authServerId,
-      essentialClaimsArray,  // Essential claims array (correct format)
-      [],                    // Voluntary claims (empty array here)
-      purpose                // Purpose of the request
+      authServerId, 
+      essentialClaimsArray,  // Essential claims as an array
+      [],  // No voluntary claims in this case
+      purpose           // Purpose of the request
     );
 
     // Define cookie options with necessary attributes for cross-origin requests
@@ -131,7 +132,7 @@ app.post('/select-bank', async (req, res) => {
       sameSite: 'None',       
       secure: true,           
       httpOnly: true,         
-      maxAge: 10 * 60 * 1000  // 10 minutes
+      maxAge: 10 * 60 * 1000  // 10 minutes for token validity
     };
 
     // Set cookies for state, nonce, and code_verifier to maintain session integrity
@@ -150,6 +151,7 @@ app.post('/select-bank', async (req, res) => {
     return res.status(500).json({ error: 'Failed to send PAR request', details: error.message });
   }
 });
+
 
 
 
