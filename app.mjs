@@ -7,7 +7,6 @@ import logger from 'morgan';
 import cors from 'cors';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from './config.js';
-
 export const tokenStore = new Map(); // Token store to keep track of tokens and their expiration
 
 const rpClient = new RelyingPartyClientSdk(config);
@@ -88,7 +87,7 @@ function clearExpiredTokens() {
 }
 
 // Set up interval to clear expired tokens every 5 minutes
-setInterval(clearExpiredTokens, 5 * 60 * 1000);
+setInterval(clearExpiredTokens, 5 * 60 * 1000);  // Clear expired tokens every 5 minutes
 
 // Route: Pushed Authorization Request (PAR) handling
 app.post('/select-bank', async (req, res) => {
@@ -208,6 +207,21 @@ app.get('/retrieve-tokens', async (req, res) => {
     console.error('Error retrieving tokens:', error);
     return res.status(500).json({ error: 'Failed to retrieve tokens', details: error.message });
   }
+});
+
+// Middleware to validate the token for restricted access
+app.get('/restricted-resource', (req, res) => {
+  const cartId = req.query.cartId;
+  const token = req.query.token; // Assuming token is passed in query parameters
+
+  // Check if token exists in tokenStore and is valid
+  const tokenData = tokenStore.get(cartId);
+  if (!tokenData || tokenData.token !== token) {
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+
+  // Token is valid, proceed to restricted resource
+  res.json({ message: 'Access granted to restricted resource' });
 });
 
 // Catch 404 and error handler
