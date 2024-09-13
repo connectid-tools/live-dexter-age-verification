@@ -132,7 +132,7 @@ app.post('/select-bank', async (req, res) => {
       sameSite: 'None',       
       secure: true,           
       httpOnly: true,         
-      maxAge: 10 * 60 * 1000  // 10 minutes for token validity
+      maxAge: 3 * 60 * 1000  // 10 minutes for token validity
     };
 
     // Set cookies for state, nonce, and code_verifier to maintain session integrity
