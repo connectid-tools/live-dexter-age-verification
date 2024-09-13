@@ -91,38 +91,40 @@ function clearExpiredTokens() {
 setInterval(clearExpiredTokens, 5 * 60 * 1000);  // Clear expired tokens every 5 minutes
 
 app.post('/select-bank', async (req, res) => {
-  const voluntaryClaims = [];
-  const purpose = 'Age verification required'; // Default purpose
-  const authServerId = req.body.authorisationServerId; // Fetch the authorization server ID
-  const cartId = req.body.cartId;  // Fetch the cart ID
+  const purpose = 'Age verification required';
+  const authServerId = req.body.authorisationServerId;
+  const cartId = req.body.cartId;
 
+  // Validate that both the authorizationServerId and cartId are provided
   if (!authServerId || !cartId) {
     return res.status(400).json({ error: 'authorisationServerId and cartId are required' });
   }
 
-  // Correct claims object
+  // Define the essential claims properly as an object
   const essentialClaims = {
     id_token: {
-      over18: { essential: true }  // Requesting 'over18' as essential
+      over18: { essential: true }  // Requesting 'over18' as an essential claim
     }
   };
 
   try {
-    // Send the PAR request
+    console.log(`Processing request to send PAR with authorisationServerId='${authServerId}', essentialClaim='over18', cartId='${cartId}'`);
+    console.log("Claims being sent:", essentialClaims);
+
+    // Send the Pushed Authorization Request (PAR) to the authorization server
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
       authServerId,
-      essentialClaims, // Pass the claims object
-      voluntaryClaims,
+      essentialClaims,  // Properly formatted claims as an object
+      [],  // No voluntary claims
       purpose
     );
 
-    // Set cookies and handle response
     const cookieOptions = {
-      path: '/',
-      sameSite: 'None',
-      secure: true,
-      httpOnly: true,
-      maxAge: 10 * 60 * 1000  // 10 minutes
+      path: '/',              
+      sameSite: 'None',       
+      secure: true,           
+      httpOnly: true,         
+      maxAge: 10 * 60 * 1000  
     };
 
     res.cookie('state', state, cookieOptions);
@@ -136,7 +138,6 @@ app.post('/select-bank', async (req, res) => {
     return res.status(500).json({ error: 'Failed to send PAR request', details: error.message });
   }
 });
-console.log('Claims being sent to PAR request:', essentialClaims);
 
 
 
