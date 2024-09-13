@@ -91,64 +91,53 @@ function clearExpiredTokens() {
 setInterval(clearExpiredTokens, 5 * 60 * 1000);  // Clear expired tokens every 5 minutes
 
 app.post('/select-bank', async (req, res) => {
-  const purpose = 'Age verification required'; // Default purpose if not provided
-  const authServerId = req.body.authorisationServerId;  // Fetching the authorization server ID
-  const cartId = req.body.cartId;  // Fetching the cart ID
+  const voluntaryClaims = [];
+  const purpose = 'Age verification required'; // Default purpose
+  const authServerId = req.body.authorisationServerId; // Fetch the authorization server ID
+  const cartId = req.body.cartId;  // Fetch the cart ID
 
-  // Validate that both the authorizationServerId and cartId are provided
   if (!authServerId || !cartId) {
     return res.status(400).json({ error: 'authorisationServerId and cartId are required' });
   }
 
-  // Original object structure for essential claims
-  const essentialClaimsObject = {
+  // Correct claims object
+  const essentialClaims = {
     id_token: {
-      over18: { essential: true }  // Requesting 'over18' as an essential claim in the ID token
+      over18: { essential: true }  // Requesting 'over18' as essential
     }
   };
 
-   // Translate the object into an array of keys where 'essential' is true
-   const essentialClaims = Object.keys(essentialClaimsObject.id_token).map(
-    (claim) => claim  // Get only the claim names (in this case, "over18")
-  );
-
   try {
-    console.log(`Processing request to send PAR with authorisationServerId='${authServerId}', essentialClaim='over18', cartId='${cartId}'`);
-    console.log("Claims being sent:", essentialClaims);
-
-    // Send the Pushed Authorization Request (PAR) to the authorization server
+    // Send the PAR request
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
       authServerId,
-      essentialClaims,  // Send the claims object directly
-      [],  // No voluntary claims in this case
+      essentialClaims, // Pass the claims object
+      voluntaryClaims,
       purpose
     );
 
-    // Define cookie options with necessary attributes for cross-origin requests
+    // Set cookies and handle response
     const cookieOptions = {
-      path: '/',              
-      sameSite: 'None',       
-      secure: true,           
-      httpOnly: true,         
-      maxAge: 10 * 60 * 1000  
+      path: '/',
+      sameSite: 'None',
+      secure: true,
+      httpOnly: true,
+      maxAge: 10 * 60 * 1000  // 10 minutes
     };
 
-    // Set cookies for state, nonce, and code_verifier to maintain session integrity
     res.cookie('state', state, cookieOptions);
     res.cookie('nonce', nonce, cookieOptions);
     res.cookie('code_verifier', code_verifier, cookieOptions);
     res.cookie('authorisation_server_id', authServerId, cookieOptions);
 
-    // Log successful sending of the PAR request and returning the authorization URL
-    console.log(`PAR sent to authorisationServerId='${authServerId}', returning authUrl='${authUrl}'`);
-
-    // Return the authorization URL back to the frontend
     return res.json({ authUrl });
   } catch (error) {
     console.error('Error during PAR request:', error);
     return res.status(500).json({ error: 'Failed to send PAR request', details: error.message });
   }
 });
+console.log('Claims being sent to PAR request:', essentialClaims);
+
 
 
 
