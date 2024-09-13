@@ -7,6 +7,8 @@ import logger from 'morgan';
 import cors from 'cors';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from './config.js';
+import createError from 'http-errors';  // Import createError
+
 export const tokenStore = new Map(); // Token store to keep track of tokens and their expiration
 
 const rpClient = new RelyingPartyClientSdk(config);
@@ -85,7 +87,6 @@ function clearExpiredTokens() {
   });
 }
 
-
 // Set up interval to clear expired tokens every 5 minutes
 setInterval(clearExpiredTokens, 5 * 60 * 1000);  // Clear expired tokens every 5 minutes
 
@@ -108,43 +109,33 @@ app.post('/select-bank', async (req, res) => {
     }
   };
 
-  // Convert the essentialClaimsObject into an array format for compatibility
   const essentialClaimsArray = ['over18', 'txn'];
 
   try {
     console.log(`Processing request to send PAR with authorisationServerId='${authServerId}', essentialClaim='over18', cartId='${cartId}'`);
 
-    // Log both the object and iterable versions
-    console.log("Essential claims as object:", essentialClaimsObject);
-    console.log("Essential claims as iterable (array):", essentialClaimsArray);
-
-    // Send the Pushed Authorization Request (PAR) to the authorization server
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
       authServerId, 
-      essentialClaimsArray,  // Essential claims as an array
-      [],  // No voluntary claims in this case
-      purpose           // Purpose of the request
+      essentialClaimsArray,  
+      [],  
+      purpose 
     );
 
-    // Define cookie options with necessary attributes for cross-origin requests
     const cookieOptions = {
       path: '/',              
       sameSite: 'None',       
       secure: true,           
       httpOnly: true,         
-      maxAge: 3 * 60 * 1000  // 3 minutes for token validity
+      maxAge: 3 * 60 * 1000  
     };
 
-    // Set cookies for state, nonce, and code_verifier to maintain session integrity
     res.cookie('state', state, cookieOptions);
     res.cookie('nonce', nonce, cookieOptions);
     res.cookie('code_verifier', code_verifier, cookieOptions);
     res.cookie('authorisation_server_id', authServerId, cookieOptions);
 
-    // Log successful sending of the PAR request and returning the authorization URL
     console.log(`PAR sent to authorisationServerId='${authServerId}', returning authUrl='${authUrl}'`);
 
-    // Return the authorization URL back to the frontend
     return res.json({ authUrl });
   } catch (error) {
     console.error('Error during PAR request:', error);
@@ -152,7 +143,6 @@ app.post('/select-bank', async (req, res) => {
   }
 });
 
-// Adding route for retrieving tokens and calling `userinfo`
 app.get('/retrieve-tokens', async (req, res) => {
   const cartId = req.query.cartId;
   const code = req.query.code;
@@ -190,12 +180,10 @@ app.get('/retrieve-tokens', async (req, res) => {
     const claims = tokenSet.claims();
     console.log('Claims extracted:', claims);
 
-    // Check if the user meets the required claim (e.g., 'over18')
     if (claims.over18 && claims.over18 === true) {
-      const token = generateAndStoreToken(cartId);  // Server-side token generation and storage
+      const token = generateAndStoreToken(cartId);  
       console.log(`Verification successful for cartId ${cartId}. Token generated: ${token}`);
 
-      // Now call the userinfo endpoint using the access token
       const userInfo = await rpClient.getUserInfo(authorisationServerId, tokenSet.access_token);
       console.log('UserInfo received:', userInfo);
 
@@ -208,13 +196,12 @@ app.get('/retrieve-tokens', async (req, res) => {
     return res.status(500).json({ error: 'Failed to retrieve tokens', details: error.message });
   }
 });
-// Middleware to validate the token for restricted access
+
 app.post('/restricted-resource', (req, res) => {
-  const { cartId, token } = req.body;  // Get cartId and token from request body
+  const { cartId, token } = req.body;
 
   console.log(`Received request for cartId: ${cartId} with token: ${token}`);
 
-  // Check if token exists in tokenStore and is valid
   const tokenData = tokenStore.get(cartId);
   if (!tokenData) {
       console.error(`No token found for cartId: ${cartId}`);
@@ -226,20 +213,19 @@ app.post('/restricted-resource', (req, res) => {
       return res.status(401).json({ error: 'Invalid or expired token' });
   }
 
-  // Token is valid
   console.log(`Token validated successfully for cartId ${cartId}.`);
   res.json({ message: 'Access granted to restricted resource' });
 });
 
-
 // Catch 404 and error handler
 app.use(function(req, res, next) {
-  next(createError(404));
+  next(createError(404)); // Using createError here
 });
 
 app.use(function(err, req, res, next) {
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
+
   res.status(err.status || 500).json({ error: err.message });
 });
 
