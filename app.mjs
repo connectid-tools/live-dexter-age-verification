@@ -100,31 +100,35 @@ app.post('/select-bank', async (req, res) => {
     return res.status(400).json({ error: 'authorisationServerId and cartId are required' });
   }
 
-  // Define the essential claims as an object
-  const essentialClaims = {
+  // Define essential claims as an object (for OpenID compliance)
+  const essentialClaimsObject = {
     id_token: {
       over18: { essential: true }  // Requesting 'over18' as an essential claim in the ID token
     }
   };
 
-  // Convert the essential claims into an iterable format for logging/validation purposes
-  const essentialClaimsArray = Object.keys(essentialClaims.id_token).map(claim => ({
-    [claim]: essentialClaims.id_token[claim]
+  // Convert essential claims object into an array (for SDK requirements)
+  const essentialClaimsArray = Object.keys(essentialClaimsObject.id_token).map((key) => ({
+    claim: key,
+    ...essentialClaimsObject.id_token[key]
   }));
+
+  // Empty array for voluntary claims if none are present
+  const voluntaryClaims = [];
 
   try {
     console.log(`Processing request to send PAR with authorisationServerId='${authServerId}', essentialClaim='over18', cartId='${cartId}'`);
-    
+
     // Log both the object and iterable versions
-    console.log("Essential claims as object:", essentialClaims);
+    console.log("Essential claims as object:", essentialClaimsObject);
     console.log("Essential claims as iterable (array):", essentialClaimsArray);
 
-    // Send the Pushed Authorization Request (PAR) to the authorization server using the object format
+    // Send the Pushed Authorization Request (PAR) to the authorization server using the array format
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
-      authServerId,
-      essentialClaims,  // Use the object form here, as expected by the SDK
-      {},  // Pass an empty object for voluntary claims
-      purpose
+      authServerId, 
+      essentialClaimsArray,  // Essential claims as an array (SDK may require this)
+      voluntaryClaims,       // Voluntary claims (empty array)
+      purpose                // Purpose of the request
     );
 
     // Define cookie options with necessary attributes for cross-origin requests
@@ -152,6 +156,7 @@ app.post('/select-bank', async (req, res) => {
     return res.status(500).json({ error: 'Failed to send PAR request', details: error.message });
   }
 });
+
 
 
 
