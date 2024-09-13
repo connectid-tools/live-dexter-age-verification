@@ -75,16 +75,16 @@ function generateAndStoreToken(cartId) {
   return token;
 }
 
-// Clear expired tokens from tokenStore
 function clearExpiredTokens() {
   const now = Date.now();
   tokenStore.forEach((tokenData, cartId) => {
-    if (tokenData.expiresAt < now) {
-      tokenStore.delete(cartId);
-      console.log(`Expired token for cartId ${cartId} removed.`);
-    }
+      if (tokenData.expiresAt < now) {
+          console.log(`Removing expired token for cartId ${cartId}, token expired at ${new Date(tokenData.expiresAt).toISOString()}`);
+          tokenStore.delete(cartId);
+      }
   });
 }
+
 
 // Set up interval to clear expired tokens every 5 minutes
 setInterval(clearExpiredTokens, 5 * 60 * 1000);  // Clear expired tokens every 5 minutes
@@ -212,15 +212,24 @@ app.get('/retrieve-tokens', async (req, res) => {
 // Middleware to validate the token for restricted access
 app.get('/restricted-resource', (req, res) => {
   const cartId = req.query.cartId;
-  const token = req.query.token; // Assuming token is passed in query parameters
+  const token = req.query.token;
+
+  console.log(`Received request for cartId: ${cartId} with token: ${token}`);
 
   // Check if token exists in tokenStore and is valid
   const tokenData = tokenStore.get(cartId);
-  if (!tokenData || tokenData.token !== token) {
-    return res.status(401).json({ error: 'Invalid or expired token' });
+  if (!tokenData) {
+      console.error(`No token found for cartId: ${cartId}`);
+      return res.status(401).json({ error: 'Invalid or expired token' });
   }
 
-  // Token is valid, proceed to restricted resource
+  if (tokenData.token !== token) {
+      console.error(`Token mismatch for cartId ${cartId}: received token=${token}, stored token=${tokenData.token}`);
+      return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+
+  // Token is valid
+  console.log(`Token validated successfully for cartId ${cartId}.`);
   res.json({ message: 'Access granted to restricted resource' });
 });
 
