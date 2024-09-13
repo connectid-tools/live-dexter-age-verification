@@ -7,7 +7,6 @@ import logger from 'morgan';
 import cors from 'cors';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from './config.js';
-export const tokenStore = new Map(); // Token store to keep track of tokens and their expiration
 
 const rpClient = new RelyingPartyClientSdk(config);
 
@@ -23,7 +22,7 @@ const endpointDomain = process.env.ENDPOINT_DOMAIN;
 
 // Define allowed origins (both the BigCommerce store and the DigitalOcean app)
 const allowedOrigins = [
-`https://${storeDomain}`,  // BigCommerce Store Domain
+  `https://${storeDomain}`,  // BigCommerce Store Domain
   `https://${endpointDomain}.ondigitalocean.app`
 ];
 
@@ -56,9 +55,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Other route and middleware configurations below
-
-
 // Middleware setup
 app.use(logger('dev'));
 app.use(express.json());
@@ -68,27 +64,6 @@ app.use(express.static(path.join(path.resolve(), 'public')));
 app.use('/', indexRouter);
 app.use('/validate-cart', validateCartRouter);
 app.use('/restricted-items', getRestrictedItemsRouter);
-
-// Token management
-function generateAndStoreToken(cartId) {
-  const token = Math.random().toString(36).substring(2);
-  const expiresAt = Date.now() + 3 * 60 * 1000;  // Token expiration set to 1 hour
-  tokenStore.set(cartId, { token, expiresAt });
-  console.log(`Token for cartId ${cartId} generated. Expires at ${new Date(expiresAt).toISOString()}. Token: ${token}`);
-  return token;
-}
-
-function clearExpiredTokens() {
-  const now = Date.now();
-  tokenStore.forEach((tokenData, cartId) => {
-    if (tokenData.expiresAt < now) {
-      tokenStore.delete(cartId);
-      console.log(`Expired token for cartId ${cartId} removed.`);
-    }
-  });
-}
-
-setInterval(clearExpiredTokens, 5 * 60 * 1000);  // Clear expired tokens every 5 minutes
 
 app.post('/select-bank', async (req, res) => {
   const purpose = 'Age verification required'; // Default purpose
@@ -113,7 +88,7 @@ app.post('/select-bank', async (req, res) => {
 
   try {
     console.log(`Processing request to send PAR with authorisationServerId='${authServerId}', essentialClaim='over18', cartId='${cartId}'`);
-    
+
     // Log both the object and iterable versions
     console.log("Essential claims as object:", essentialClaimsObject);
     console.log("Essential claims as iterable (array):", essentialClaimsArray);
@@ -132,7 +107,7 @@ app.post('/select-bank', async (req, res) => {
       sameSite: 'None',       
       secure: true,           
       httpOnly: true,         
-      maxAge: 3 * 60 * 1000  // 10 minutes for token validity
+      maxAge: 3 * 60 * 1000  // 3 minutes for token validity
     };
 
     // Set cookies for state, nonce, and code_verifier to maintain session integrity
@@ -152,22 +127,13 @@ app.post('/select-bank', async (req, res) => {
   }
 });
 
-
-
-
-
-
-
-
-
-
 // Adding route for retrieving tokens and calling `userinfo`
 app.get('/retrieve-tokens', async (req, res) => {
   const cartId = req.query.cartId;
   const code = req.query.code;
 
   if (!code || !cartId) {
-      return res.status(400).json({ error: 'Code parameter and cartId are required' });
+    return res.status(400).json({ error: 'Code parameter and cartId are required' });
   }
 
   const authorisationServerId = req.cookies.authorisation_server_id;
@@ -176,49 +142,46 @@ app.get('/retrieve-tokens', async (req, res) => {
   const nonce = req.cookies.nonce;
 
   if (!authorisationServerId || !codeVerifier || !state || !nonce) {
-      console.error('Missing one or more required cookies:', {
-          authorisationServerId,
-          codeVerifier,
-          state,
-          nonce
-      });
-      return res.status(400).json({ error: 'Missing required cookies for token exchange.' });
+    console.error('Missing one or more required cookies:', {
+      authorisationServerId,
+      codeVerifier,
+      state,
+      nonce
+    });
+    return res.status(400).json({ error: 'Missing required cookies for token exchange.' });
   }
 
   try {
-      const tokenSet = await rpClient.retrieveTokens(
-          authorisationServerId,
-          { code },
-          codeVerifier,
-          state,
-          nonce
-      );
+    const tokenSet = await rpClient.retrieveTokens(
+      authorisationServerId,
+      { code },
+      codeVerifier,
+      state,
+      nonce
+    );
 
-      console.log('TokenSet received:', tokenSet);
+    console.log('TokenSet received:', tokenSet);
 
-      const claims = tokenSet.claims();
-      console.log('Claims extracted:', claims);
+    const claims = tokenSet.claims();
+    console.log('Claims extracted:', claims);
 
-      // Check if the user meets the required claim (e.g., 'over18')
-      if (claims.over18 && claims.over18 === true) {
-          const token = generateAndStoreToken(cartId);
-          console.log(`Verification successful for cartId ${cartId}. Token generated: ${token}`);
+    // Check if the user meets the required claim (e.g., 'over18')
+    if (claims.over18 && claims.over18 === true) {
+      console.log(`Verification successful for cartId ${cartId}`);
 
-          // Now call the userinfo endpoint using the access token
-          const userInfo = await rpClient.getUserInfo(authorisationServerId, tokenSet.access_token);
-          console.log('UserInfo received:', userInfo);
+      // Now call the userinfo endpoint using the access token
+      const userInfo = await rpClient.getUserInfo(authorisationServerId, tokenSet.access_token);
+      console.log('UserInfo received:', userInfo);
 
-          return res.json({ claims, token, userInfo, xFapiInteractionId: tokenSet.xFapiInteractionId });
-      } else {
-          return res.status(400).json({ error: 'User verification failed. Age requirement not met.' });
-      }
+      return res.json({ claims, userInfo, xFapiInteractionId: tokenSet.xFapiInteractionId });
+    } else {
+      return res.status(400).json({ error: 'User verification failed. Age requirement not met.' });
+    }
   } catch (error) {
-      console.error('Error retrieving tokens:', error);
-      return res.status(500).json({ error: 'Failed to retrieve tokens', details: error.message });
+    console.error('Error retrieving tokens:', error);
+    return res.status(500).json({ error: 'Failed to retrieve tokens', details: error.message });
   }
 });
-
-
 
 // Catch 404 and error handler
 app.use(function(req, res, next) {
