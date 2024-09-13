@@ -91,7 +91,6 @@ function clearExpiredTokens() {
 setInterval(clearExpiredTokens, 5 * 60 * 1000);  // Clear expired tokens every 5 minutes
 
 app.post('/select-bank', async (req, res) => {
-  const voluntaryClaims = [];
   const purpose = 'Age verification required'; // Default purpose if not provided
   const authServerId = req.body.authorisationServerId;  // Fetching the authorization server ID
   const cartId = req.body.cartId;  // Fetching the cart ID
@@ -101,17 +100,12 @@ app.post('/select-bank', async (req, res) => {
     return res.status(400).json({ error: 'authorisationServerId and cartId are required' });
   }
 
- // Original object structure for essential claims
- const essentialClaimsObject = {
-  id_token: {
-    over18: { essential: true }  // Requesting 'over18' as an essential claim in the ID token
-  }
-};
-
-// Translate the object into an array of keys where 'essential' is true
-const essentialClaims = Object.keys(essentialClaimsObject.id_token).filter(
-  (claim) => essentialClaimsObject.id_token[claim].essential
-);
+  // Define the essential claims object directly, as per OpenID Connect specification
+  const essentialClaims = {
+    id_token: {
+      over18: { essential: true }  // Requesting 'over18' as an essential claim in the ID token
+    }
+  };
 
   try {
     console.log(`Processing request to send PAR with authorisationServerId='${authServerId}', essentialClaim='over18', cartId='${cartId}'`);
@@ -120,9 +114,9 @@ const essentialClaims = Object.keys(essentialClaimsObject.id_token).filter(
     // Send the Pushed Authorization Request (PAR) to the authorization server
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
       authServerId,
-      essentialClaims,
-      voluntaryClaims,
-      purpose,
+      essentialClaims,  // Send the claims object directly
+      [],  // No voluntary claims in this case
+      purpose
     );
 
     // Define cookie options with necessary attributes for cross-origin requests
@@ -150,6 +144,7 @@ const essentialClaims = Object.keys(essentialClaimsObject.id_token).filter(
     return res.status(500).json({ error: 'Failed to send PAR request', details: error.message });
   }
 });
+
 
 
 
