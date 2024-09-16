@@ -6,25 +6,31 @@ const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
 router.post('/select-bank', async (req, res) => {
-  const essentialClaims = {
-    "auth_time": { "essential": true },
-    "over18": { "essential": true }
-  };
+  // Fetch essential and voluntary claims from request body
+  const essentialClaims = [
+    { "claim": "auth_time", "essential": true },
+    { "claim": "over18", "essential": true }
+  ];
   const voluntaryClaims = req.body.voluntaryClaims || [];
   const purpose = req.body.purpose || 'Age verification required'; // Default purpose
   const authServerId = req.body.authorisationServerId;
   const cartId = req.body.cartId;
 
+  // Validate that both the authorizationServerId and cartId are provided
   if (!authServerId || !cartId) {
     const error = 'authorisationServerId and cartId are required';
     console.error(error);
     return res.status(400).json({ error });
   }
+  // Log essential and voluntary claims
+  console.log(`Essential Claims: ${JSON.stringify(essentialClaims)}`);
+  console.log(`Voluntary Claims: ${JSON.stringify(voluntaryClaims)}`);
 
   try {
+    // Send the pushed authorization request with the claims
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
       authServerId,
-      essentialClaims,  // Pass the claims as an object
+      essentialClaims,  // Use the essential claims as an array
       voluntaryClaims,  // Pass voluntary claims
       purpose
     );
