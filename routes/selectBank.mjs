@@ -5,18 +5,21 @@ import { config } from '../config.js';
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
-// Define a list of valid claims for id_token
-const validIdTokenClaims = [
+// Define a list of valid essential claims for id_token
+const essentialClaimsList = [
   'auth_time',
-  'over18',
   'given_name',
-  'middle_name',
   'family_name',
   'phone_number',
   'email',
   'address',
   'birthdate',
   'txn'
+];
+
+// Define voluntary claims (including over18)
+const voluntaryClaimsList = [
+  'over18'
 ];
 
 // Helper function to validate and extract claims
@@ -32,23 +35,11 @@ const extractValidClaims = (claims, allowedClaims) => {
 };
 
 router.post('/select-bank', async (req, res) => {
-  // Essential claims as objects
-  const essentialClaimsObjects = {
-    "auth_time": { "essential": true },
-    "over18": { "essential": true }
-  };
+  // Essential claims
+  const essentialClaims = essentialClaimsList;  // List of essential claims from the spec
 
-  // Convert essential claims to an array of strings
-  const essentialClaimsArray = Object.keys(essentialClaimsObjects); // Array of strings: ['auth_time', 'over18']
-
-  // Debugging: Log essentialClaimsArray to ensure it's correctly formatted
-  console.log(`Essential Claims Array: ${JSON.stringify(essentialClaimsArray)}`);
-
-  // Extract and validate voluntary claims from request body
-  const voluntaryClaims = extractValidClaims(req.body.voluntaryClaims || [], validIdTokenClaims);
-
-  // Log claims request for debugging
-  console.log(`Voluntary Claims: ${JSON.stringify(voluntaryClaims)}`);
+  // Extract and validate voluntary claims (over18)
+  const voluntaryClaims = extractValidClaims(req.body.voluntaryClaims || voluntaryClaimsList, voluntaryClaimsList);
 
   const purpose = req.body.purpose || 'Age verification required';
   const authServerId = req.body.authorisationServerId;
@@ -64,8 +55,8 @@ router.post('/select-bank', async (req, res) => {
     // Send the pushed authorization request with the essential and voluntary claims
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
       authServerId,
-      essentialClaimsArray,  // Pass array of essential claims (strings)
-      voluntaryClaims,       // Pass array of voluntary claims (strings)
+      essentialClaims,  // Pass array of essential claims (strings)
+      voluntaryClaims,   // Pass array of voluntary claims (strings)
       purpose
     );
 
