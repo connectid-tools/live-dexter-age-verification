@@ -1,6 +1,6 @@
 import express from 'express';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
-import jwtDecode from 'jwt-decode';
+import { decode as jwtDecode } from 'jwt-decode';  // Import the named export "decode" and alias it to jwtDecode
 import { config } from '../config.js';
 
 const router = express.Router();
