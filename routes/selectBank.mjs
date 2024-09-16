@@ -18,13 +18,9 @@ router.post('/select-bank', async (req, res) => {
   // Define the essential claims for the ID Token
   const essentialClaims = {
     "id_token": {
-      "iss": { "essential": true },  // Issuer Identifier
-      "sub": { "essential": true },  // Subject Identifier
-      "aud": { "essential": true },  // Audience
       "exp": { "essential": true },  // Expiration time
       "iat": { "essential": true },  // Issued at time
       "auth_time": { "essential": true },  // Authentication time
-      "nonce": { "essential": true }  // Nonce
     }
   };
 
