@@ -1,5 +1,9 @@
 import express from 'express';
+import { config } from '../config.js';
+import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
+
 const router = express.Router();
+const rpClient = new RelyingPartyClientSdk(config);
 
 router.post('/select-bank', async (req, res) => {
   const purpose = 'Age verification required'; // Default purpose

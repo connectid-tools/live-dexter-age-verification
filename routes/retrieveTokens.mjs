@@ -1,5 +1,10 @@
 import express from 'express';
+import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
+import { config } from '../config.js';
+
 const router = express.Router();
+const rpClient = new RelyingPartyClientSdk(config);
+
 
 router.get('/retrieve-tokens', async (req, res) => {
   const cartId = req.query.cartId;
