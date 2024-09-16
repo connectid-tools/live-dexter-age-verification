@@ -11,11 +11,13 @@ router.post('/token-expiry', (req, res) => {
   const tokenData = tokenStore.get(cartId);
   if (!tokenData) {
     console.error(`No token found for cartId: ${cartId}`);
+    console.log(`Current tokenStore contents: ${JSON.stringify([...tokenStore.entries()])}`);
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
 
   // Check if the token has expired
   const currentTime = Date.now();
+  console.log(`Current time: ${currentTime}, Token expiry time: ${tokenData.expiresAt}`);
   if (currentTime > tokenData.expiresAt) {
     console.error(`Token for cartId ${cartId} has expired.`);
     tokenStore.delete(cartId);  // Optionally remove expired token
@@ -23,6 +25,7 @@ router.post('/token-expiry', (req, res) => {
   }
 
   // Check if the token matches
+  console.log(`Received token: ${token}, Stored token: ${tokenData.token}`);
   if (tokenData.token !== token) {
     console.error(`Token mismatch for cartId ${cartId}: received token=${token}, stored token=${tokenData.token}`);
     return res.status(401).json({ error: 'Invalid or expired token' });
@@ -42,11 +45,13 @@ router.get('/token-expiry', (req, res) => {
   const tokenData = tokenStore.get(cartId);
   if (!tokenData) {
     console.error(`No token found for cartId: ${cartId}`);
+    console.log(`Current tokenStore contents: ${JSON.stringify([...tokenStore.entries()])}`);
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
 
   // Check if the token has expired
   const currentTime = Date.now();
+  console.log(`Current time: ${currentTime}, Token expiry time: ${tokenData.expiresAt}`);
   if (currentTime > tokenData.expiresAt) {
     console.error(`Token for cartId ${cartId} has expired.`);
     tokenStore.delete(cartId);  // Optionally remove expired token
@@ -54,6 +59,7 @@ router.get('/token-expiry', (req, res) => {
   }
 
   // Check if the token matches
+  console.log(`Received token: ${token}, Stored token: ${tokenData.token}`);
   if (tokenData.token !== token) {
     console.error(`Token mismatch for cartId ${cartId}: received token=${token}, stored token=${tokenData.token}`);
     return res.status(401).json({ error: 'Invalid or expired token' });
