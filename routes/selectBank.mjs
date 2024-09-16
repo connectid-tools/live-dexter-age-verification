@@ -22,26 +22,44 @@ const validClaims = [
 // Helper function to validate and extract claims
 const extractValidClaims = (claims) => {
   return claims
-    .map(claim => typeof claim === 'string' ? claim : claim.claim)
-    .filter(claim => validClaims.includes(claim) && typeof claim === 'string' && claim.trim() !== '');
+    .map(claim => {
+      if (typeof claim === 'string') {
+        return { claim: claim, essential: false };
+      } else if (typeof claim === 'object' && claim.claim) {
+        return { claim: claim.claim, essential: claim.essential || false };
+      }
+      return null;
+    })
+    .filter(claim => claim && validClaims.includes(claim.claim) && typeof claim.claim === 'string' && claim.claim.trim() !== '');
 };
 
 router.post('/select-bank', async (req, res) => {
-  // Define essential claims directly (could be from request body if needed)
-  const essentialClaimsObjects = [
-    { claim: "auth_time", essential: true },
-    { claim: "over18", essential: true }
-  ];
+  // Define essential claims as an object with proper format
+  const essentialClaimsObjects = {
+    "auth_time": { "essential": true },
+    "over18": { "essential": true }
+  };
 
-  // Extract and validate essential claims as an array of strings
-  const essentialClaims = extractValidClaims(essentialClaimsObjects);
+  // Extract and validate essential claims as a JSON object
+  const essentialClaims = extractValidClaims(Object.keys(essentialClaimsObjects).map(key => ({ claim: key, essential: essentialClaimsObjects[key].essential })));
 
   // Extract and validate voluntary claims from request body
   const voluntaryClaims = extractValidClaims(req.body.voluntaryClaims || []);
 
-  // Log essential and voluntary claims for debugging
-  console.log(`Essential Claims: ${JSON.stringify(essentialClaims)}`);
-  console.log(`Voluntary Claims: ${JSON.stringify(voluntaryClaims)}`);
+  // Convert claims to the required format
+  const claimsRequest = {
+    id_token: essentialClaims.reduce((acc, { claim, essential }) => {
+      acc[claim] = { essential };
+      return acc;
+    }, {}),
+    userinfo: voluntaryClaims.reduce((acc, { claim, essential }) => {
+      acc[claim] = { essential };
+      return acc;
+    }, {})
+  };
+
+  // Log claims request for debugging
+  console.log(`Claims Request: ${JSON.stringify(claimsRequest)}`);
 
   const purpose = req.body.purpose || 'Age verification required'; // Default purpose
   const authServerId = req.body.authorisationServerId;
@@ -58,8 +76,7 @@ router.post('/select-bank', async (req, res) => {
     // Send the pushed authorization request with the claims
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
       authServerId,
-      essentialClaims,  // Array of strings
-      voluntaryClaims,  // Array of strings
+      claimsRequest,  // Object with claims as per specification
       purpose
     );
 
