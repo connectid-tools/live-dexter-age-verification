@@ -52,7 +52,7 @@ router.get('/retrieve-tokens', async (req, res) => {
     const over18 = decodedToken.over18;
 
     console.info(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
-    console.info(`Returned raw id_token: ${token.raw}`);
+    console.info(`Returned raw id_token: ${token.raw}`); 
     console.info(`Returned decoded id_token: ${token.decoded}`);
     console.info(`Returned xFapiInteractionId: ${tokenSet.xFapiInteractionId}`);
     console.info(`Over18 claim: ${over18}`);
