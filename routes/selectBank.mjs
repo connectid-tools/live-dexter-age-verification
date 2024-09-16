@@ -38,10 +38,20 @@ router.post('/select-bank', async (req, res) => {
   // Essential claims
   const essentialClaims = essentialClaimsList;  // List of essential claims from the spec
 
-  // Extract and validate voluntary claims (over18)
+  // Extract and validate voluntary claims (e.g., over18)
   const voluntaryClaims = extractValidClaims(req.body.voluntaryClaims || voluntaryClaimsList, voluntaryClaimsList);
 
-  const purpose = req.body.purpose || 'Age verification required';
+  // Define verified claims for the request (without bank account details)
+  const verifiedClaims = {
+    verification: {
+      trust_framework: 'au_connectid' // Specify trust framework for the verification
+    },
+    claims: {
+      over18: true // Example of verified claim
+    }
+  };
+
+  const purpose = req.body.purpose || 'Age verification';
   const authServerId = req.body.authorisationServerId;
   const cartId = req.body.cartId;
 
@@ -52,7 +62,7 @@ router.post('/select-bank', async (req, res) => {
   }
 
   try {
-    // Send the pushed authorization request with the essential and voluntary claims
+    // Send the pushed authorization request with the essential, voluntary, and verified claims
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
       authServerId,
       essentialClaims,  // Pass array of essential claims (strings)
@@ -60,6 +70,7 @@ router.post('/select-bank', async (req, res) => {
       purpose
     );
 
+    // Set cookies to be used later during token retrieval
     const cookieOptions = {
       path: '/',
       sameSite: 'None',
@@ -68,6 +79,7 @@ router.post('/select-bank', async (req, res) => {
       maxAge: 3 * 60 * 1000
     };
 
+    // Store relevant details in cookies for later retrieval
     res.cookie('state', state, cookieOptions);
     res.cookie('nonce', nonce, cookieOptions);
     res.cookie('code_verifier', code_verifier, cookieOptions);
