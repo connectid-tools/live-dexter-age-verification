@@ -44,12 +44,13 @@ router.post('/select-bank', async (req, res) => {
   // Define verified claims for the request (without bank account details)
   const verifiedClaims = {
     verification: {
-      trust_framework: 'au_connectid' // Specify trust framework for the verification
+      trust_framework: 'au_connectid'  // The trust framework used for verification
     },
     claims: {
-      over18: true // Example of verified claim
+      over18: true  // The actual claim that is verified
     }
   };
+  
 
   const purpose = req.body.purpose || 'Age verification';
   const authServerId = req.body.authorisationServerId;
@@ -62,12 +63,13 @@ router.post('/select-bank', async (req, res) => {
   }
 
   try {
-    // Send the pushed authorization request with the essential, voluntary, and verified claims
+    // Send the pushed authorization request with essential, voluntary, and verified claims
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
       authServerId,
       essentialClaims,  // Pass array of essential claims (strings)
       voluntaryClaims,   // Pass array of voluntary claims (strings)
-      purpose
+      purpose,
+      verifiedClaims    // Include verified claims
     );
 
     // Set cookies to be used later during token retrieval
