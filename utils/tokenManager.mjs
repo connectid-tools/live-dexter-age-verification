@@ -2,7 +2,6 @@ import express from 'express';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import jwtDecode from 'jwt-decode';
 import { config } from '../config.js';
-import { generateAndStoreToken } from '../utils/tokenManager.js'; // Assuming your token manager is defined here
 
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
