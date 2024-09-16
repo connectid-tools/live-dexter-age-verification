@@ -1,4 +1,4 @@
-import { tokenStore } from '../app.mjs';
+import { tokenStore } from '../utils/tokenManager.mjs';
 import express from 'express';
 import restrictedItemsService from '../services/retrieveAndRestrict.mjs';
 
