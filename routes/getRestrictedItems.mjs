@@ -19,7 +19,7 @@ router.post('/', async (req, res) => {
   try {
     if (!restrictedSKUs || restrictedSKUs.size === 0) {
       await initializeRestrictedSKUs();
-    }
+    } 
 
     const cartItems = await fetchCartItems(cartId);
     const cartSKUs = cartItems.map(item => item.sku.toUpperCase());
