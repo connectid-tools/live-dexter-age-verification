@@ -1,40 +1,68 @@
-export const tokenStore = new Map();
+import express from 'express';
+import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
+import jwtDecode from 'jwt-decode';
+import { config } from '../config.js';
+import logger from '../logger.js'; // Assuming you have a logger module
 
-// Generate and store token for a cartId
-export function generateAndStoreToken(cartId) {
-  const token = Math.random().toString(36).substring(2);
-  const expiresAt = Date.now() + 10 * 60 * 1000;  // 10 minutes expiry
-  tokenStore.set(cartId, { token, expiresAt });
-  console.log(`Token for cartId ${cartId} generated. Expires at ${new Date(expiresAt).toISOString()}. Token: ${token}`);
-  return token;
-}
+const router = express.Router();
+const rpClient = new RelyingPartyClientSdk(config);
 
-// Clear expired tokens from tokenStore
-export function clearExpiredTokens() {
-  const now = Date.now();
-  tokenStore.forEach((tokenData, cartId) => {
-    if (tokenData.expiresAt < now) {
-      console.log(`Removing expired token for cartId ${cartId}, token expired at ${new Date(tokenData.expiresAt).toISOString()}`);
-      tokenStore.delete(cartId);
-    }
-  });
-}
+router.get('/retrieve-tokens', async (req, res) => {
+  const cartId = req.query.cartId;
+  const code = req.query.code;
 
-// Set interval to clear expired tokens every minute
-setInterval(clearExpiredTokens, 60 * 1000);  // Call every minute
-
-// Check if token is valid for a given cartId
-export function isTokenValid(cartId) {
-  const tokenData = tokenStore.get(cartId);
-  if (tokenData) {
-    if (tokenData.expiresAt > Date.now()) {
-      return true;
-    } else {
-      console.log(`Token for cartId ${cartId} has expired.`);
-      tokenStore.delete(cartId);  // Clean up expired token
-    }
-  } else {
-    console.log(`No token found for cartId ${cartId}.`);
+  if (!code || !cartId) {
+    return res.status(400).json({ error: 'Code parameter and cartId are required' });
   }
-  return false;
-}
+
+  const authorisationServerId = req.cookies.authorisation_server_id;
+  const codeVerifier = req.cookies.code_verifier;
+  const state = req.cookies.state;
+  const nonce = req.cookies.nonce;
+
+  if (!authorisationServerId || !codeVerifier || !state || !nonce) {
+    console.error('Missing one or more required cookies:', {
+      authorisationServerId,
+      codeVerifier,
+      state,
+      nonce
+    });
+    return res.status(400).json({ error: 'Missing required cookies for token exchange.' });
+  }
+
+  try {
+    const tokenSet = await rpClient.retrieveTokens(
+      authorisationServerId,
+      req.query,
+      codeVerifier,
+      state,
+      nonce
+    );
+    const claims = tokenSet.claims();
+    const decodedToken = jwtDecode(tokenSet.id_token);
+    const token = {
+      decoded: JSON.stringify(decodedToken, null, 2),
+      raw: tokenSet.id_token,
+    };
+
+    // Check for the over18 claim
+    const over18 = decodedToken.over18;
+    if (over18 !== undefined) {
+      logger.info(`Over18 claim is present: ${over18}`);
+    } else {
+      logger.info('Over18 claim is not present.');
+    }
+
+    logger.info(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
+    logger.info(`Returned raw id_token: ${token.raw}`);
+    logger.info(`Returned decoded id_token: ${token.decoded}`);
+    logger.info(`Returned xFapiInteractionId: ${tokenSet.xFapiInteractionId}`);
+
+    return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId, over18 });
+  } catch (error) {
+    logger.error('Error retrieving tokenset: ' + error);
+    return res.status(500).json({ error: error.toString() });
+  }
+});
+
+export default router;
