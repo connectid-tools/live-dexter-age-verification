@@ -5,8 +5,8 @@ import { config } from '../config.js';
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
-// Define a list of valid claims
-const validClaims = [
+// Define a list of valid claims for id_token
+const validIdTokenClaims = [
   'auth_time',
   'over18',
   'given_name',
@@ -20,33 +20,35 @@ const validClaims = [
 ];
 
 // Helper function to validate and extract claims
-const extractValidClaims = (claims) => {
+const extractValidClaims = (claims, allowedClaims) => {
   return claims
     .map(claim => {
       if (typeof claim === 'string') {
-        return { claim: claim, essential: false };
+        return { claim, essential: false };
       } else if (typeof claim === 'object' && claim.claim) {
         return { claim: claim.claim, essential: claim.essential || false };
       }
       return null;
     })
-    .filter(claim => claim && validClaims.includes(claim.claim) && typeof claim.claim === 'string' && claim.claim.trim() !== '');
+    .filter(claim => claim && allowedClaims.includes(claim.claim) && claim.claim.trim() !== '');
 };
 
 router.post('/select-bank', async (req, res) => {
-  // Define essential claims as an object with proper format
+  // Essential claims and their validity
   const essentialClaimsObjects = {
     "auth_time": { "essential": true },
     "over18": { "essential": true }
   };
 
-  // Extract and validate essential claims as a JSON object
-  const essentialClaims = extractValidClaims(Object.keys(essentialClaimsObjects).map(key => ({ claim: key, essential: essentialClaimsObjects[key].essential })));
+  // Extract and validate claims
+  const essentialClaims = extractValidClaims(Object.keys(essentialClaimsObjects).map(key => ({
+    claim: key,
+    essential: essentialClaimsObjects[key].essential
+  })), validIdTokenClaims);
 
-  // Extract and validate voluntary claims from request body
-  const voluntaryClaims = extractValidClaims(req.body.voluntaryClaims || []);
+  const voluntaryClaims = extractValidClaims(req.body.voluntaryClaims || [], validIdTokenClaims);
 
-  // Convert claims to the required format
+  // Construct claims request
   const claimsRequest = {
     id_token: essentialClaims.reduce((acc, { claim, essential }) => {
       acc[claim] = { essential };
@@ -58,14 +60,12 @@ router.post('/select-bank', async (req, res) => {
     }, {})
   };
 
-  // Log claims request for debugging
   console.log(`Claims Request: ${JSON.stringify(claimsRequest)}`);
 
-  const purpose = req.body.purpose || 'Age verification required'; // Default purpose
+  const purpose = req.body.purpose || 'Age verification required';
   const authServerId = req.body.authorisationServerId;
   const cartId = req.body.cartId;
 
-  // Validate that both the authorizationServerId and cartId are provided
   if (!authServerId || !cartId) {
     const error = 'authorisationServerId and cartId are required';
     console.error(error);
@@ -73,10 +73,9 @@ router.post('/select-bank', async (req, res) => {
   }
 
   try {
-    // Send the pushed authorization request with the claims
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
       authServerId,
-      claimsRequest,  // Object with claims as per specification
+      claimsRequest,
       purpose
     );
 
