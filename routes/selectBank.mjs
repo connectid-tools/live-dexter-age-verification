@@ -15,19 +15,19 @@ router.post('/select-bank', async (req, res) => {
     return res.status(400).json({ error: 'authorisationServerId and cartId are required' });
   }
 
-  // Ensure claims are properly structured
   const essentialClaims = {
     "id_token": {
       "auth_time": { "essential": true },  // Standard OpenID claim
-      // Remove any unsupported claims like "txn"
+      "txn": { "essential": true }  // Assuming this is a supported claim by the server
     }
   };
-
-  try {
-    console.log(`Processing request to send PAR with authorisationServerId='${authServerId}', essentialClaims=${JSON.stringify(essentialClaims)}, cartId='${cartId}'`);
-
-    // Ensure essentialClaims is passed as an array
-    const essentialClaimsArray = [essentialClaims];
+  
+  // Stringify essential claims before sending if needed or log them correctly
+  console.log(`Essential claims: ${JSON.stringify(essentialClaims)}`);
+  
+  // Ensure it is properly passed as part of your authorization request
+  const essentialClaimsArray = [essentialClaims];
+  
 
     // Log the essentialClaimsArray to verify its structure
     console.log(`Essential Claims Array: ${JSON.stringify(essentialClaimsArray)}`);
