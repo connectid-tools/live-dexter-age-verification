@@ -11,7 +11,20 @@ router.post('/select-bank', async (req, res) => {
     { "claim": "auth_time", "essential": true },
     { "claim": "over18", "essential": true }
   ];
-  const voluntaryClaims = req.body.voluntaryClaims || [];
+
+  // Ensure voluntary claims are formatted correctly
+  const voluntaryClaims = (req.body.voluntaryClaims || []).map(claim => {
+    if (typeof claim === 'string') {
+      return { "claim": claim, "essential": false };
+    } else if (typeof claim === 'object' && claim.claim) {
+      return {
+        "claim": String(claim.claim), // Ensure claim is a string
+        "essential": Boolean(claim.essential) // Ensure essential is a boolean
+      };
+    }
+    return { "claim": "", "essential": false }; // Default for invalid format
+  });
+
   const purpose = req.body.purpose || 'Age verification required'; // Default purpose
   const authServerId = req.body.authorisationServerId;
   const cartId = req.body.cartId;
@@ -22,6 +35,7 @@ router.post('/select-bank', async (req, res) => {
     console.error(error);
     return res.status(400).json({ error });
   }
+
   // Log essential and voluntary claims
   console.log(`Essential Claims: ${JSON.stringify(essentialClaims)}`);
   console.log(`Voluntary Claims: ${JSON.stringify(voluntaryClaims)}`);
