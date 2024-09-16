@@ -5,6 +5,7 @@ import { config } from '../config.js';
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
+
 router.get('/retrieve-tokens', async (req, res) => {
   const cartId = req.query.cartId;
   const code = req.query.code;
@@ -41,14 +42,6 @@ router.get('/retrieve-tokens', async (req, res) => {
 
     const claims = tokenSet.claims();
     console.log('Claims extracted:', claims);
-
-    // Validate required claims
-    const requiredClaims = ['iss', 'sub', 'aud', 'exp', 'iat', 'auth_time', 'nonce'];
-    for (const claim of requiredClaims) {
-      if (!claims[claim]) {
-        return res.status(400).json({ error: `Missing required claim: ${claim}` });
-      }
-    }
 
     if (claims.over18 && claims.over18 === true) {
       const token = generateAndStoreToken(cartId);  
