@@ -16,13 +16,11 @@ router.post('/select-bank', async (req, res) => {
   }
 
   // Define the essential claims as an object as per OIDC guidelines
-  const essentialClaimsObject = {
+  const essentialClaims = {
     "id_token": {
       "auth_time": { "essential": true }
     }
   }
-
-  const essentialClaims = ['over18'];
 
   try {
     console.log(`Processing request to send PAR with authorisationServerId='${authServerId}', essentialClaim='over18', cartId='${cartId}'`);
