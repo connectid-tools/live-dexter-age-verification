@@ -1,8 +1,6 @@
 import express from 'express';
 import { config } from '../config.js';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
-import { generateAndStoreToken } from '../utils/tokenManager.js'; // Assuming you store tokens
-import { validateClaims } from '../utils/validation.js'; // For custom validation functions
 
 
 const router = express.Router();
