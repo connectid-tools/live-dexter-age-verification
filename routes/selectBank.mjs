@@ -15,12 +15,10 @@ router.post('/select-bank', async (req, res) => {
     return res.status(400).json({ error: 'authorisationServerId and cartId are required' });
   }
 
-  // Define the essential claims for the ID Token
+  // Define the essential claims to check if the user is over 18
   const essentialClaims = {
     "id_token": {
-      "exp": { "essential": true },  // Expiration time
-      "iat": { "essential": true },  // Issued at time
-      "auth_time": { "essential": true },  // Authentication time
+      "auth_time": { "essential": true },  // Standard OpenID claim
     }
   };
 
