@@ -20,7 +20,7 @@ const validClaims = [
 ];
 
 // Helper function to validate and extract claims
-const extractValidClaims = (claims: any[]): string[] => {
+const extractValidClaims = (claims) => {
   return claims
     .map(claim => typeof claim === 'string' ? claim : claim.claim)
     .filter(claim => validClaims.includes(claim) && typeof claim === 'string' && claim.trim() !== '');
