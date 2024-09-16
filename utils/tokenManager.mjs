@@ -1,72 +1,49 @@
 import express from 'express';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
-import { decode as jwtDecode } from 'jwt-decode';  // Import the named export "decode" and alias it to jwtDecode
 import { config } from '../config.js';
 
+export const tokenStore = new Map();
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
-router.get('/retrieve-tokens', async (req, res) => {
-  const cartId = req.query.cartId;
-  const code = req.query.code;
+// Generate and store token for a cartId
+export function generateAndStoreToken(cartId) {
+  const token = Math.random().toString(36).substring(2);
+  const expiresAt = Date.now() + 10 * 60 * 1000;  // 10 minutes expiry
+  tokenStore.set(cartId, { token, expiresAt });
+  console.log(`Token for cartId ${cartId} generated. Expires at ${new Date(expiresAt).toISOString()}. Token: ${token}`);
+  return token;
+}
 
-  if (!code || !cartId) {
-    return res.status(400).json({ error: 'Code parameter and cartId are required' });
-  }
-
-  const authorisationServerId = req.cookies.authorisation_server_id;
-  const codeVerifier = req.cookies.code_verifier;
-  const state = req.cookies.state;
-  const nonce = req.cookies.nonce;
-
-  if (!authorisationServerId || !codeVerifier || !state || !nonce) {
-    console.error('Missing one or more required cookies:', {
-      authorisationServerId,
-      codeVerifier,
-      state,
-      nonce
-    });
-    return res.status(400).json({ error: 'Missing required cookies for token exchange.' });
-  }
-
-  try {
-    // Retrieve tokens from the authorization server
-    const tokenSet = await rpClient.retrieveTokens(
-      authorisationServerId,
-      { code },
-      codeVerifier,
-      state,
-      nonce
-    );
-
-    const claims = tokenSet.claims();
-    const decodedToken = jwtDecode(tokenSet.id_token);
-
-    // Check for the over18 claim
-    const over18 = decodedToken.over18;
-    if (over18) {
-      // Generate and store a token if the user is over 18
-      const token = generateAndStoreToken(cartId);  
-      console.info(`Verification successful for cartId ${cartId}. Token generated: ${token}`);
-      
-      const userInfo = await rpClient.getUserInfo(authorisationServerId, tokenSet.access_token);
-      console.info(`Returned userInfo: ${JSON.stringify(userInfo)}`);
-
-      return res.json({
-        claims,
-        token,
-        userInfo,
-        xFapiInteractionId: tokenSet.xFapiInteractionId
-      });
-    } else {
-      // User failed the age verification
-      return res.status(400).json({ error: 'User verification failed. Age requirement not met.' });
+// Clear expired tokens from tokenStore
+export function clearExpiredTokens() {
+  const now = Date.now();
+  tokenStore.forEach((tokenData, cartId) => {
+    if (tokenData.expiresAt < now) {
+      console.log(`Removing expired token for cartId ${cartId}, token expired at ${new Date(tokenData.expiresAt).toISOString()}`);
+      tokenStore.delete(cartId);
     }
-  } catch (error) {
-    // Log error and send the response
-    console.error('Error retrieving tokens:', error);
-    return res.status(500).json({ error: 'Failed to retrieve tokens', details: error.message });
+  });
+}
+
+// Set interval to clear expired tokens every minute
+setInterval(clearExpiredTokens, 60 * 1000);  // Call every minute
+
+// Check if token is valid for a given cartId
+export function isTokenValid(cartId) {
+  const tokenData = tokenStore.get(cartId);
+  if (tokenData) {
+    if (tokenData.expiresAt > Date.now()) {
+      return true;
+    } else {
+      console.log(`Token for cartId ${cartId} has expired.`);
+      tokenStore.delete(cartId);  // Clean up expired token
+    }
+  } else {
+    console.log(`No token found for cartId ${cartId}.`);
   }
-});
+  return false;
+}
+
 
 export default router;

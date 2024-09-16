@@ -1,6 +1,5 @@
 import express from 'express';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
-import jwtDecode from 'jwt-decode';
 import { config } from '../config.js';
 
 const router = express.Router();
@@ -24,12 +23,16 @@ router.get('/retrieve-tokens', async (req, res) => {
       authorisationServerId,
       codeVerifier,
       state,
-      nonce
+      nonce,
     });
     return res.status(400).json({ error: 'Missing required cookies for token exchange.' });
   }
 
   try {
+    // Dynamically import jwt-decode to ensure compatibility with ESM modules
+    const { default: jwtDecode } = await import('jwt-decode'); 
+
+    // Retrieve tokens from the authorization server
     const tokenSet = await rpClient.retrieveTokens(
       authorisationServerId,
       req.query,
@@ -37,6 +40,7 @@ router.get('/retrieve-tokens', async (req, res) => {
       state,
       nonce
     );
+    
     const claims = tokenSet.claims();
     const decodedToken = jwtDecode(tokenSet.id_token);
     const token = {
