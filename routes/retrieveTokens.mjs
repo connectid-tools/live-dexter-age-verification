@@ -10,6 +10,7 @@ router.get('/retrieve-tokens', async (req, res) => {
   const code = req.query.code;
 
   if (!code || !cartId) {
+    console.error('Code parameter and cartId are required');
     return res.status(400).json({ error: 'Code parameter and cartId are required' });
   }
 
@@ -30,7 +31,7 @@ router.get('/retrieve-tokens', async (req, res) => {
 
   try {
     // Dynamically import jwt-decode to ensure compatibility with ESM modules
-    const { default: jwtDecode } = await import('jwt-decode'); 
+    const { default: jwtDecode } = await import('jwt-decode');
 
     // Retrieve tokens from the authorization server
     const tokenSet = await rpClient.retrieveTokens(
@@ -40,7 +41,8 @@ router.get('/retrieve-tokens', async (req, res) => {
       state,
       nonce
     );
-    
+
+    // Extract claims and decode token
     const claims = tokenSet.claims();
     const decodedToken = jwtDecode(tokenSet.id_token);
     const token = {
@@ -48,19 +50,26 @@ router.get('/retrieve-tokens', async (req, res) => {
       raw: tokenSet.id_token,
     };
 
-    // Check for the over18 claim
-    const over18 = decodedToken.over18;
-
+    // Log information
     console.info(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
-    console.info(`Returned raw id_token: ${token.raw}`); 
+    console.info(`Returned raw id_token: ${token.raw}`);
     console.info(`Returned decoded id_token: ${token.decoded}`);
     console.info(`Returned xFapiInteractionId: ${tokenSet.xFapiInteractionId}`);
+
+    // Check for the over18 claim if available
+    const over18 = decodedToken.over18 || 'Claim not present';
+
     console.info(`Over18 claim: ${over18}`);
 
-    return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId, over18 });
+    return res.json({
+      claims,
+      token,
+      xFapiInteractionId: tokenSet.xFapiInteractionId,
+      over18
+    });
   } catch (error) {
-    console.error('Error retrieving tokenset: ' + error);
-    return res.status(500).json({ error: error.toString() });
+    console.error('Error retrieving tokenset: ', error);
+    return res.status(500).json({ error: 'Failed to retrieve token set', details: error.toString() });
   }
 });
 

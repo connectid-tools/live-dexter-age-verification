@@ -2,52 +2,43 @@ import express from 'express';
 import { config } from '../config.js';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 
-
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
 router.post('/select-bank', async (req, res) => {
-  const purpose = 'Age verification required'; // Default purpose
-  const authServerId = req.body.authorisationServerId;  // Fetching the authorization server ID
-  const cartId = req.body.cartId;  // Fetching the cart ID
+  // Fetch essential and voluntary claims from request body
+  const essentialClaims = req.body.essentialClaims || [];
+  const voluntaryClaims = req.body.voluntaryClaims || [];
+  const purpose = req.body.purpose || 'Age verification required'; // Default purpose
+  const authServerId = req.body.authorisationServerId;
+  const cartId = req.body.cartId;
 
   // Validate that both the authorizationServerId and cartId are provided
   if (!authServerId || !cartId) {
-    return res.status(400).json({ error: 'authorisationServerId and cartId are required' });
+    const error = 'authorisationServerId and cartId are required';
+    console.error(error);
+    return res.status(400).json({ error });
   }
 
-  // Define the essential claims to check if the user is over 18
-  const essentialClaims = {
-    "id_token": {
-      "auth_time": { "essential": true },  // Standard OpenID claim
-      "over18": { "essential": true }  // Custom claim to check if the user is over 18
-    }
-  };
-
-  // Log essential claims
-  console.log(`Essential claims: ${JSON.stringify(essentialClaims)}`);
-
-  // Ensure it is properly passed as part of your authorization request
-  const essentialClaimsArray = [essentialClaims];
+  // Log essential and voluntary claims
+  console.log(`Essential Claims: ${JSON.stringify(essentialClaims)}`);
+  console.log(`Voluntary Claims: ${JSON.stringify(voluntaryClaims)}`);
 
   try {
-    // Log the essentialClaimsArray to verify its structure
-    console.log(`Essential Claims Array: ${JSON.stringify(essentialClaimsArray)}`);
-
-    // Send the pushed authorization request with the updated claim
+    // Send the pushed authorization request with the claims
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
-      authServerId, 
-      essentialClaimsArray,  // Use the array version of essentialClaims
-      [],  
-      purpose 
+      authServerId,
+      essentialClaims,  // Use the claims directly
+      voluntaryClaims,  // Pass voluntary claims
+      purpose
     );
 
     const cookieOptions = {
-      path: '/',              
-      sameSite: 'None',       
-      secure: true,           
-      httpOnly: true,         
-      maxAge: 3 * 60 * 1000  
+      path: '/',
+      sameSite: 'None',
+      secure: true,
+      httpOnly: true,
+      maxAge: 3 * 60 * 1000
     };
 
     res.cookie('state', state, cookieOptions);
