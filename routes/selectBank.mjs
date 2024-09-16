@@ -6,24 +6,36 @@ const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
 router.post('/select-bank', async (req, res) => {
-  // Fetch essential and voluntary claims from request body
-  const essentialClaims = [
+  // Extract essential claims from request body and convert to array of strings
+  const essentialClaimsObjects = [
     { "claim": "auth_time", "essential": true },
     { "claim": "over18", "essential": true }
   ];
 
-  // Ensure voluntary claims are formatted correctly
-  const voluntaryClaims = (req.body.voluntaryClaims || []).map(claim => {
+  const essentialClaims = essentialClaimsObjects
+    .filter(claim => claim.essential) // Only include claims marked as essential
+    .map(claim => claim.claim); // Convert to array of strings
+
+  // Extract and format voluntary claims from request body
+  const voluntaryClaimsObjects = (req.body.voluntaryClaims || []).map(claim => {
     if (typeof claim === 'string') {
       return { "claim": claim, "essential": false };
     } else if (typeof claim === 'object' && claim.claim) {
       return {
-        "claim": String(claim.claim), // Ensure claim is a string
-        "essential": Boolean(claim.essential) // Ensure essential is a boolean
+        "claim": String(claim.claim),
+        "essential": Boolean(claim.essential)
       };
     }
-    return { "claim": "", "essential": false }; // Default for invalid format
+    return { "claim": "", "essential": false };
   });
+
+  const voluntaryClaims = voluntaryClaimsObjects
+    .filter(claim => !claim.essential) // Only include non-essential claims
+    .map(claim => claim.claim); // Convert to array of strings
+
+  // Log formatted claims for debugging
+  console.log(`Formatted Essential Claims: ${JSON.stringify(essentialClaims)}`);
+  console.log(`Formatted Voluntary Claims: ${JSON.stringify(voluntaryClaims)}`);
 
   const purpose = req.body.purpose || 'Age verification required'; // Default purpose
   const authServerId = req.body.authorisationServerId;
@@ -36,19 +48,15 @@ router.post('/select-bank', async (req, res) => {
     return res.status(400).json({ error });
   }
 
-  // Log essential and voluntary claims
-  console.log(`Essential Claims: ${JSON.stringify(essentialClaims)}`);
-  console.log(`Voluntary Claims: ${JSON.stringify(voluntaryClaims)}`);
-
   try {
     // Send the pushed authorization request with the claims
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
       authServerId,
-      essentialClaims,  // Use the essential claims as an array
-      voluntaryClaims,  // Pass voluntary claims
-      purpose
+      essentialClaims,  // Must provide essentialClaims as an array of strings
+      voluntaryClaims,  // Optional: array of strings
+      purpose           // Optional: purpose string
     );
-
+    
     const cookieOptions = {
       path: '/',
       sameSite: 'None',
