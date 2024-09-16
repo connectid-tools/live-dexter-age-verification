@@ -17,7 +17,7 @@ const essentialClaimsList = [
   'txn'
 ];
 
-// Define voluntary claims (including over18)
+// Define voluntary claims (e.g., over18)
 const voluntaryClaimsList = [
   'over18'
 ];
@@ -41,7 +41,7 @@ router.post('/select-bank', async (req, res) => {
   // Extract and validate voluntary claims (e.g., over18)
   const voluntaryClaims = extractValidClaims(req.body.voluntaryClaims || voluntaryClaimsList, voluntaryClaimsList);
 
-  // Define verified claims for the request (without bank account details)
+  // Define verified claims for the request (ensure that this does not conflict with the id_token claims)
   const verifiedClaims = {
     verification: {
       trust_framework: 'au_connectid'  // The trust framework used for verification
@@ -50,7 +50,6 @@ router.post('/select-bank', async (req, res) => {
       over18: true  // The actual claim that is verified
     }
   };
-  
 
   const purpose = req.body.purpose || 'Age verification';
   const authServerId = req.body.authorisationServerId;
@@ -63,13 +62,13 @@ router.post('/select-bank', async (req, res) => {
   }
 
   try {
-    // Send the pushed authorization request with essential, voluntary, and verified claims
+    // Send the pushed authorization request with essential and voluntary claims (verified_claims handled separately)
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
       authServerId,
       essentialClaims,  // Pass array of essential claims (strings)
       voluntaryClaims,   // Pass array of voluntary claims (strings)
       purpose,
-      verifiedClaims    // Include verified claims
+      verifiedClaims    // Include verified claims as an object (do not include it in the claims array)
     );
 
     // Set cookies to be used later during token retrieval
