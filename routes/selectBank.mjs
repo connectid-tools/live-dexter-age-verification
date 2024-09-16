@@ -1,13 +1,16 @@
 import express from 'express';
-import { config } from '../config.js';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
+import { config } from '../config.js';
 
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
 router.post('/select-bank', async (req, res) => {
   // Fetch essential and voluntary claims from request body
-  const essentialClaims = req.body.essentialClaims || [];
+  const essentialClaims = {
+    "auth_time": { "essential": true },
+    "over18": { "essential": true }
+  };
   const voluntaryClaims = req.body.voluntaryClaims || [];
   const purpose = req.body.purpose || 'Age verification required'; // Default purpose
   const authServerId = req.body.authorisationServerId;
@@ -28,7 +31,7 @@ router.post('/select-bank', async (req, res) => {
     // Send the pushed authorization request with the claims
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
       authServerId,
-      essentialClaims,  // Use the claims directly
+      essentialClaims,  // Use the essential claims
       voluntaryClaims,  // Pass voluntary claims
       purpose
     );

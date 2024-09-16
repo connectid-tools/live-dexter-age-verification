@@ -45,15 +45,11 @@ router.get('/retrieve-tokens', async (req, res) => {
     // Extract claims and decode token
     const claims = tokenSet.claims();
     const decodedToken = jwtDecode(tokenSet.id_token);
-    const token = {
-      decoded: JSON.stringify(decodedToken, null, 2),
-      raw: tokenSet.id_token,
-    };
 
     // Log information
     console.info(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
-    console.info(`Returned raw id_token: ${token.raw}`);
-    console.info(`Returned decoded id_token: ${token.decoded}`);
+    console.info(`Returned raw id_token: ${tokenSet.id_token}`);
+    console.info(`Returned decoded id_token: ${JSON.stringify(decodedToken, null, 2)}`);
     console.info(`Returned xFapiInteractionId: ${tokenSet.xFapiInteractionId}`);
 
     // Check for the over18 claim if available
@@ -63,12 +59,15 @@ router.get('/retrieve-tokens', async (req, res) => {
 
     return res.json({
       claims,
-      token,
+      token: {
+        decoded: JSON.stringify(decodedToken, null, 2),
+        raw: tokenSet.id_token,
+      },
       xFapiInteractionId: tokenSet.xFapiInteractionId,
       over18
     });
   } catch (error) {
-    console.error('Error retrieving tokenset: ', error);
+    console.error('Error retrieving token set: ', error);
     return res.status(500).json({ error: 'Failed to retrieve token set', details: error.toString() });
   }
 });
