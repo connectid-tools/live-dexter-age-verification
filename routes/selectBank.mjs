@@ -24,13 +24,11 @@ const extractValidClaims = (claims, allowedClaims) => {
   return claims
     .map(claim => {
       if (typeof claim === 'string') {
-        return { claim, essential: false };
-      } else if (typeof claim === 'object' && claim.claim) {
-        return { claim: claim.claim, essential: claim.essential || false };
+        return claim.trim();
       }
       return null;
     })
-    .filter(claim => claim && allowedClaims.includes(claim.claim) && claim.claim.trim() !== '');
+    .filter(claim => claim && allowedClaims.includes(claim));
 };
 
 router.post('/select-bank', async (req, res) => {
@@ -40,38 +38,17 @@ router.post('/select-bank', async (req, res) => {
     "over18": { "essential": true }
   };
 
-  // Extract and validate essential claims
-  const essentialClaimsArray = Object.keys(essentialClaimsObjects).map(key => ({
-    claim: key,
-    essential: essentialClaimsObjects[key].essential
-  }));
+  // Convert essential claims to an array of strings
+  const essentialClaimsArray = Object.keys(essentialClaimsObjects); // Array of strings: ['auth_time', 'over18']
 
-  const essentialClaims = extractValidClaims(essentialClaimsArray, validIdTokenClaims);
-
-  // Ensure essentialClaims is an array of strings
-  const essentialClaimsStringArray = essentialClaims
-    .filter(({ claim }) => typeof claim === 'string' && claim.trim() !== '')
-    .map(({ claim }) => claim);
-
-  // Debugging: Log essentialClaims
-  console.log(`Essential Claims: ${JSON.stringify(essentialClaimsStringArray)}`);
+  // Debugging: Log essentialClaimsArray to ensure it's correctly formatted
+  console.log(`Essential Claims Array: ${JSON.stringify(essentialClaimsArray)}`);
 
   // Extract and validate voluntary claims from request body
   const voluntaryClaims = extractValidClaims(req.body.voluntaryClaims || [], validIdTokenClaims);
 
-  // Construct claims request
-  const claimsRequest = {
-    id_token: essentialClaimsStringArray.reduce((acc, claim) => {
-      acc[claim] = { essential: true }; // Essential claims are always true
-      return acc;
-    }, {}),
-    userinfo: voluntaryClaims.reduce((acc, { claim, essential }) => {
-      acc[claim] = { essential };
-      return acc;
-    }, {})
-  };
-
-  console.log(`Claims Request: ${JSON.stringify(claimsRequest)}`);
+  // Log claims request for debugging
+  console.log(`Voluntary Claims: ${JSON.stringify(voluntaryClaims)}`);
 
   const purpose = req.body.purpose || 'Age verification required';
   const authServerId = req.body.authorisationServerId;
@@ -84,10 +61,11 @@ router.post('/select-bank', async (req, res) => {
   }
 
   try {
-    // Send the pushed authorization request with the claims
+    // Send the pushed authorization request with the essential and voluntary claims
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
       authServerId,
-      claimsRequest,
+      essentialClaimsArray,  // Pass array of essential claims (strings)
+      voluntaryClaims,       // Pass array of voluntary claims (strings)
       purpose
     );
 
