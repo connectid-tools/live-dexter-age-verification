@@ -27,7 +27,7 @@ const extractValidClaims = (claims) => {
 };
 
 router.post('/select-bank', async (req, res) => {
-  // Example essential claims defined directly (could be from request body if needed)
+  // Define essential claims directly (could be from request body if needed)
   const essentialClaimsObjects = [
     { claim: "auth_time", essential: true },
     { claim: "over18", essential: true }
@@ -39,6 +39,10 @@ router.post('/select-bank', async (req, res) => {
   // Extract and validate voluntary claims from request body
   const voluntaryClaims = extractValidClaims(req.body.voluntaryClaims || []);
 
+  // Log essential and voluntary claims for debugging
+  console.log(`Essential Claims: ${JSON.stringify(essentialClaims)}`);
+  console.log(`Voluntary Claims: ${JSON.stringify(voluntaryClaims)}`);
+
   const purpose = req.body.purpose || 'Age verification required'; // Default purpose
   const authServerId = req.body.authorisationServerId;
   const cartId = req.body.cartId;
@@ -49,10 +53,6 @@ router.post('/select-bank', async (req, res) => {
     console.error(error);
     return res.status(400).json({ error });
   }
-
-  // Log essential and voluntary claims
-  console.log(`Essential Claims: ${JSON.stringify(essentialClaims)}`);
-  console.log(`Voluntary Claims: ${JSON.stringify(voluntaryClaims)}`);
 
   try {
     // Send the pushed authorization request with the claims
