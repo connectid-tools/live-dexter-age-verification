@@ -2,7 +2,7 @@ import express from 'express';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import jwtDecode from 'jwt-decode';
 import { config } from '../config.js';
-import logger from '../logger.js'; // Assuming you have a logger module
+import console from '../console.js'; // Assuming you have a console module
 
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
@@ -48,15 +48,15 @@ router.get('/retrieve-tokens', async (req, res) => {
     // Check for the over18 claim
     const over18 = decodedToken.over18;
 
-    logger.info(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
-    logger.info(`Returned raw id_token: ${token.raw}`);
-    logger.info(`Returned decoded id_token: ${token.decoded}`);
-    logger.info(`Returned xFapiInteractionId: ${tokenSet.xFapiInteractionId}`);
-    logger.info(`Over18 claim: ${over18}`);
+    console.info(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
+    console.info(`Returned raw id_token: ${token.raw}`);
+    console.info(`Returned decoded id_token: ${token.decoded}`);
+    console.info(`Returned xFapiInteractionId: ${tokenSet.xFapiInteractionId}`);
+    console.info(`Over18 claim: ${over18}`);
 
     return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId, over18 });
   } catch (error) {
-    logger.error('Error retrieving tokenset: ' + error);
+    console.error('Error retrieving tokenset: ' + error);
     return res.status(500).json({ error: error.toString() });
   }
 });
