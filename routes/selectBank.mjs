@@ -6,7 +6,7 @@ const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
 
-app.post('/select-bank', async (req, res) => {
+router.post('/select-bank', async (req, res) => {
   const essentialClaims = req.body.essentialClaims || []
   const voluntaryClaims = req.body.voluntaryClaims || []
   const purpose = req.body.purpose || config.data.purpose
