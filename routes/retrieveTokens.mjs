@@ -67,6 +67,11 @@ router.get('/retrieve-tokens', async (req, res) => {
     console.info(`Returned decoded id_token: ${JSON.stringify(decodedToken, null, 2)}`);
     console.info(`Returned xFapiInteractionId: ${tokenSet.xFapiInteractionId}`);
 
+    // Check for the over18 claim (optional claim)
+    const over18 = consolidatedClaims.over18 || 'Claim not present';
+
+    console.info(`Over18 claim: ${over18}`);
+
     return res.json({
       claims,
       consolidatedClaims, // Return both standard and extended claims
@@ -75,7 +80,7 @@ router.get('/retrieve-tokens', async (req, res) => {
         raw: tokenSet.id_token,
       },
       xFapiInteractionId: tokenSet.xFapiInteractionId,
-        // Include over18 voluntary claim
+      over18,  // Include over18 voluntary claim
     });
   } catch (error) {
     console.error('Error retrieving token set: ', error);
