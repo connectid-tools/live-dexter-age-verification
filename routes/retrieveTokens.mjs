@@ -51,23 +51,30 @@ router.get('/retrieve-tokens', async (req, res) => {
       nonce
     );
 
-    // Extract claims and decode token
+    // Extract standard claims
     const claims = tokenSet.claims();
+
+    // Extract extended claims (consolidated claims)
+    const consolidatedClaims = tokenSet.consolidatedClaims();
+
+    // Decode the id_token
     const decodedToken = jwtDecode(tokenSet.id_token);
 
     // Log information
-    console.info(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
+    console.info(`Returned standard claims: ${JSON.stringify(claims, null, 2)}`);
+    console.info(`Returned consolidated claims: ${JSON.stringify(consolidatedClaims, null, 2)}`);
     console.info(`Returned raw id_token: ${tokenSet.id_token}`);
     console.info(`Returned decoded id_token: ${JSON.stringify(decodedToken, null, 2)}`);
     console.info(`Returned xFapiInteractionId: ${tokenSet.xFapiInteractionId}`);
 
     // Check for the over18 claim (optional claim)
-    const over18 = decodedToken.over18 || 'Claim not present';
+    const over18 = consolidatedClaims.over18 || 'Claim not present';
 
     console.info(`Over18 claim: ${over18}`);
 
     return res.json({
       claims,
+      consolidatedClaims, // Return both standard and extended claims
       token: {
         decoded: JSON.stringify(decodedToken, null, 2),
         raw: tokenSet.id_token,
