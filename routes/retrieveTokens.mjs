@@ -52,10 +52,10 @@ router.get('/retrieve-tokens', async (req, res) => {
 
 
         // Retrieve transaction ID (txn) from either standard or consolidated claims
-        const txn = claims.txn || consolidatedClaims.txn || 'Transaction ID not present';
-        console.info(`Transaction ID: ${txn}`);
+        const txn2 = claims.txn || consolidatedClaims.txn || 'Transaction ID not present';
+        console.info(`Transaction ID: ${txn2}`);
 
-        
+
     
     console.info(`standard claims: ${consolidatedClaims}`);
 
