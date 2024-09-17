@@ -33,15 +33,6 @@ router.get('/retrieve-tokens', async (req, res) => {
     // Dynamically import jwt-decode to ensure compatibility with ESM modules
     const { default: jwtDecode } = await import('jwt-decode');
 
-    // Retrieve fallback providers from the relying party client
-    const fallbackProviders = await rpClient.getFallbackProviderParticipants();
-
-    // Log fallback providers
-    console.info(`Fallback Providers: ${JSON.stringify(fallbackProviders, null, 2)}`);
-
-    // Assuming only one fallback provider is returned, we'll extract it
-    const fallbackProvider = fallbackProviders[0] || 'No fallback provider available';
-
     // Retrieve tokens from the authorization server
     const tokenSet = await rpClient.retrieveTokens(
       authorisationServerId,
@@ -59,6 +50,15 @@ router.get('/retrieve-tokens', async (req, res) => {
 
     // Decode the id_token
     const decodedToken = jwtDecode(tokenSet.id_token);
+
+    // Validate required OpenID Connect ID Token claims
+    const requiredClaims = ['iss', 'sub', 'aud', 'exp', 'iat'];
+    for (const claim of requiredClaims) {
+      if (!decodedToken[claim]) {
+        console.error(`Missing required claim: ${claim}`);
+        return res.status(400).json({ error: `Missing required claim: ${claim}` });
+      }
+    }
 
     // Log information
     console.info(`Returned standard claims: ${JSON.stringify(claims, null, 2)}`);
@@ -81,7 +81,6 @@ router.get('/retrieve-tokens', async (req, res) => {
       },
       xFapiInteractionId: tokenSet.xFapiInteractionId,
       over18,  // Include over18 voluntary claim
-      fallbackProvider // Include fallback provider in the response
     });
   } catch (error) {
     console.error('Error retrieving token set: ', error);
