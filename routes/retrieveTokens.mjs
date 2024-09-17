@@ -4,7 +4,7 @@ import { config } from '../config.js';
 
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
-router.get('/retrieve-ttokens', async (req, res) => {
+router.get('/retrieve-tokens', async (req, res) => {
   const cartId = req.query.cartId;
   const code = req.query.code;
 
@@ -50,6 +50,12 @@ router.get('/retrieve-ttokens', async (req, res) => {
     // Extract extended claims (consolidated claims)
     const consolidatedClaims = tokenSet.consolidatedClaims();
 
+
+        // Retrieve transaction ID (txn) from either standard or consolidated claims
+        const txn = claims.txn || consolidatedClaims.txn || 'Transaction ID not present';
+        console.info(`Transaction ID: ${txn}`);
+
+        
     
     console.info(`standard claims: ${consolidatedClaims}`);
 
