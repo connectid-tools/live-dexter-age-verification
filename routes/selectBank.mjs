@@ -24,6 +24,22 @@ router.post('/select-bank', async (req, res) => {
     return res.status(400).json({ error });
   }
 
+  // Check if the over18 claim is marked as essential or voluntary
+if (req.body.claims?.over18 !== undefined) {
+  const over18Claim = { claimName: 'over18', claimValue: req.body.claims.over18 };
+
+  if (req.body.claims.isEssentialOver18) {
+    essentialClaims.push(over18Claim);
+    console.log(`over18 claim added to essentialClaims: ${JSON.stringify(over18Claim)}`);
+  } else {
+    voluntaryClaims.push(over18Claim);
+    console.log(`over18 claim added to voluntaryClaims: ${JSON.stringify(over18Claim)}`);
+  }
+} else {
+  console.log('over18 claim is not present in the request');
+}
+
+
   try {
     
     // Send the pushed authorization request
@@ -51,8 +67,6 @@ router.post('/select-bank', async (req, res) => {
     res.cookie('nonce', nonce, cookieOptions);
     res.cookie('code_verifier', code_verifier, cookieOptions);
     res.cookie('authorisation_server_id', authServerId, cookieOptions);
-
-    console.log(`PAR sent to authorisationServerId='${authServerId}', returning authUrl='${authUrl}'`);
     
     return res.json({ authUrl });
   } catch (error) {
