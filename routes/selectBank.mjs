@@ -4,7 +4,6 @@ import { config } from '../config.js';
 
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
-
 router.post('/select-bank', async (req, res) => {
   const essentialClaims = req.body.essentialClaims || [];
   const voluntaryClaims = req.body.voluntaryClaims || [];
@@ -25,12 +24,31 @@ router.post('/select-bank', async (req, res) => {
   }
 
   try {
+    // Construct the claims request properly
+    const claimsRequest = {
+      id_token: {
+        txn: { essential: true },
+        auth_time: { essential: true },
+        verified_claims: {
+          verification: {
+            trust_framework: { value: 'au_connectid' }
+          },
+          claims: {
+            over18: { essential: true }
+          }
+        }
+      }
+    };
+
+    console.log(`Claims Request: ${JSON.stringify(claimsRequest)}`);
+
     // Send the pushed authorization request
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
       authServerId,
       essentialClaims,
       voluntaryClaims,
-      purpose
+      purpose,
+      claimsRequest // Pass the claims request
     );
 
     const cookieOptions = {
@@ -55,5 +73,6 @@ router.post('/select-bank', async (req, res) => {
     return res.status(500).json({ error: 'Failed to send PAR request', details: error.message });
   }
 });
+
 
 export default router;
