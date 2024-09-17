@@ -4,8 +4,7 @@ import { config } from '../config.js';
 
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
-
-router.get('/retrieve-tokens', async (req, res) => {
+router.get('/retrieve-ttokens', async (req, res) => {
   const cartId = req.query.cartId;
   const code = req.query.code;
 
@@ -60,6 +59,10 @@ router.get('/retrieve-tokens', async (req, res) => {
       }
     }
 
+    // Retrieve transaction ID (txn) claim
+    const txn = claims.txn || 'Transaction ID not present'; // Check for the transaction ID
+    console.info(`Transaction ID: ${txn}`);
+
     // Log information
     console.info(`Returned standard claims: ${JSON.stringify(claims, null, 2)}`);
     console.info(`Returned consolidated claims: ${JSON.stringify(consolidatedClaims, null, 2)}`);
@@ -81,11 +84,13 @@ router.get('/retrieve-tokens', async (req, res) => {
       },
       xFapiInteractionId: tokenSet.xFapiInteractionId,
       over18,  // Include over18 voluntary claim
+      txn      // Return the transaction ID
     });
   } catch (error) {
     console.error('Error retrieving token set: ', error);
     return res.status(500).json({ error: 'Failed to retrieve token set', details: error.toString() });
   }
 });
+
 
 export default router;
