@@ -25,9 +25,6 @@ router.post('/select-bank', async (req, res) => {
   }
 
   try {
-    console.log(
-      `PAR sent to authorisationServerId='${authServerId}', returning authUrl='${authUrl}', essentialClaims=${JSON.stringify(essentialClaims)}, voluntaryClaims=${JSON.stringify(voluntaryClaims)}`
-    );
     
     // Send the pushed authorization request
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
@@ -36,7 +33,11 @@ router.post('/select-bank', async (req, res) => {
       voluntaryClaims,
       purpose
     );
-
+    
+    console.log(
+      `PAR sent to authorisationServerId='${authServerId}', returning authUrl='${authUrl}', essentialClaims=${JSON.stringify(essentialClaims)}, voluntaryClaims=${JSON.stringify(voluntaryClaims)}`
+    );
+    
     const cookieOptions = {
       path: '/',
       sameSite: 'None', 
