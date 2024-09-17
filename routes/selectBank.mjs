@@ -13,7 +13,7 @@ router.post('/select-bank', async (req, res) => {
 
   if (!authServerId) {
     const error = 'authorisationServerId parameter is required';
-    console.error(error); // Changed from logger.error to console.error
+    console.error(error);
     return res.status(400).json({ error });
   }
 
@@ -35,8 +35,8 @@ router.post('/select-bank', async (req, res) => {
 
     const cookieOptions = {
       path: '/',
-      sameSite: 'None', // Modify this if running locally (see note below)
-      secure: true, // Toggle to false if testing on HTTP (local dev)
+      sameSite: 'None', 
+      secure: true, 
       httpOnly: true,
       maxAge: 3 * 60 * 1000 // 3 minutes
     };
