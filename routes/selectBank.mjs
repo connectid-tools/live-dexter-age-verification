@@ -17,34 +17,45 @@ router.post('/select-bank', async (req, res) => {
     return res.status(400).json({ error })
   }
 
-  try {
-    logger.info(
-      `Processing request to send PAR with authorisationServerId='${authServerId}' essentialClaims='${essentialClaims.join(
-        ','
-      )}' voluntaryClaims='${voluntaryClaims.join(',')}', purpose='${purpose}'`
-    )
-    const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
-      authServerId,
-      essentialClaims,
-      voluntaryClaims,
-      purpose
-    )
-
-    const path = ''
-    res.cookie('state', state, { path, sameSite: 'none', secure: true })
-    res.cookie('nonce', nonce, { path, sameSite: 'none', secure: true })
-    res.cookie('code_verifier', code_verifier, { path, sameSite: 'none', secure: true })
-    res.cookie('authorisation_server_id', authServerId, { path, sameSite: 'none', secure: true })
-
-    logger.info(
-      `PAR sent to authorisationServerId='${authServerId}', returning url='${authUrl}', x-fapi-interaction-id='${xFapiInteractionId}'`
-    )
-
-    return res.json({ authUrl })
-  } catch (error) {
-    logger.error(error)
-    return res.status(500).json({ error: error.toString() })
-  }
-})
-
-export default router;
+    console.log(`Claims Request: ${JSON.stringify(claimsRequest)}`);
+    const cartId = req.body.cartId;
+  
+    if (!authServerId || !cartId) {
+      const error = 'authorisationServerId and cartId are required';
+      console.error(error);
+      return res.status(400).json({ error });
+    }
+  
+    try {
+      // Send the pushed authorization request with the claims
+      const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
+        authServerId,
+        essentialClaims,
+        voluntaryClaims,
+        purpose
+      )
+  
+      const cookieOptions = {
+        path: '/',
+        sameSite: 'None',
+        secure: true,
+        httpOnly: true,
+        maxAge: 3 * 60 * 1000
+      };
+  
+      res.cookie('state', state, cookieOptions);
+      res.cookie('nonce', nonce, cookieOptions);
+      res.cookie('code_verifier', code_verifier, cookieOptions);
+      res.cookie('authorisation_server_id', authServerId, cookieOptions);
+  
+      console.log(`PAR sent to authorisationServerId='${authServerId}', returning authUrl='${authUrl}'`);
+  
+      return res.json({ authUrl });
+    } catch (error) {
+      console.error('Error during PAR request:', error);
+      return res.status(500).json({ error: 'Failed to send PAR request', details: error.message });
+    }
+  });
+  
+  export default router;
+  
