@@ -76,6 +76,7 @@ router.get('/retrieve-ttokens', async (req, res) => {
     console.info(`Over18 claim: ${over18}`);
 
     return res.json({
+      txn,  // Return the transaction ID
       claims,
       consolidatedClaims, // Return both standard and extended claims
       token: {
