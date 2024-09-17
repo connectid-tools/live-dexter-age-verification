@@ -49,8 +49,8 @@ router.post('/select-bank', async (req, res) => {
     res.cookie('code_verifier', code_verifier, cookieOptions);
     res.cookie('authorisation_server_id', authServerId, cookieOptions);
 
-    `PAR sent to authorisationServerId='${authServerId}', returning authUrl='${authUrl}', essentialClaims=${JSON.stringify(essentialClaims)}, voluntaryClaims=${JSON.stringify(voluntaryClaims)}`
-        
+    console.log(`PAR sent to authorisationServerId='${authServerId}', returning authUrl='${authUrl}'`);
+    
     return res.json({ authUrl });
   } catch (error) {
     console.error('Error during PAR request:', error);
