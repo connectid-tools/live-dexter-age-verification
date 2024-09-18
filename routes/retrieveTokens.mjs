@@ -13,28 +13,28 @@ async function getJwtDecode() {
 }
 
 router.get('/retrieve-tokens', async (req, res) => {
-  const { code, cartId } = req.query;
+  const { code } = req.query; 
 
-  // Validate both `code` and `cartId`
-  if (!code || !cartId) {
+  // Validate that the authorization code is present
+  if (!code) {
     clearCookies(res);
-    return res.status(400).json({ error: 'Code and cartId parameters are required' });
+    return res.status(400).json({ error: 'Code parameter is required' });
   }
 
-  // Check if the necessary cookies are set
+  // Retrieve necessary cookies for token retrieval
   const { authorisation_server_id, code_verifier, state, nonce } = req.cookies;
   if (!authorisation_server_id || !code_verifier || !state || !nonce) {
     return res.status(400).json({ error: 'Missing required cookies for token retrieval' });
   }
 
   try {
-    // Retrieve tokens from the authorization server
+    // Call the rpClient's retrieveTokens method to exchange the code for tokens
     const tokenSet = await rpClient.retrieveTokens(
-      authorisation_server_id,
-      req.query, // contains the authorization code (i.e., code)
-      code_verifier,
-      state,
-      nonce
+      authorisation_server_id, // Authorization server ID
+      { code },                // Contains the authorization code (i.e., code)
+      code_verifier,           // Code verifier used in the PKCE flow
+      state,                   // State to match the original request
+      nonce                    // Nonce to match the original request
     );
 
     // Extract the claims and tokens
