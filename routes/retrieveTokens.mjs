@@ -2,15 +2,16 @@ import express from 'express';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from '../config.js';
 import { clearCookies } from '../utils/cookieUtils.mjs';
+import { jwtDecode } from 'jwt-decode'
 
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
 // Import jwtDecode dynamically for ESM compatibility
-async function getJwtDecode() {
-  const { default: jwtDecode } = await import('jwt-decode');
-  return jwtDecode;
-}
+// async function getJwtDecode() {
+//   const { default: jwtDecode } = await import('jwt-decode');
+//   return jwtDecode;
+// }
 
 router.get('/retrieve-tokens', async (req, res) => {
   console.log('--- /retrieve-tokens endpoint hit ---');
@@ -65,7 +66,7 @@ router.get('/retrieve-tokens', async (req, res) => {
 
     // Extract the claims and tokens
     const claims = tokenSet.claims();
-    const jwtDecode = await getJwtDecode();
+    // const jwtDecode = await getJwtDecode();
     const token = {
       decoded: JSON.stringify(jwtDecode(tokenSet.id_token), null, 2),
       raw: tokenSet.id_token,
