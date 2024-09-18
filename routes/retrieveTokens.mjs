@@ -56,7 +56,12 @@ router.get('/retrieve-tokens', async (req, res) => {
     );
 
     console.log('Tokens successfully retrieved');
-    console.log('Token Set:', tokenSet);
+    console.log('Full Token Set:', JSON.stringify(tokenSet, null, 2));
+
+    // Check if the state is missing in the response
+    if (!tokenSet.state) {
+      console.error('State is missing in the tokenSet response');
+    }
 
     // Extract the claims and tokens
     const claims = tokenSet.claims();
