@@ -1,3 +1,8 @@
+
+import express from 'express';
+const router = express.Router();
+
+
 export const clearCookies = (res, logger) => {
     logger.info('Clearing all cookies');
     res.clearCookie('state');
@@ -5,4 +10,5 @@ export const clearCookies = (res, logger) => {
     res.clearCookie('code_verifier');
     res.clearCookie('authorisation_server_id');
   };
-  
+
+  export default router;
