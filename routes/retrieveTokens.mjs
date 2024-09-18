@@ -17,20 +17,20 @@ router.get('/retrieve-tokens', async (req, res) => {
 
   // Validate that the authorization code is present
   if (!code) {
-    clearCookies(res);
+    // Only clear cookies when there's a valid reason, such as a missing code.
+    clearCookies(res); 
     return res.status(400).json({ error: 'Code parameter is required' });
   }
 
   // Retrieve necessary cookies for token retrieval
   const { authorisation_server_id, code_verifier, state, nonce } = req.cookies;
-  
-  console.log(`State retrieved from cookies: ${state}`); // Add logging
+
+  console.log(`State retrieved from cookies: ${state}`);  // Check if state is present in the cookie
 
   if (!authorisation_server_id || !code_verifier || !state || !nonce) {
+    // Avoid clearing cookies unless absolutely necessary
     return res.status(400).json({ error: 'Missing required cookies for token retrieval' });
   }
-
-  console.info(`Retrieved cookies - authorisation_server_id: ${authorisation_server_id}, state: ${state}, nonce: ${nonce}`);
 
   try {
     // Call the rpClient's retrieveTokens method to exchange the code for tokens
@@ -55,6 +55,9 @@ router.get('/retrieve-tokens', async (req, res) => {
     console.info(`Returned decoded id_token: ${token.decoded}`);
     console.info(`Returned xFapiInteractionId: ${tokenSet.xFapiInteractionId}`);
 
+    // Clear cookies after the token exchange is complete
+    clearCookies(res);
+
     // Return the claims and token info as a response
     return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId });
   } catch (error) {
@@ -62,6 +65,5 @@ router.get('/retrieve-tokens', async (req, res) => {
     return res.status(500).json({ error: error.toString() });
   }
 });
-
 
 export default router;
