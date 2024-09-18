@@ -13,26 +13,39 @@ async function getJwtDecode() {
 }
 
 router.get('/retrieve-tokens', async (req, res) => {
-  const { code } = req.query; 
+  console.log('--- /retrieve-tokens endpoint hit ---');
+  
+  // Extract the authorization code from query params
+  const { code } = req.query;
+  console.log(`Received code: ${code}`);
 
   // Validate that the authorization code is present
   if (!code) {
-    // Only clear cookies when there's a valid reason, such as a missing code.
-    clearCookies(res); 
+    console.error('Code parameter is missing');
     return res.status(400).json({ error: 'Code parameter is required' });
   }
 
   // Retrieve necessary cookies for token retrieval
   const { authorisation_server_id, code_verifier, state, nonce } = req.cookies;
+  console.log('Cookies received:');
+  console.log(`authorisation_server_id: ${authorisation_server_id}`);
+  console.log(`code_verifier: ${code_verifier}`);
+  console.log(`state: ${state}`);
+  console.log(`nonce: ${nonce}`);
 
-  console.log(`State retrieved from cookies: ${state}`);  // Check if state is present in the cookie
-
+  // Check if any required cookie is missing
   if (!authorisation_server_id || !code_verifier || !state || !nonce) {
-    // Avoid clearing cookies unless absolutely necessary
+    console.error('Missing required cookies for token retrieval');
     return res.status(400).json({ error: 'Missing required cookies for token retrieval' });
   }
 
   try {
+    console.log('Attempting to retrieve tokens with the following details:');
+    console.log(`authorisation_server_id: ${authorisation_server_id}`);
+    console.log(`code_verifier: ${code_verifier}`);
+    console.log(`state: ${state}`);
+    console.log(`nonce: ${nonce}`);
+
     // Call the rpClient's retrieveTokens method to exchange the code for tokens
     const tokenSet = await rpClient.retrieveTokens(
       authorisation_server_id, // Authorization server ID
@@ -41,6 +54,9 @@ router.get('/retrieve-tokens', async (req, res) => {
       state,                   // State to match the original request
       nonce                    // Nonce to match the original request
     );
+
+    console.log('Tokens successfully retrieved');
+    console.log('Token Set:', tokenSet);
 
     // Extract the claims and tokens
     const claims = tokenSet.claims();
@@ -55,13 +71,21 @@ router.get('/retrieve-tokens', async (req, res) => {
     console.info(`Returned decoded id_token: ${token.decoded}`);
     console.info(`Returned xFapiInteractionId: ${tokenSet.xFapiInteractionId}`);
 
-    // Clear cookies after the token exchange is complete
+    // Log claims and token info
+    console.log('Claims:', claims);
+    console.log('ID Token (raw):', token.raw);
+    console.log('ID Token (decoded):', token.decoded);
+
+    // Clear cookies AFTER ensuring the tokens have been retrieved and no further actions need cookies
     clearCookies(res);
+    console.log('Cookies cleared successfully');
 
     // Return the claims and token info as a response
+    console.log('Returning token and claims info in the response');
     return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId });
+
   } catch (error) {
-    console.error('Error retrieving tokenset: ' + error);
+    console.error('Error retrieving tokenset:', error);
     return res.status(500).json({ error: error.toString() });
   }
 });
