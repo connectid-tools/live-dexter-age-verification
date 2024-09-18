@@ -33,6 +33,8 @@ router.post('/select-bank', async (req, res) => {
       voluntaryClaims,
       purpose
     );
+
+    console.log(`State generated and sent to auth server: ${state}`); // Add logging
     
     console.log(
       `PAR sent to authorisationServerId='${authServerId}', returning authUrl='${authUrl}', essentialClaims=${JSON.stringify(essentialClaims)}, voluntaryClaims=${JSON.stringify(voluntaryClaims)}`
@@ -46,11 +48,11 @@ router.post('/select-bank', async (req, res) => {
       maxAge: 3 * 60 * 1000 // 3 minutes
     };
 
-    // Set cookies to maintain state
-    res.cookie('state', state, cookieOptions);
-    res.cookie('nonce', nonce, cookieOptions);
-    res.cookie('code_verifier', code_verifier, cookieOptions);
-    res.cookie('authorisation_server_id', authServerId, cookieOptions);
+// Set cookies to maintain state
+  res.cookie('state', state, cookieOptions);
+  res.cookie('nonce', nonce, cookieOptions);
+  res.cookie('code_verifier', code_verifier, cookieOptions);
+  res.cookie('authorisation_server_id', authServerId, cookieOptions);
     
     return res.json({ authUrl });
   } catch (error) {

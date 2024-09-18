@@ -23,9 +23,14 @@ router.get('/retrieve-tokens', async (req, res) => {
 
   // Retrieve necessary cookies for token retrieval
   const { authorisation_server_id, code_verifier, state, nonce } = req.cookies;
+  
+  console.log(`State retrieved from cookies: ${state}`); // Add logging
+
   if (!authorisation_server_id || !code_verifier || !state || !nonce) {
     return res.status(400).json({ error: 'Missing required cookies for token retrieval' });
   }
+
+  console.info(`Retrieved cookies - authorisation_server_id: ${authorisation_server_id}, state: ${state}, nonce: ${nonce}`);
 
   try {
     // Call the rpClient's retrieveTokens method to exchange the code for tokens
@@ -57,5 +62,6 @@ router.get('/retrieve-tokens', async (req, res) => {
     return res.status(500).json({ error: error.toString() });
   }
 });
+
 
 export default router;
