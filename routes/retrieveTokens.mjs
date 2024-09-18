@@ -49,7 +49,7 @@ router.get('/retrieve-tokens', async (req, res) => {
     // Call the rpClient's retrieveTokens method to exchange the code for tokens
     const tokenSet = await rpClient.retrieveTokens(
       authorisation_server_id, // Authorization server ID
-      { code },                // Contains the authorization code (i.e., code)
+      request.query,                // Contains the authorization code (i.e., code)
       code_verifier,           // Code verifier used in the PKCE flow
       state,                   // State to match the original request
       nonce                    // Nonce to match the original request
