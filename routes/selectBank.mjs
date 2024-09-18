@@ -1,4 +1,3 @@
-// routes/selectBank.mjs
 import express from 'express';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from '../config.js';
@@ -28,7 +27,6 @@ router.post('/select-bank', async (req, res) => {
   }
 
   try {
-    // Logging essential details before sending the request
     console.log('Sending PAR request to auth server with details:');
     console.log(`- Authorisation Server ID: ${authServerId}`);
     console.log(`- Essential Claims: ${JSON.stringify(essentialClaims)}`);
@@ -58,7 +56,6 @@ router.post('/select-bank', async (req, res) => {
       maxAge: 3 * 60 * 1000 // 3 minutes
     };
 
-    // Logging before setting cookies
     console.log('Setting cookies for state, nonce, code_verifier, and authorisation_server_id:');
     console.log(`- state: ${state}`);
     console.log(`- nonce: ${nonce}`);
@@ -71,19 +68,10 @@ router.post('/select-bank', async (req, res) => {
     res.cookie('code_verifier', code_verifier, cookieOptions);
     res.cookie('authorisation_server_id', authServerId, cookieOptions);
 
-    // Logging after cookies are set
-    console.log('Cookies after setting:');
-    console.log(`- state: ${req.cookies.state}`);
-    console.log(`- nonce: ${req.cookies.nonce}`);
-    console.log(`- code_verifier: ${req.cookies.code_verifier}`);
-    console.log(`- authorisation_server_id: ${req.cookies.authorisation_server_id}`);
+    console.log('Cookies set successfully for state, nonce, code_verifier, and authorisation_server_id');
 
-    // Log the successful response being sent to the client
-    console.log(`Returning auth URL to the client: ${authUrl}`);
-    
     return res.json({ authUrl });
   } catch (error) {
-    // Log the error details for better troubleshooting
     console.error('Error during PAR request:', error);
     return res.status(500).json({ error: 'Failed to send PAR request', details: error.message });
   }

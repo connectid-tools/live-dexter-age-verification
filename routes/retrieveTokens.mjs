@@ -14,7 +14,7 @@ async function getJwtDecode() {
 
 router.get('/retrieve-tokens', async (req, res) => {
   console.log('--- /retrieve-tokens endpoint hit ---');
-  
+
   // Extract the authorization code from query params
   const { code } = req.query;
   console.log(`Received code: ${code}`);
@@ -71,7 +71,6 @@ router.get('/retrieve-tokens', async (req, res) => {
     console.info(`Returned decoded id_token: ${token.decoded}`);
     console.info(`Returned xFapiInteractionId: ${tokenSet.xFapiInteractionId}`);
 
-    // Log claims and token info
     console.log('Claims:', claims);
     console.log('ID Token (raw):', token.raw);
     console.log('ID Token (decoded):', token.decoded);
@@ -83,7 +82,6 @@ router.get('/retrieve-tokens', async (req, res) => {
     // Return the claims and token info as a response
     console.log('Returning token and claims info in the response');
     return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId });
-
   } catch (error) {
     console.error('Error retrieving tokenset:', error);
     return res.status(500).json({ error: error.toString() });
