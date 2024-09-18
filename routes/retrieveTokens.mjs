@@ -72,10 +72,10 @@ router.get('/retrieve-tokens', async (req, res) => {
       raw: tokenSet.id_token,
     };
 
-    console.info(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
-    console.info(`Returned raw id_token: ${token.raw}`);
-    console.info(`Returned decoded id_token: ${token.decoded}`);
-    console.info(`Returned xFapiInteractionId: ${tokenSet.xFapiInteractionId}`);
+    console.log(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
+    console.log(`Returned raw id_token: ${token.raw}`);
+    console.log(`Returned decoded id_token: ${token.decoded}`);
+    console.log(`Returned xFapiInteractionId: ${tokenSet.xFapiInteractionId}`);
 
     console.log('Claims:', claims);
     console.log('ID Token (raw):', token.raw);
