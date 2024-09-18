@@ -1,3 +1,4 @@
+// routes/selectBank.mjs
 import express from 'express';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from '../config.js';
@@ -25,7 +26,6 @@ router.post('/select-bank', async (req, res) => {
   }
 
   try {
-    
     // Send the pushed authorization request
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
       authServerId,

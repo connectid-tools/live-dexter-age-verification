@@ -13,6 +13,7 @@ import getRestrictedItemsRouter from './routes/getRestrictedItems.mjs';
 import selectBankRouter from './routes/selectBank.mjs';
 import retrieveTokensRouter from './routes/retrieveTokens.mjs';
 import tokenExpiryRouter from './routes/tokenExpiry.mjs';
+import { clearCookies } from './utils/cookieUtils.mjs';
 
 const app = express();
 const port = 3001;
