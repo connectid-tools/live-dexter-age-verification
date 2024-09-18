@@ -24,6 +24,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(path.resolve(), 'public')));
 app.use(cors);
 app.use(setCorsHeaders);
+app.use(cookieParser());
 
 // Routes
 app.use('/', indexRouter);
