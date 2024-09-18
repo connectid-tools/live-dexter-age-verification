@@ -1,7 +1,7 @@
 import express from 'express';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from '../config.js';
-import { clearCookies } from './cookieUtils.js';
+import { clearCookies } from '.utils/cookieUtils.mjs';
 
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
