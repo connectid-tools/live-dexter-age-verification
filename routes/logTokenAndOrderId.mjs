@@ -11,6 +11,34 @@ const s3 = new AWS.S3({
     secretAccessKey: process.env.SPACES_SECRET, // Set this in your environment variables
 });
 
+// Function to check for duplicate log entries
+async function checkForDuplicateLog(orderId, authToken) {
+    const params = {
+        Bucket: 'shtransactionlogs',
+        Key: 'sh-demo-txn-logs/txnLogs.txt',
+    };
+
+    try {
+        const existingFile = await s3.getObject(params).promise();
+        const existingLog = existingFile.Body.toString('utf-8');
+
+        // Check if an entry with the same orderId and authToken exists
+        const logEntries = existingLog.split('\n');
+        const duplicate = logEntries.some(entry => {
+            return entry.includes(`Order ID: ${orderId}`) && entry.includes(`Auth Token: ${authToken}`);
+        });
+
+        return duplicate;
+    } catch (error) {
+        if (error.code === 'NoSuchKey') {
+            // If no file exists, no duplicate can exist
+            return false;
+        } else {
+            throw new Error('Error reading log file: ' + error.message);
+        }
+    }
+}
+
 // Function to upload log data to DigitalOcean Space
 async function uploadLogToSpace(logData) {
     const params = {
@@ -53,11 +81,20 @@ async function uploadLogToSpace(logData) {
 router.post('/log-order', async (req, res) => {
     const { orderId, authToken } = req.body;
 
+    // Return error if authToken or orderId is missing
     if (!orderId || !authToken) {
         return res.status(400).json({ error: 'Missing orderId or authToken' });
     }
 
     try {
+        // Check if the log entry already exists (duplicate check)
+        const isDuplicate = await checkForDuplicateLog(orderId, authToken);
+
+        if (isDuplicate) {
+            console.log('Duplicate log entry found. Skipping logging.');
+            return res.status(200).json({ message: 'Duplicate log entry. No action taken.' });
+        }
+
         // Convert authToken into a string in case it's not already
         const authTokenString = typeof authToken === 'string' ? authToken : JSON.stringify(authToken);
 
@@ -68,15 +105,12 @@ router.post('/log-order', async (req, res) => {
         const uploadSuccess = await uploadLogToSpace(logEntry);
 
         if (uploadSuccess) {
-            // Log success message
             console.log('Log entry uploaded successfully.');
             res.status(200).json({ message: 'Order ID and auth token logged successfully to DigitalOcean Spaces' });
         } else {
-            // Log failure message
             console.error('Failed to upload log entry.');
             res.status(500).json({ error: 'Failed to log order and token.' });
         }
-
     } catch (error) {
         console.error('Error logging order and token:', error);
         res.status(500).json({ error: 'Internal Server Error' });
