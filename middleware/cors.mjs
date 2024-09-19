@@ -3,6 +3,7 @@ import cors from 'cors';
 const allowedOrigins = [
   `https://${process.env.STORE_DOMAIN}`,
   `https://${process.env.ENDPOINT_DOMAIN}.ondigitalocean.app`
+  `https://api.bigcommerce.com`
 ];
 
 export const corsOptions = {
