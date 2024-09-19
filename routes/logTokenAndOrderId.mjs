@@ -25,11 +25,14 @@ router.post('/log-order', async (req, res) => {
         // Ensure the logs directory exists
         await ensureLogsDirectory();
 
+        // Convert authToken into a string in case it's not already
+        const authTokenString = typeof authToken === 'string' ? authToken : JSON.stringify(authToken);
+
         // Define the path to the log file in a 'logs' directory within the project
         const logFilePath = path.join(process.cwd(), 'logs', 'txnLogs.txt');  // Now points to './logs/txnLogs.txt'
 
         // Create a log entry as a new line
-        const logEntry = `Order ID: ${orderId}, Auth Token: ${authToken}, Timestamp: ${new Date().toISOString()}\n`;
+        const logEntry = `Order ID: ${orderId}, Auth Token: ${authTokenString}, Timestamp: ${new Date().toISOString()}\n`;
 
         // Append the log entry to the file (this creates the file if it doesn't exist)
         await fs.appendFile(logFilePath, logEntry);
