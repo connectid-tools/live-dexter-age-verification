@@ -13,6 +13,7 @@ import getRestrictedItemsRouter from './routes/getRestrictedItems.mjs';
 import selectBankRouter from './routes/selectBank.mjs';
 import retrieveTokensRouter from './routes/retrieveTokens.mjs';
 import tokenExpiryRouter from './routes/tokenExpiry.mjs';
+import logOrderRouter from './routes/logOrder.mjs';
 import cookieParser from 'cookie-parser';
 
 const app = express();
@@ -34,6 +35,7 @@ app.use('/restricted-items', getRestrictedItemsRouter);
 app.use(selectBankRouter);
 app.use(retrieveTokensRouter);
 app.use(tokenExpiryRouter);
+app.use('/log-order', logOrderRouter);
 
 // Token management
 setInterval(clearExpiredTokens, 5 * 60 * 1000);

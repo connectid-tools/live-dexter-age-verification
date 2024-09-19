@@ -81,6 +81,7 @@ router.get('/retrieve-tokens', async (req, res) => {
     console.log('ID Token (raw):', token.raw);
     console.log('ID Token (decoded):', token.decoded);
 
+
     // Clear cookies AFTER ensuring the tokens have been retrieved and no further actions need cookies
     clearCookies(res);
     console.log('Cookies cleared successfully');
