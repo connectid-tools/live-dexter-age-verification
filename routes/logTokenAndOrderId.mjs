@@ -4,6 +4,16 @@ import path from 'path';
 
 const router = express.Router();
 
+// Ensure the logs directory exists
+async function ensureLogsDirectory() {
+    const logsDir = path.join(process.cwd(), '../logs');
+    try {
+        await fs.mkdir(logsDir, { recursive: true }); // Create the directory if it doesn't exist
+    } catch (error) {
+        console.error('Error creating logs directory:', error);
+    }
+}
+
 router.post('/log-order', async (req, res) => {
     const { orderId, authToken } = req.body;
 
@@ -12,6 +22,9 @@ router.post('/log-order', async (req, res) => {
     }
 
     try {
+        // Ensure the logs directory exists
+        await ensureLogsDirectory();
+
         // Define the path to the log file in a 'logs' directory
         const logFilePath = path.join(process.cwd(), '../logs', 'txnLogs.txt');
 
