@@ -11,8 +11,23 @@ const s3 = new AWS.S3({
     secretAccessKey: process.env.SPACES_SECRET, // Set this in your environment variables
 });
 
-// Function to check for duplicate log entries
-async function checkForDuplicateLog(orderId, authToken) {
+// Function to extract the txn value from authToken
+function extractTxnFromAuthToken(authToken) {
+    try {
+        const parsedToken = JSON.parse(authToken);
+        if (parsedToken.decoded) {
+            const decoded = JSON.parse(parsedToken.decoded);
+            return decoded?.txn || null; // Return the txn value if it exists
+        }
+        return null;
+    } catch (error) {
+        console.error('Error extracting txn from authToken:', error);
+        return null;
+    }
+}
+
+// Function to check for duplicate log entries based on txn and orderId
+async function checkForDuplicateLog(orderId, txn) {
     const params = {
         Bucket: 'shtransactionlogs',
         Key: 'sh-demo-txn-logs/txnLogs.txt',
@@ -22,10 +37,10 @@ async function checkForDuplicateLog(orderId, authToken) {
         const existingFile = await s3.getObject(params).promise();
         const existingLog = existingFile.Body.toString('utf-8');
 
-        // Check if an entry with the same orderId and authToken exists
+        // Check if an entry with the same orderId and txn exists
         const logEntries = existingLog.split('\n');
         const duplicate = logEntries.some(entry => {
-            return entry.includes(`Order ID: ${orderId}`) && entry.includes(`Auth Token: ${authToken}`);
+            return entry.includes(`Order ID: ${orderId}`) && entry.includes(`txn: ${txn}`);
         });
 
         return duplicate;
@@ -87,32 +102,36 @@ router.post('/log-order', async (req, res) => {
     }
 
     try {
+        // Extract the txn value from the authToken
+        const txn = extractTxnFromAuthToken(authToken);
+
+        if (!txn) {
+            return res.status(400).json({ error: 'Invalid or missing txn in authToken' });
+        }
+
         // Check if the log entry already exists (duplicate check)
-        const isDuplicate = await checkForDuplicateLog(orderId, authToken);
+        const isDuplicate = await checkForDuplicateLog(orderId, txn);
 
         if (isDuplicate) {
             console.log('Duplicate log entry found. Skipping logging.');
             return res.status(200).json({ message: 'Duplicate log entry. No action taken.' });
         }
 
-        // Convert authToken into a string in case it's not already
-        const authTokenString = typeof authToken === 'string' ? authToken : JSON.stringify(authToken);
-
-        // Create a log entry as a new line
-        const logEntry = `Order ID: ${orderId}, Auth Token: ${authTokenString}, Timestamp: ${new Date().toISOString()}\n`;
+        // Create a log entry with only txn, orderId, and timestamp
+        const logEntry = `Order ID: ${orderId}, txn: ${txn}, Timestamp: ${new Date().toISOString()}\n`;
 
         // Upload the log entry to DigitalOcean Spaces
         const uploadSuccess = await uploadLogToSpace(logEntry);
 
         if (uploadSuccess) {
             console.log('Log entry uploaded successfully.');
-            res.status(200).json({ message: 'Order ID and auth token logged successfully to DigitalOcean Spaces' });
+            res.status(200).json({ message: 'Order ID, txn, and timestamp logged successfully to DigitalOcean Spaces' });
         } else {
             console.error('Failed to upload log entry.');
-            res.status(500).json({ error: 'Failed to log order and token.' });
+            res.status(500).json({ error: 'Failed to log order and txn.' });
         }
     } catch (error) {
-        console.error('Error logging order and token:', error);
+        console.error('Error logging order and txn:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
