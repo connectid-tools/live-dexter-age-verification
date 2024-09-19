@@ -1,5 +1,5 @@
 import express from 'express';
-import fs from 'fs/promises'; // Use promises version of fs for async/await
+import fs from 'fs/promises';
 import path from 'path';
 
 const router = express.Router();
@@ -12,8 +12,8 @@ router.post('/log-order', async (req, res) => {
     }
 
     try {
-        // Define the path to the log file one folder back
-        const logFilePath = path.join(process.cwd(), '../', 'txnLogs.txt');
+        // Define the path to the log file in a 'logs' directory
+        const logFilePath = path.join(process.cwd(), '../logs', 'txnLogs.txt');
 
         // Create a log entry as a new line
         const logEntry = `Order ID: ${orderId}, Auth Token: ${authToken}, Timestamp: ${new Date().toISOString()}\n`;
