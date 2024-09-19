@@ -9,7 +9,7 @@ router.get('/get-order-data', async (req, res) => {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
-            'X-Auth-Token': '5kcfsr1c412sagqc20l0eb6u19pf7cc'  // BigCommerce API token
+            'X-Auth-Token': '1b2iqeour6ky2lc7trmjby5s555o2mk'  // BigCommerce API token
         }
     };
 
