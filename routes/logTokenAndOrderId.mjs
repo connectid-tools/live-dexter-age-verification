@@ -14,9 +14,23 @@ const s3 = new AWS.S3({
 // Function to extract the txn value from authToken
 function extractTxnFromAuthToken(authToken) {
     try {
-        const parsedToken = JSON.parse(authToken);
+        let parsedToken;
+
+        // Check if authToken is already an object, if not, parse it
+        if (typeof authToken === 'object') {
+            parsedToken = authToken;
+        } else if (typeof authToken === 'string') {
+            parsedToken = JSON.parse(authToken);
+        } else {
+            throw new Error('Invalid authToken format');
+        }
+
+        // Check if parsedToken has the decoded property and extract txn
         if (parsedToken.decoded) {
-            const decoded = JSON.parse(parsedToken.decoded);
+            const decoded = typeof parsedToken.decoded === 'string'
+                ? JSON.parse(parsedToken.decoded)
+                : parsedToken.decoded;
+
             return decoded?.txn || null; // Return the txn value if it exists
         }
         return null;
@@ -25,6 +39,7 @@ function extractTxnFromAuthToken(authToken) {
         return null;
     }
 }
+
 
 // Function to check for duplicate log entries based on txn and orderId
 async function checkForDuplicateLog(orderId, txn) {
