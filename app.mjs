@@ -36,8 +36,8 @@ app.use('/restricted-items', getRestrictedItemsRouter);
 app.use(selectBankRouter);
 app.use(retrieveTokensRouter);
 app.use(tokenExpiryRouter);
-app.use('/log-order', logOrderRouter);
-app.use('/get-order-data', getOrderDataRouter);
+app.use(logOrderRouter);
+app.use(getOrderDataRouter);
 
 // Token management
 setInterval(clearExpiredTokens, 5 * 60 * 1000);
