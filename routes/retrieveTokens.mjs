@@ -52,8 +52,21 @@ router.get('/retrieve-tokens', async (req, res) => {
     const expectedClientId = "https://rp.directory.sandbox.connectid.com.au/openid_relying_party/a849178a-f0a4-45ed-8472-a50c4d5299ae";
     const expectedAlgorithm = 'PS256';
 
+    // Test 1 - Happy path flow with tokens retrieved
+    if (!loggedError && !loggedSuccess) {
+      tokenLogs.push({
+        type: 'Success',
+        message: 'Success: Happy path flow completed, tokens retrieved',
+        timestamp: new Date()
+      });
+      loggedSuccess = true;
+      return res.status(200).json({ message: 'Success: Happy path flow completed, tokens retrieved', logs: tokenLogs });
+    }
     // Test 2 - Mismatched `iss` value
+    console.log('Checking `iss` value:', token.decoded.iss, 'against expected issuer:', expectedIssuer);
+
     if (token.decoded.iss !== expectedIssuer) {
+      console.log('Mismatched `iss` value detected'); // Log that the mismatch was detected
       tokenLogs.push({ 
         type: 'Error', 
         message: '`iss` value in id_token does not match expected issuer', 
