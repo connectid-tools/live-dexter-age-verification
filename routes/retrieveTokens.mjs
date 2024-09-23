@@ -82,6 +82,14 @@ router.get('/retrieve-tokens', async (req, res) => {
     console.log('ID Token (raw):', token.raw);
     console.log('ID Token (decoded):', token.decoded);
 
+    // Log the token retrieval success in tokenLogs before clearing cookies
+    tokenLogs.push({
+      type: 'Success',
+      message: 'Tokens retrieved successfully',
+      details: { claims, token },
+      timestamp: new Date(),
+    });
+
 
     // Clear cookies AFTER ensuring the tokens have been retrieved and no further actions need cookies
     clearCookies(res);
@@ -92,8 +100,15 @@ router.get('/retrieve-tokens', async (req, res) => {
     return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId });
   } catch (error) {
     console.error('Error retrieving tokenset:', error);
+    
+    // Log the error in tokenLogs
+    tokenLogs.push({
+      type: 'Error',
+      message: 'Error retrieving tokenset',
+      details: error.toString(),
+      timestamp: new Date(),
+    });
+    
     return res.status(500).json({ error: error.toString() });
   }
 });
-
-export default router;
