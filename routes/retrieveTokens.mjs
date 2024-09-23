@@ -85,8 +85,6 @@ router.get('/retrieve-tokens', async (req, res) => {
 
     let loggedError = false; // Flag to track if an error has already been logged
 
-    let loggedError = false; // Flag to track if an error has already been logged
-
 // Test 1 - Happy path flow with tokens retrieved (log success if no errors)
 if (!loggedError) {
   const successMessage = 'Success: Happy path flow completed, tokens retrieved';
