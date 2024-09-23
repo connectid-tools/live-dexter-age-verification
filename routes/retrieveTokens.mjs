@@ -62,6 +62,7 @@ router.get('/retrieve-tokens', async (req, res) => {
       loggedSuccess = true;
       return res.status(200).json({ message: 'Success: Happy path flow completed, tokens retrieved', logs: tokenLogs });
     }
+    
     // Test 2 - Mismatched `iss` value
     console.log('Checking `iss` value:', token.decoded.iss, 'against expected issuer:', expectedIssuer);
 
