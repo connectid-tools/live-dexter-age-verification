@@ -112,3 +112,5 @@ router.get('/retrieve-tokens', async (req, res) => {
     return res.status(500).json({ error: error.toString() });
   }
 });
+
+export default router;
