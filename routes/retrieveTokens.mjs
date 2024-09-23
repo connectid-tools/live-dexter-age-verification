@@ -53,15 +53,15 @@ router.get('/retrieve-tokens', async (req, res) => {
     const expectedAlgorithm = 'PS256';
 
     // Test 1 - Happy path flow with tokens retrieved
-    if (!loggedError && !loggedSuccess) {
-      tokenLogs.push({
-        type: 'Success',
-        message: 'Success: Happy path flow completed, tokens retrieved',
-        timestamp: new Date()
-      });
-      loggedSuccess = true;
-      return res.status(200).json({ message: 'Success: Happy path flow completed, tokens retrieved', logs: tokenLogs });
-    }
+    // if (!loggedError && !loggedSuccess) {
+    //   tokenLogs.push({
+    //     type: 'Success',
+    //     message: 'Success: Happy path flow completed, tokens retrieved',
+    //     timestamp: new Date()
+    //   });
+    //   loggedSuccess = true;
+    //   return res.status(200).json({ message: 'Success: Happy path flow completed, tokens retrieved', logs: tokenLogs });
+    // }
     
     // Test 2 - Mismatched `iss` value
     console.log('Checking `iss` value:', token.decoded.iss, 'against expected issuer:', expectedIssuer);
