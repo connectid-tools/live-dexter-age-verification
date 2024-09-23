@@ -7,11 +7,10 @@ import { jwtDecode } from 'jwt-decode'
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
-// Import jwtDecode dynamically for ESM compatibility
-// async function getJwtDecode() {
-//   const { default: jwtDecode } = await import('jwt-decode');
-//   return jwtDecode;
-// }
+
+let tokenSetData = {};  // To store token set and related data
+let tokenLogs = [];     // To store logs for /logs endpoint to return
+
 
 router.get('/retrieve-tokens', async (req, res) => {
   console.log('--- /retrieve-tokens endpoint hit ---');
@@ -71,6 +70,8 @@ router.get('/retrieve-tokens', async (req, res) => {
       decoded: JSON.stringify(jwtDecode(tokenSet.id_token), null, 2),
       raw: tokenSet.id_token,
     };
+
+    tokenSetData = { tokenSet, claims, token };
 
     console.log(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
     console.log(`Returned raw id_token: ${token.raw}`);
