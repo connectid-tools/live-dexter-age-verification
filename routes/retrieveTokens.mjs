@@ -2,15 +2,12 @@ import express from 'express';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from '../config.js';
 import { clearCookies } from '../utils/cookieUtils.mjs';
-import { jwtDecode } from 'jwt-decode'
+import { jwtDecode } from 'jwt-decode';
 
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
-
-let tokenSetData = {};  // To store token set and related data
-let tokenLogs = [];     // To store logs for /logs endpoint to return
-
+let tokenLogs = [];     // To store logs for the `/retrieve-tokens` response
 
 router.get('/retrieve-tokens', async (req, res) => {
   console.log('--- /retrieve-tokens endpoint hit ---');
@@ -49,7 +46,7 @@ router.get('/retrieve-tokens', async (req, res) => {
     // Call the rpClient's retrieveTokens method to exchange the code for tokens
     const tokenSet = await rpClient.retrieveTokens(
       authorisation_server_id, // Authorization server ID
-      req.query,                // Contains the authorization code (i.e., code)
+      req.query,               // Contains the authorization code (i.e., code)
       code_verifier,           // Code verifier used in the PKCE flow
       state,                   // State to match the original request
       nonce                    // Nonce to match the original request
@@ -58,20 +55,12 @@ router.get('/retrieve-tokens', async (req, res) => {
     console.log('Tokens successfully retrieved');
     console.log('Full Token Set:', JSON.stringify(tokenSet, null, 2));
 
-    // Check if the state is missing in the response
-    if (!tokenSet.state) {
-      console.error('State is missing in the tokenSet response');
-    }
-
     // Extract the claims and tokens
     const claims = tokenSet.claims();
-    // const jwtDecode = await getJwtDecode();
     const token = {
       decoded: JSON.stringify(jwtDecode(tokenSet.id_token), null, 2),
       raw: tokenSet.id_token,
     };
-
-    tokenSetData = { tokenSet, claims, token };
 
     console.log(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
     console.log(`Returned raw id_token: ${token.raw}`);
@@ -82,7 +71,10 @@ router.get('/retrieve-tokens', async (req, res) => {
     console.log('ID Token (raw):', token.raw);
     console.log('ID Token (decoded):', token.decoded);
 
-    // Log the token retrieval success in tokenLogs before clearing cookies
+    // Clear previous logs to ensure fresh logs for every request
+    tokenLogs = [];
+
+    // Log the token retrieval success
     tokenLogs.push({
       type: 'Success',
       message: 'Tokens retrieved successfully',
@@ -90,17 +82,42 @@ router.get('/retrieve-tokens', async (req, res) => {
       timestamp: new Date(),
     });
 
+    // Perform additional checks and log errors or successes
+    const expectedIssuer = "https://www.certification.openid.net/test/a/sheldonandhammond/";
+    const expectedClientId = "https://rp.directory.sandbox.connectid.com.au/openid_relying_party/a849178a-f0a4-45ed-8472-a50c4d5299ae";
+    const expectedAlgorithm = 'PS256'; // Expected algorithm for ID token signing
+
+    // Test 1 - Check the `iss` value
+    if (token.decoded.iss !== expectedIssuer) {
+      tokenLogs.push({ type: 'Error', message: '`iss` value in id_token does not match expected issuer', timestamp: new Date() });
+    }
+
+    // Test 2 - Check the `aud` value
+    if (token.decoded.aud !== expectedClientId) {
+      tokenLogs.push({ type: 'Error', message: '`aud` value in id_token does not match expected client ID', timestamp: new Date() });
+    }
+
+    // Test 3 - Check the signing algorithm
+    if (tokenSet.id_token_header?.alg !== expectedAlgorithm) {
+      tokenLogs.push({ type: 'Error', message: `id_token algorithm ${tokenSet.id_token_header?.alg} does not match expected ${expectedAlgorithm}`, timestamp: new Date() });
+    }
+
+    // Test 4 - Check the expiration
+    const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+    if (token.decoded.exp && token.decoded.exp < currentTime) {
+      tokenLogs.push({ type: 'Error', message: '`exp` value in id_token has expired', timestamp: new Date() });
+    }
+
+    // More tests can be added here...
 
     // Clear cookies AFTER ensuring the tokens have been retrieved and no further actions need cookies
     clearCookies(res);
     console.log('Cookies cleared successfully');
 
-    // Return the claims and token info as a response
-    console.log('Returning token and claims info in the response');
-    return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId });
+    // Return the logs along with the claims and token info as a response
+    console.log('Returning token, claims, and logs in the response');
+    return res.json({ claims, token, logs: tokenLogs, xFapiInteractionId: tokenSet.xFapiInteractionId });
   } catch (error) {
-    console.error('Error retrieving tokenset:', error);
-    
     // Log the error in tokenLogs
     tokenLogs.push({
       type: 'Error',
@@ -108,8 +125,7 @@ router.get('/retrieve-tokens', async (req, res) => {
       details: error.toString(),
       timestamp: new Date(),
     });
-    
-    return res.status(500).json({ error: error.toString() });
+    return res.status(500).json({ error: error.toString(), logs: tokenLogs });
   }
 });
 
