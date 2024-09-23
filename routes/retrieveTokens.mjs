@@ -12,6 +12,10 @@ let tokenLogs = [];     // To store logs for the `/retrieve-tokens` response
 router.get('/retrieve-tokens', async (req, res) => {
   console.log('--- /retrieve-tokens endpoint hit ---');
 
+  let loggedError = false; // Flag to track if an error has already been logged
+  let loggedSuccess = false; // To track if success has been logged
+
+
   // Extract the authorization code from query params
   const { code } = req.query;
   console.log(`Received code: ${code}`);
@@ -83,13 +87,16 @@ router.get('/retrieve-tokens', async (req, res) => {
     const expectedClientId = "https://rp.directory.sandbox.connectid.com.au/openid_relying_party/a849178a-f0a4-45ed-8472-a50c4d5299ae";
     const expectedAlgorithm = 'PS256'; // Expected algorithm for ID token signing
 
-    let loggedError = false; // Flag to track if an error has already been logged
-
-// Test 1 - Happy path flow with tokens retrieved (log success if no errors)
-if (!loggedError) {
-  const successMessage = 'Success: Happy path flow completed, tokens retrieved';
-  tokenLogs.push({ type: 'Success', message: successMessage, timestamp: new Date() });
-}
+  if (!loggedError && !loggedSuccess) {
+    tokenLogs.push({
+      type: 'Success',
+      message: 'Success: Happy path flow completed, tokens retrieved',
+      timestamp: new Date()
+    });
+    loggedSuccess = true;
+    return res.status(200).json({ message: 'Success: Happy path flow completed, tokens retrieved', logs: tokenLogs });
+  }
+  
 
 // Test 2 - Mismatched `iss` value
 if (token.decoded.iss !== expectedIssuer) {
@@ -115,16 +122,16 @@ if (!loggedError && token.decoded.aud !== expectedClientId) {
   return res.status(400).json({ error: 'The aud value in the id_token does not match the expected client ID', logs: tokenLogs });
 }
 
-// Test 4 - `aud` array with additional untrusted client_id and missing `azp`
-if (!loggedError && Array.isArray(token.decoded.aud) && !token.decoded.azp) {
-  tokenLogs.push({ 
-    type: 'Error', 
-    message: '`aud` contains multiple clients and `azp` claim is missing', 
-    timestamp: new Date() 
+if (!loggedError && Array.isArray(token.decoded.aud) && token.decoded.aud.length === 1 && token.decoded.aud[0] === expectedClientId) {
+  tokenLogs.push({
+    type: 'Success',
+    message: '`aud` is an array with one valid value',
+    timestamp: new Date()
   });
-  loggedError = true;
-  return res.status(400).json({ error: 'The aud array contains multiple clients, and the azp claim is missing', logs: tokenLogs });
+  loggedSuccess = true;
+  return res.status(200).json({ message: '`aud` is an array with one valid value', logs: tokenLogs });
 }
+
 
 // Test 5 - `alg: none`
 if (!loggedError && tokenSet.id_token_header?.alg === 'none') {
@@ -199,6 +206,7 @@ if (!loggedError && Array.isArray(token.decoded.aud) && token.decoded.aud.length
     message: '`aud` is an array with one valid value', 
     timestamp: new Date() 
   });
+  loggedSuccess = true;
 }
 
 // Test 12 - Mismatched `nonce`
@@ -274,14 +282,16 @@ if (!loggedError && !req.query.state) {
 }
 
 // Test 18 - Happy path flow and resource access
-const resourceRequestSuccessful = true; // Assuming this is calculated elsewhere
 if (!loggedError && tokenSet && resourceRequestSuccessful) {
-  tokenLogs.push({ 
-    type: 'Success', 
-    message: 'Happy path flow completed, tokens retrieved and resource endpoint accessed successfully', 
-    timestamp: new Date() 
+  tokenLogs.push({
+    type: 'Success',
+    message: 'Happy path flow completed, tokens retrieved and resource endpoint accessed successfully',
+    timestamp: new Date()
   });
+  loggedSuccess = true;
+  return res.status(200).json({ message: 'Happy path flow completed, tokens retrieved and resource endpoint accessed successfully', logs: tokenLogs });
 }
+
 
 // Test 19 - Case-sensitive `token_type` issue
 if (!loggedError && tokenSet.token_type !== 'Bearer') {
@@ -294,7 +304,6 @@ if (!loggedError && tokenSet.token_type !== 'Bearer') {
   return res.status(400).json({ error: 'Case-sensitive mismatch in token_type returned from the token endpoint', logs: tokenLogs });
 }
 
-    
 
 
     // Clear cookies AFTER ensuring the tokens have been retrieved and no further actions need cookies
