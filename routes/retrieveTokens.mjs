@@ -261,26 +261,20 @@ router.get('/retrieve-tokens', async (req, res) => {
     if (loggedSuccess) {
       clearCookies(res);
       console.log('Cookies cleared successfully');
-    
+      
       return res.json({ claims, token, logs: tokenLogs, xFapiInteractionId: tokenSet.xFapiInteractionId });
     }
-    
+
     } catch (error) {
-      // Only log the generic error if no specific error has been logged
-      if (!loggedError) {
-        // Catch any error from the `retrieveTokens` method or other unexpected errors
-        tokenLogs.push({
-          type: 'Error',
-          message: 'Error retrieving tokenset',
-          details: error.toString(),
-          timestamp: new Date(),
-        });
-        return res.status(500).json({ error: 'Error retrieving tokenset', logs: tokenLogs });
-      } else {
-        // If a specific error has already been logged, return the existing logs without logging the generic error
-        return res.status(500).json({ error: 'A specific error occurred', logs: tokenLogs });
+      // If a specific token error (e.g., `iss` or `aud` mismatch) has been logged, just return those logs
+      if (loggedError) {
+        return res.status(400).json({ error: 'Specific token error occurred', logs: tokenLogs });
       }
+
+      // No generic error logging
     }
+
+    
 });
 
 export default router;
