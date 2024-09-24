@@ -19,7 +19,6 @@ router.get('/retrieve-tokens', async (req, res) => {
   // Validate that the authorization code is present
   if (!code) {
     tokenLogs.push({ type: 'Error', message: 'Code parameter is required', timestamp: new Date() });
-    clearCookies(res); // Clear cookies even if there's an error
     return res.status(400).json({ error: 'Code parameter is required', logs: tokenLogs });
   }
 
@@ -28,7 +27,6 @@ router.get('/retrieve-tokens', async (req, res) => {
 
   if (!authorisation_server_id || !code_verifier || !state || !nonce) {
     tokenLogs.push({ type: 'Error', message: 'Missing required cookies for token retrieval', timestamp: new Date() });
-    clearCookies(res); // Clear cookies even if there's an error
     return res.status(400).json({ error: 'Missing required cookies for token retrieval', logs: tokenLogs });
   }
 
@@ -89,36 +87,34 @@ router.get('/retrieve-tokens', async (req, res) => {
     
     // Check if the error response exists
     if (error.response && error.response.data) {
-        const { error: errorCode, error_description, error_uri } = error.response.data;
-  
-        console.log('Full error response:', error.response.data);
-        errorMessage = `SDK Error: ${error_description || 'Unknown SDK error'}`;
-        errorDetails = error.response.data;
-        
-        // Ensure all error components are strings
-        errorObject = {
-          error: String(errorCode || 'Unknown error'),
-          error_description: String(error_description || 'No description provided'),
-          error_uri: String(error_uri || 'No URI provided'),
-        };
+      const { error: errorCode, error_description, error_uri } = error.response.data;
 
-        // Extract x-fapi-interaction-id from the headers if available
-        if (error.response.headers && error.response.headers['x-fapi-interaction-id']) {
-          xFapiInteractionId = error.response.headers['x-fapi-interaction-id'];
-        }
+      // Extract x-fapi-interaction-id from the headers if available
+      if (error.response.headers && error.response.headers['x-fapi-interaction-id']) {
+        xFapiInteractionId = error.response.headers['x-fapi-interaction-id'];
+      }
 
-        // Combine the xFapiInteractionId and error message together
-        errorMessage += `, x-fapi-interaction-id: ${xFapiInteractionId}, ${error_description || 'No additional description'}`;
+      // Build full error message combining the x-fapi-interaction-id and error description
+      errorMessage = `SDK Error: ${error_description || 'Unknown SDK error'}, x-fapi-interaction-id: ${xFapiInteractionId}, ${error_description || 'No additional description'}`;
+      
+      errorDetails = error.response.data;
+      errorObject = {
+        error: String(errorCode || 'Unknown error'),
+        error_description: String(error_description || 'No description provided'),
+        error_uri: String(error_uri || 'No URI provided'),
+      };
+
     } else if (error.message) {
-        // Handle the case where error has a message property
-        errorMessage = `Error: ${error.message}`;
-        errorDetails = fullError;  // Log the full error object including stack trace
+      // Handle the case where error has a message property
+      errorMessage = `Error: ${error.message}`;
+      errorDetails = fullError;  // Log the full error object including stack trace
     } else {
-        // Catch any unexpected error structure
-        errorMessage = 'Unexpected error structure';
-        errorDetails = fullError; // Log entire error object if no response or message is present
+      // Catch any unexpected error structure
+      errorMessage = 'Unexpected error structure';
+      errorDetails = fullError; // Log entire error object if no response or message is present
     }
-  
+
+    // Log the error with x-fapi-interaction-id
     tokenLogs.push({
       type: 'Error',
       message: errorMessage,
@@ -128,8 +124,6 @@ router.get('/retrieve-tokens', async (req, res) => {
       xFapiInteractionId: xFapiInteractionId // Include the x-fapi-interaction-id
     });
 
-    // Do not clear cookies on error
-
     // Send the error, error details, and logs to the frontend
     return res.status(500).json({ 
       error: errorMessage, 
@@ -137,7 +131,6 @@ router.get('/retrieve-tokens', async (req, res) => {
       logs: tokenLogs 
     });
   }
-
 });
 
 export default router;
