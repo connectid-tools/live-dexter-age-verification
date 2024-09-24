@@ -110,11 +110,11 @@ function handleFullError(error) {
   if (error.response) {
     console.error('SDK returned an error response:', error.response);
     tokenLogs.push({
-      type: 'Error',
-      message: `SDK Error: ${error.response.data.error_description || 'Unknown error'}`,
+      type: 'SDK Error', 
+      message: `SDK Error: ${error.response.data.error_description || 'Unknown error'}`, 
       details: error.response.data,
       timestamp: new Date(),
-    });
+    });    
   } else {
     console.error('General error occurred:', fullError);
     tokenLogs.push({
