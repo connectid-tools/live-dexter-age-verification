@@ -12,9 +12,6 @@ let tokenLogs = []; // To store logs for the `/retrieve-tokens` response
 router.get('/retrieve-tokens', async (req, res) => {
   console.log('--- /retrieve-tokens endpoint hit ---');
 
-  let loggedError = false; 
-  let loggedSuccess = false;
-
   // Extract the authorization code from query params
   const { code } = req.query;
   console.log(`Received code: ${code}`);
@@ -22,6 +19,7 @@ router.get('/retrieve-tokens', async (req, res) => {
   // Validate that the authorization code is present
   if (!code) {
     tokenLogs.push({ type: 'Error', message: 'Code parameter is required', timestamp: new Date() });
+    clearCookies(res); // Clear cookies even if there's an error
     return res.status(400).json({ error: 'Code parameter is required', logs: tokenLogs });
   }
 
@@ -30,10 +28,12 @@ router.get('/retrieve-tokens', async (req, res) => {
 
   if (!authorisation_server_id || !code_verifier || !state || !nonce) {
     tokenLogs.push({ type: 'Error', message: 'Missing required cookies for token retrieval', timestamp: new Date() });
+    clearCookies(res); // Clear cookies even if there's an error
     return res.status(400).json({ error: 'Missing required cookies for token retrieval', logs: tokenLogs });
   }
 
   try {
+    // Call the SDK to retrieve tokens
     const tokenSet = await rpClient.retrieveTokens(
       authorisation_server_id,
       req.query,
@@ -50,41 +50,49 @@ router.get('/retrieve-tokens', async (req, res) => {
 
     tokenLogs = []; // Clear previous logs
 
+    // Handle SDK errors within the token set
     if (tokenSet.error_description) {
       console.log(`SDK Error encountered: ${tokenSet.error_description}`);
       tokenLogs.push({ type: 'Error', message: tokenSet.error_description, timestamp: new Date() });
-      loggedError = true;
+      clearCookies(res); // Clear cookies even if there's an error
       return res.status(400).json({ error: tokenSet.error_description, logs: tokenLogs });
     }
 
-    // Success path: Log the success and set the `loggedSuccess` flag to true
+    // Success path: Log the success
     tokenLogs.push({ type: 'Success', message: 'Token retrieved successfully', timestamp: new Date() });
-    loggedSuccess = true;
 
-    // If no errors, clear cookies and return successful response
-    if (loggedSuccess) {
-      clearCookies(res); // Clear cookies
-      console.log('Cookies cleared successfully');
-      return res.status(200).json({
-        claims,
-        token,
-        logs: tokenLogs,
-        xFapiInteractionId: tokenSet.xFapiInteractionId
-      });
-    }
+    // Clear cookies and return success response
+    clearCookies(res); 
+    console.log('Cookies cleared successfully');
+    return res.status(200).json({
+      claims,
+      token,
+      logs: tokenLogs,
+      xFapiInteractionId: tokenSet.xFapiInteractionId
+    });
 
   } catch (error) {
-    // Log the entire error object to inspect its structure
+    // Handle and log the error
     console.error('Error retrieving tokens:', error);
 
     let errorMessage = 'Unknown error occurred';
     let errorDetails = {};
-
+    let errorObject = {};
+    
     // Check if the error response exists
     if (error.response && error.response.data) {
+        const { error: errorCode, error_description, error_uri } = error.response.data;
+
         console.log('Full error response:', error.response.data);
-        errorMessage = `SDK Error: ${error.response.data.error_description || 'Unknown SDK error'}`;
-        errorDetails = error.response.data;  // Capture full error details
+        errorMessage = `SDK Error: ${error_description || 'Unknown SDK error'}`;
+        errorDetails = error.response.data;
+        
+        // Log the error details in the response
+        errorObject = {
+          error: errorCode,
+          error_description,
+          error_uri,
+        };
     } else if (error.message) {
         // Handle the case where error has a message property
         errorMessage = `Error: ${error.message}`;
@@ -95,16 +103,22 @@ router.get('/retrieve-tokens', async (req, res) => {
         errorDetails = error; // Log entire error object if no response or message is present
     }
 
-    // Push to tokenLogs array to capture log details
     tokenLogs.push({
       type: 'Error',
       message: errorMessage,
       timestamp: new Date(),
-      details: errorDetails // Include full error details in logs
+      details: errorDetails, // Include full error details in logs
+      error_object: errorObject, // Include parsed error details
     });
 
-    // Send the error and logs to the frontend
-    return res.status(500).json({ error: errorMessage, logs: tokenLogs });
+    clearCookies(res); // Clear cookies even if there's an error
+
+    // Send the error, error details, and logs to the frontend
+    return res.status(500).json({ 
+      error: errorMessage, 
+      error_object: errorObject, 
+      logs: tokenLogs 
+    });
   }
 });
 
