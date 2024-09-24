@@ -62,12 +62,13 @@ router.get('/retrieve-tokens', async (req, res) => {
     });
 
   } catch (error) {
-    // Capture and log the full SDK error response
+    // Directly log the SDK error
+    console.error('This is the first error log:', error);
+
+    // Capture the SDK error message using handleFullError
     const sdkErrorMessage = handleFullError(error);
-    
-    // Log the error
-    console.error('This is the first error log:', sdkErrorMessage);
-    
+
+    // Log the processed error message
     tokenLogs.push({ type: 'Error', message: sdkErrorMessage, timestamp: new Date() });
     
     // Clear cookies before returning an error response
