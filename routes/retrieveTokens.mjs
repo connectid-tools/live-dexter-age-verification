@@ -107,6 +107,7 @@ router.get('/retrieve-tokens', async (req, res) => {
             details: error
         });
     }
+  }
 });
 
 export default router;
