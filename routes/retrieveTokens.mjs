@@ -78,7 +78,7 @@ router.get('/retrieve-tokens', async (req, res) => {
     let errorMessage = 'Unknown error occurred';
     let errorDetails = {};
     let errorObject = {};
-    
+
     // Check if the error response exists
     if (error.response && error.response.data) {
         const { error: errorCode, error_description, error_uri } = error.response.data;
@@ -87,11 +87,11 @@ router.get('/retrieve-tokens', async (req, res) => {
         errorMessage = `SDK Error: ${error_description || 'Unknown SDK error'}`;
         errorDetails = error.response.data;
         
-        // Log the error details in the response
+        // Ensure all error components are strings
         errorObject = {
-          error: errorCode,
-          error_description,
-          error_uri,
+          error: String(errorCode || 'Unknown error'),
+          error_description: String(error_description || 'No description provided'),
+          error_uri: String(error_uri || 'No URI provided'),
         };
     } else if (error.message) {
         // Handle the case where error has a message property
