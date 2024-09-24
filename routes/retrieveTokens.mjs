@@ -50,7 +50,6 @@ router.get('/retrieve-tokens', async (req, res) => {
 
     tokenLogs = []; // Clear previous logs
 
-    // Check for SDK errors with detailed log of the error description
     if (tokenSet.error_description) {
       console.log(`SDK Error encountered: ${tokenSet.error_description}`);
       tokenLogs.push({ type: 'Error', message: tokenSet.error_description, timestamp: new Date() });
@@ -58,43 +57,29 @@ router.get('/retrieve-tokens', async (req, res) => {
       return res.status(400).json({ error: tokenSet.error_description, logs: tokenLogs });
     }
 
-    // Add detailed success logging
-    console.log('Token claims:', claims);
-    console.log('Decoded token:', token);
-
+    // Success path: Log the success and set the `loggedSuccess` flag to true
     tokenLogs.push({ type: 'Success', message: 'Token retrieved successfully', timestamp: new Date() });
     loggedSuccess = true;
 
-    // Log success message when clearing cookies
+    // If no errors, clear cookies and return successful response
     if (loggedSuccess) {
-      clearCookies(res);
+      clearCookies(res); // Clear cookies
       console.log('Cookies cleared successfully');
       return res.status(200).json({
         claims,
         token,
         logs: tokenLogs,
-        xFapiInteractionId: tokenSet.xFapiInteractionId,
+        xFapiInteractionId: tokenSet.xFapiInteractionId
       });
     }
 
   } catch (error) {
-    // Catch and log SDK errors
+    // Catch errors thrown by the SDK
     console.error('Error retrieving tokens:', error);
 
-    // Detailed error logging from SDK response
-    if (error.response && error.response.data) {
-      console.log(`SDK Error: ${error.response.data.error_description || 'Unknown error'}`);
-      tokenLogs.push({
-        type: 'Error',
-        message: `SDK Error: ${error.response.data.error_description || 'Unknown error'}`,
-        timestamp: new Date(),
-      });
-      return res.status(400).json({ error: error.response.data.error_description || 'Unknown error', logs: tokenLogs });
-    }
-
-    // Generic error logging
-    console.log('General Error: Internal server error occurred.');
-    return res.status(500).json({ error: 'Internal server error', logs: tokenLogs });
+    // Log and return the error as it is from the SDK
+    tokenLogs.push({ type: 'Error', message: `SDK Error: ${error.message}`, timestamp: new Date() });
+    return res.status(500).json({ error: error.message, logs: tokenLogs });
   }
 });
 
