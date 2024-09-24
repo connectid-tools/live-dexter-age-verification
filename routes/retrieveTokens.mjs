@@ -78,8 +78,10 @@ router.get('/retrieve-tokens', async (req, res) => {
     clearCookies(res);
     console.log('Cookies cleared on error');
     
+    // Return the full error details, including stack and response
     return res.status(500).json({
       error: error.message || 'Unknown error occurred',
+      fullError: error,  // Include full error object for detailed logging
       logs: tokenLogs,  // Sends logs to the frontend
     });
   }
@@ -118,8 +120,8 @@ function handleFullError(error) {
     });
   }
 
-  // Return a message to be displayed in the logs
-  return fullError.message;
+  // Return the full error object to be included in the response
+  return fullError;
 }
 
 export default router;
