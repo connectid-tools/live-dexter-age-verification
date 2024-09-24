@@ -74,39 +74,36 @@ router.get('/retrieve-tokens', async (req, res) => {
     }
 
   } catch (error) {
-    // Log the entire error object
+    // Log the entire error object to inspect its structure
     console.error('Error retrieving tokens:', error);
 
     let errorMessage = 'Unknown error occurred';
     let errorDetails = {};
 
+    // Check if the error response exists
     if (error.response && error.response.data) {
-        // Log error.response.data to inspect its contents
-        console.log('Full error details:', error.response.data);
-
+        console.log('Full error response:', error.response.data);
         errorMessage = `SDK Error: ${error.response.data.error_description || 'Unknown SDK error'}`;
-        errorDetails = error.response.data;
-        tokenLogs.push({
-            type: 'Error',
-            message: errorMessage,
-            timestamp: new Date(),
-            details: errorDetails
-        });
+        errorDetails = error.response.data;  // Capture full error details
     } else if (error.message) {
+        // Handle the case where error has a message property
         errorMessage = `Error: ${error.message}`;
-        tokenLogs.push({
-            type: 'Error',
-            message: errorMessage,
-            timestamp: new Date(),
-        });
+        errorDetails = error;  // Log the entire error object
     } else {
-        tokenLogs.push({
-            type: 'Error',
-            message: 'Unexpected error structure',
-            timestamp: new Date(),
-            details: error
-        });
+        // Catch any unexpected error structure
+        errorMessage = 'Unexpected error structure';
+        errorDetails = error; // Log entire error object if no response or message is present
     }
+
+    // Push to tokenLogs array to capture log details
+    tokenLogs.push({
+      type: 'Error',
+      message: errorMessage,
+      timestamp: new Date(),
+      details: errorDetails // Include full error details in logs
+    });
+
+    // Send the error and logs to the frontend
     return res.status(500).json({ error: errorMessage, logs: tokenLogs });
   }
 });
