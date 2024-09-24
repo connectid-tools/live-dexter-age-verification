@@ -70,21 +70,28 @@
     } catch (error) {
       if (!hasLoggedError) {
         hasLoggedError = true;
-        const sdkErrorMessage =  handleFullError(`this is the first log ${error}`); // Logs and processes SDK error
+    
+        // Log a custom message first
+        console.error('This is the first error log:', error);
+    
+        // Now pass the actual error object to handleFullError
+        const sdkErrorMessage = handleFullError(error);
+        
         tokenLogs.push({ type: 'Error', message: sdkErrorMessage, timestamp: new Date() });
       }
-
+    
       // Clear cookies before returning an error response
       clearCookies(res);
-      console.warn('Cookies cleared on error');  // Warn log for cookie clearance on error
+      console.warn('Cookies cleared on error');
       
       // Return error response with logs
       return res.status(500).json({
         error: error.message || 'Unknown error occurred',
-        sdkErrorDetails: handleFullError(error), // Send full SDK error object to frontend
-        logs: tokenLogs,  // Include logs in response
+        sdkErrorDetails: handleFullError(error),
+        logs: tokenLogs,
       });
     }
+    
   });
 
   function logError(message) {
