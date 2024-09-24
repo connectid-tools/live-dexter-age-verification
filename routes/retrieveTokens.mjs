@@ -68,14 +68,15 @@ router.get('/retrieve-tokens', async (req, res) => {
       xFapiInteractionId: tokenSet.xFapiInteractionId
     });
 
-  } catch (error) {
-    console.error('Error retrieving tokens:', error);
-
+  } // In your catch block, ensure you're logging the full error object
+  catch (error) {
+    console.error('Full error object:', error);
+  
     let errorMessage = 'Unknown error occurred';
     let errorDetails = {};
     let errorObject = {};
     let xFapiInteractionId = 'No interaction ID'; // Default if not found
-
+  
     // Capture full error object for detailed logging
     const fullError = {
       message: error.message || 'No message provided',
@@ -84,17 +85,17 @@ router.get('/retrieve-tokens', async (req, res) => {
       config: error.config || 'No config provided',
       ...error
     };
-    
+  
     // Check if the error response exists
     if (error.response && error.response.data) {
       const { error: errorCode, error_description, error_uri } = error.response.data;
-
+  
       // Extract x-fapi-interaction-id from the headers if available
       if (error.response.headers && error.response.headers['x-fapi-interaction-id']) {
         xFapiInteractionId = error.response.headers['x-fapi-interaction-id'];
       }
-
-      // Build full error message combining the x-fapi-interaction-id and error description
+  
+      // Combine the xFapiInteractionId and error message together
       errorMessage = `SDK Error: ${error_description || 'Unknown SDK error'}, x-fapi-interaction-id: ${xFapiInteractionId}, ${error_description || 'No additional description'}`;
       
       errorDetails = error.response.data;
@@ -103,7 +104,11 @@ router.get('/retrieve-tokens', async (req, res) => {
         error_description: String(error_description || 'No description provided'),
         error_uri: String(error_uri || 'No URI provided'),
       };
-
+  
+      // Log full response and config for debugging purposes
+      console.log('Full response headers:', error.response.headers);
+      console.log('Full response data:', error.response.data);
+      console.log('Full config:', error.config);
     } else if (error.message) {
       // Handle the case where error has a message property
       errorMessage = `Error: ${error.message}`;
@@ -113,8 +118,7 @@ router.get('/retrieve-tokens', async (req, res) => {
       errorMessage = 'Unexpected error structure';
       errorDetails = fullError; // Log entire error object if no response or message is present
     }
-
-    // Log the error with x-fapi-interaction-id
+  
     tokenLogs.push({
       type: 'Error',
       message: errorMessage,
@@ -123,7 +127,7 @@ router.get('/retrieve-tokens', async (req, res) => {
       error_object: errorObject, // Include parsed error details
       xFapiInteractionId: xFapiInteractionId // Include the x-fapi-interaction-id
     });
-
+  
     // Send the error, error details, and logs to the frontend
     return res.status(500).json({ 
       error: errorMessage, 
@@ -131,6 +135,7 @@ router.get('/retrieve-tokens', async (req, res) => {
       logs: tokenLogs 
     });
   }
+  
 });
 
 export default router;
