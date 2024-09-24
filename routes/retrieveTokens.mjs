@@ -81,7 +81,7 @@ router.get('/retrieve-tokens', async (req, res) => {
     // Return the full error details, including stack and response
     return res.status(500).json({
       error: error.message || 'Unknown error occurred',
-      sdkErrorDetails: handleFullError(error), // Send full SDK error object to frontend
+      sdkErrorDetails: JSON.stringify(handleFullError(error)), // Send SDK error details as a string
       logs: tokenLogs,  // Sends logs to the frontend
     });
   }
