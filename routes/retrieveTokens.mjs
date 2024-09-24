@@ -13,6 +13,7 @@ router.get('/retrieve-tokens', async (req, res) => {
   console.log('--- /retrieve-tokens endpoint hit ---');
 
   let loggedError = false; // Flag to track if an error has already been logged
+  let loggedSuccess = false; // To track if success has been logged
 
   // Extract the authorization code from query params
   const { code } = req.query;
@@ -49,19 +50,29 @@ router.get('/retrieve-tokens', async (req, res) => {
 
     tokenLogs = []; // Clear previous logs
 
-    const expectedAud = "https://rp.directory.sandbox.connectid.com.au/openid_relying_party/a849178a-f0a4-45ed-8472-a50c4d5299ae";
-    if (token.decoded.aud !== expectedAud) {
-      tokenLogs.push({
-        type: 'Error',
-        message: `aud mismatch: Expected ${expectedAud}, got ${token.decoded.aud}`,
-        timestamp: new Date()
-      });
-      return res.status(400).json({ error: `aud mismatch: Expected ${expectedAud}, got ${token.decoded.aud}`, logs: tokenLogs });
+    // Check for errors from the SDK itself
+    if (tokenSet.error_description) {
+      console.log(`Error from token endpoint: ${tokenSet.error_description}`);
+      tokenLogs.push({ type: 'Error', message: tokenSet.error_description, timestamp: new Date() });
+      loggedError = true;
+      return res.status(400).json({ error: tokenSet.error_description, logs: tokenLogs });
     }
 
-    // Success path
+    // Success path: Log the success and set the `loggedSuccess` flag to true
     tokenLogs.push({ type: 'Success', message: 'Token retrieved successfully', timestamp: new Date() });
-    return res.status(200).json({ claims, token, logs: tokenLogs });
+    loggedSuccess = true;
+
+    // If no errors, clear cookies and return successful response
+    if (loggedSuccess) {
+      clearCookies(res); // Clear cookies
+      console.log('Cookies cleared successfully');
+      return res.status(200).json({
+        claims,
+        token,
+        logs: tokenLogs,
+        xFapiInteractionId: tokenSet.xFapiInteractionId
+      });
+    }
 
   } catch (error) {
     // Catch errors thrown by the SDK
