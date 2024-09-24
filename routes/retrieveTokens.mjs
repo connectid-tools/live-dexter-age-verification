@@ -77,6 +77,7 @@ router.get('/retrieve-tokens', async (req, res) => {
     let errorMessage = 'Unknown error occurred';
     let errorDetails = {};
     let errorObject = {};
+    let xFapiInteractionId = 'No interaction ID'; // Default if not found
 
     // Capture full error object for detailed logging
     const fullError = {
@@ -101,6 +102,11 @@ router.get('/retrieve-tokens', async (req, res) => {
           error_description: String(error_description || 'No description provided'),
           error_uri: String(error_uri || 'No URI provided'),
         };
+
+        // Extract x-fapi-interaction-id from the headers if available
+        if (error.response.headers && error.response.headers['x-fapi-interaction-id']) {
+          xFapiInteractionId = error.response.headers['x-fapi-interaction-id'];
+        }
     } else if (error.message) {
         // Handle the case where error has a message property
         errorMessage = `Error: ${error.message}`;
@@ -117,6 +123,7 @@ router.get('/retrieve-tokens', async (req, res) => {
       timestamp: new Date(),
       details: errorDetails, // Include full error details in logs
       error_object: errorObject, // Include parsed error details
+      xFapiInteractionId: xFapiInteractionId // Include the x-fapi-interaction-id
     });
   
     clearCookies(res); // Clear cookies even if there's an error
