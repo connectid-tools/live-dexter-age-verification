@@ -47,249 +47,46 @@ router.get('/retrieve-tokens', async (req, res) => {
     };
 
     tokenLogs = []; // Clear previous logs
-
-    const expectedIssuer = "https://www.certification.openid.net/test/a/sheldonandhammond/";
-    const expectedClientId = "https://rp.directory.sandbox.connectid.com.au/openid_relying_party/a849178a-f0a4-45ed-8472-a50c4d5299ae";
-    const expectedAlgorithm = 'PS256';
-
-    function decodeJwtHeader(token) {
-      const encodedHeader = token.split('.')[0];
-      return JSON.parse(Buffer.from(encodedHeader, 'base64').toString('utf8'));
+// Check for specific errors like `aud` mismatch from the SDK itself
+    // You might want to check the tokenSet response for potential error fields
+    if (tokenSet.error_description) {
+      console.log(`Error from token endpoint: ${tokenSet.error_description}`);
+      tokenLogs.push({ type: 'Error', message: tokenSet.error_description, timestamp: new Date() });
+      loggedError = true;
+      return res.status(400).json({ error: tokenSet.error_description, logs: tokenLogs });
     }
 
-    function checkSigningAlgorithm(tokenSet, expectedAlgorithm) {
-      const decodedHeader = decodeJwtHeader(tokenSet.id_token);
-      console.log('Checking `alg` value:', decodedHeader.alg, 'against expected algorithm:', expectedAlgorithm);
-
-      if (decodedHeader.alg !== expectedAlgorithm) {
-        tokenLogs.push({ type: 'Error', message: `id_token algorithm ${decodedHeader.alg} does not match expected ${expectedAlgorithm}`, timestamp: new Date() });
-        loggedError = true;
-        console.log(`Error: Algorithm mismatch. Expected: ${expectedAlgorithm}, Got: ${decodedHeader.alg}`);
-        return res.status(400).json({ error: 'The id_token algorithm does not match the expected algorithm', logs: tokenLogs });
-      }
-    }
-
-    checkSigningAlgorithm(tokenSet, expectedAlgorithm);
-    
-      // Test 2 - Mismatched `iss` value (from the payload, not the header)
-    console.log('Checking `iss` value:', token.decoded.iss);
-    if (token.decoded.iss !== expectedIssuer) {
-      console.log('Mismatched `iss` value detected'); // Log the mismatched `iss`
+    // Assuming there is a mismatch, log it
+    const expectedAud = "https://rp.directory.sandbox.connectid.com.au/openid_relying_party/a849178a-f0a4-45ed-8472-a50c4d5299ae";
+    if (token.decoded.aud !== expectedAud) {
+      console.log(`Mismatched 'aud' detected: Expected ${expectedAud}, got ${token.decoded.aud}`);
       tokenLogs.push({
         type: 'Error',
-        message: '`iss` value in id_token does not match expected issuer',
-        details: `Received: ${token.decoded.iss}, Expected: ${expectedIssuer}`,
-        timestamp: new Date(),
-      });
-      loggedError = true;
-      return res.status(400).json({ error: 'The iss value in the id_token does not match the authorization server\'s issuer', logs: tokenLogs });
-    }
-
-
- 
-
-    // Test 3 - Mismatched `aud` value
-    if (!loggedError && token.decoded.aud !== expectedClientId) {
-      tokenLogs.push({ 
-        type: 'Error', 
-        message: '`aud` value in id_token does not match expected client ID', 
-        details: `Received: ${token.decoded.aud}, Expected: ${expectedClientId}`,
-        timestamp: new Date() 
-      });
-      loggedError = true;
-      return res.status(400).json({ error: 'The aud value in the id_token does not match the expected client ID', logs: tokenLogs });
-    }
-    
-    if (!loggedError && Array.isArray(token.decoded.aud) && token.decoded.aud.length === 1 && token.decoded.aud[0] === expectedClientId) {
-      tokenLogs.push({
-        type: 'Success',
-        message: '`aud` is an array with one valid value',
+        message: `aud mismatch: Expected ${expectedAud}, got ${token.decoded.aud}`,
         timestamp: new Date()
       });
-      loggedSuccess = true;
+      return res.status(400).json({ error: `aud mismatch: Expected ${expectedAud}, got ${token.decoded.aud}`, logs: tokenLogs });
     }
-    
-    
-    
-    // Test 5 - `alg: none`
-    if (!loggedError && tokenSet.id_token_header?.alg === 'none') {
+
+    // Success path
+    return res.status(200).json({ claims, token, logs: tokenLogs });
+
+  } catch (error) {
+    // Catch errors thrown by the SDK
+    console.error('Error retrieving tokens:', error);
+
+    // Log and return the error as it is from the SDK
+    if (error.response && error.response.data) {
       tokenLogs.push({ 
         type: 'Error', 
-        message: '`id_token` was signed with `alg: none`', 
+        message: `SDK Error: ${error.response.data.error_description || 'Unknown error'}`, 
         timestamp: new Date() 
       });
-      loggedError = true;
-      return res.status(400).json({ error: 'The id_token was signed with alg: none', logs: tokenLogs });
-    }
-  
-    
-
-    
-    // Test 7 - Expired `exp` value
-    if (!loggedError && token.decoded.exp && token.decoded.exp < Math.floor(Date.now() / 1000)) {
-      tokenLogs.push({ 
-        type: 'Error', 
-        message: '`exp` value in id_token has expired', 
-        timestamp: new Date() 
-      });
-      loggedError = true;
-      return res.status(400).json({ error: 'The exp value in the id_token has expired', logs: tokenLogs });
+      return res.status(400).json({ error: error.response.data.error_description || 'Unknown error', logs: tokenLogs });
     }
 
-    // Test 8 - Missing `exp` value
-    if (!loggedError && !token.decoded.exp) {
-      tokenLogs.push({ 
-        type: 'Error', 
-        message: '`exp` value is missing in id_token', 
-        timestamp: new Date() 
-      });
-      loggedError = true;
-      return res.status(400).json({ error: 'The exp value is missing in the id_token', logs: tokenLogs });
-    }
-
-    // Test 9 - Missing `aud` value
-    if (!loggedError && !token.decoded.aud) {
-      tokenLogs.push({ 
-        type: 'Error', 
-        message: '`aud` value is missing in id_token', 
-        timestamp: new Date() 
-      });
-      loggedError = true;
-      return res.status(400).json({ error: 'The aud value is missing in the id_token', logs: tokenLogs });
-    }
-
-    // Test 10 - Missing `iss` value
-    if (!loggedError && !token.decoded.iss) {
-      tokenLogs.push({ 
-        type: 'Error', 
-        message: '`iss` value is missing in id_token', 
-        timestamp: new Date() 
-      });
-      loggedError = true;
-      return res.status(400).json({ error: 'The iss value is missing in the id_token', logs: tokenLogs });
-    }
-
-    // Test 11 - `aud` is an array with one valid value
-    if (!loggedError && Array.isArray(token.decoded.aud) && token.decoded.aud.length === 1 && token.decoded.aud[0] === expectedClientId) {
-      tokenLogs.push({ 
-        type: 'Success', 
-        message: '`aud` is an array with one valid value', 
-        timestamp: new Date() 
-      });
-      loggedSuccess = true;
-    }
-
-    // Test 12 - Mismatched `nonce`
-    if (!loggedError && token.decoded.nonce !== tokenSet.nonce) {
-      tokenLogs.push({ 
-        type: 'Error', 
-        message: '`nonce` value in id_token does not match the request nonce', 
-        timestamp: new Date() 
-      });
-      loggedError = true;
-      return res.status(400).json({ error: 'The nonce value in the id_token does not match the request nonce', logs: tokenLogs });
-    }
-
-    // Test 13 - Missing `nonce`
-    if (!loggedError && !token.decoded.nonce && tokenSet.nonce) {
-      tokenLogs.push({ 
-        type: 'Error', 
-        message: '`nonce` value is missing in id_token but was expected', 
-        timestamp: new Date() 
-      });
-      loggedError = true;
-      return res.status(400).json({ error: 'The nonce value is missing in the id_token but was expected', logs: tokenLogs });
-    }
-    
-    // Test 14 - Invalid issuer in the token
-    if (!loggedError && token.decoded.iss !== expectedIssuer) {
-      tokenLogs.push({ 
-        type: 'Error', 
-        message: 'Invalid issuer in id_token from token_endpoint', 
-        timestamp: new Date() 
-      });
-      loggedError = true;
-      return res.status(400).json({ error: 'The issuer in the id_token from the token endpoint is invalid', logs: tokenLogs });
-    }
-    
-    // Test 15 - Missing issuer in authorization response
-    if (!loggedError && !token.decoded.iss) {
-      tokenLogs.push({ 
-        type: 'Error', 
-        message: '`iss` is missing in the authorization response', 
-        timestamp: new Date() 
-      });
-      loggedError = true;
-      return res.status(400).json({ error: 'The iss value is missing in the authorization response', logs: tokenLogs });
-    }
-
-    // Test 16 - Invalid `state` value
-    if (!loggedError && req.query.state && req.query.state !== tokenSet.state) {
-      tokenLogs.push({ 
-        type: 'Error', 
-        message: 'Invalid `state` value in authorization endpoint response', 
-        timestamp: new Date() 
-      });
-      loggedError = true;
-      return res.status(400).json({ error: 'The state value in the authorization endpoint response is invalid', logs: tokenLogs });
-    }
-
-    // Test 17 - Invalid or Missing `state` value
-    if (!loggedError && !req.query.state) {
-      tokenLogs.push({ 
-        type: 'Skipped', 
-        message: 'No `state` value provided in authorization endpoint response', 
-        timestamp: new Date() 
-      });
-    } else if (!loggedError && req.query.state !== tokenSet.state) {
-      tokenLogs.push({ 
-        type: 'Error', 
-        message: 'Invalid `state` value in authorization endpoint response', 
-        timestamp: new Date() 
-      });
-      loggedError = true;
-      return res.status(400).json({ error: 'The state value in the authorization endpoint response is invalid', logs: tokenLogs });
-    }
-
-    // Test 18 - Happy path flow and resource access
-    if (!loggedError && tokenSet && true /* assuming resource request successful */) {
-      tokenLogs.push({
-        type: 'Success',
-        message: 'Happy path flow completed, tokens retrieved and resource endpoint accessed successfully',
-        timestamp: new Date()
-      });
-      loggedSuccess = true;
-    }
-
-    // Test 1 - Happy path flow with tokens retrieved
-    if (!loggedError && !loggedSuccess) {
-      tokenLogs.push({
-        type: 'Success',
-        message: 'Success: Happy path flow completed, tokens retrieved',
-        timestamp: new Date()
-      });
-      loggedSuccess = true;
-      return res.status(200).json({ message: 'Success: Happy path flow completed, tokens retrieved', logs: tokenLogs });
-    }
-    
-    // If no errors, clear cookies and return successful response
-    if (loggedSuccess) {
-      clearCookies(res);
-      console.log('Cookies cleared successfully');
-      
-      return res.json({ claims, token, logs: tokenLogs, xFapiInteractionId: tokenSet.xFapiInteractionId });
-    }
-
-    } catch (error) {
-      // If a specific token error (e.g., `iss` or `aud` mismatch) has been logged, just return those logs
-      if (loggedError) {
-        return res.status(400).json({ error: 'Specific token error occurred', logs: tokenLogs });
-      }
-
-      // No generic error logging
-    }
-
-    
+    // Handle any generic errors
+    return res.status(500).json({ error: 'Internal server error', logs: tokenLogs });
+  }
 });
-
 export default router;
