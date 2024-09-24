@@ -110,8 +110,6 @@ router.get('/retrieve-tokens', async (req, res) => {
       error_object: errorObject, // Include parsed error details
     });
   
-    clearCookies(res); // Clear cookies even if there's an error
-  
     // Send the error, error details, and logs to the frontend
     return res.status(500).json({ 
       error: errorMessage, 
