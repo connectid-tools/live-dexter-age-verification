@@ -23,6 +23,7 @@ router.get('/retrieve-tokens', async (req, res) => {
     logError('Code parameter is required');
     return res.status(400).json({ error: 'Code parameter is required', logs: tokenLogs });
   }
+});
 
   // Retrieve necessary cookies for token retrieval
   const { authorisation_server_id, code_verifier, state, nonce } = req.cookies;
@@ -78,14 +79,14 @@ router.get('/retrieve-tokens', async (req, res) => {
     clearCookies(res);
     console.log('Cookies cleared on error');
     
-    // Return the full error details, including stack and response, as a string
+    // Return the full error details, including stack and response
     return res.status(500).json({
       error: error.message || 'Unknown error occurred',
-      fullError: JSON.stringify(error, null, 2),  // Stringify full error object for detailed logging
+      sdkErrorDetails: handleFullError(error), // Send full SDK error object to frontend
       logs: tokenLogs,  // Sends logs to the frontend
     });
-  }
-});
+}
+
 
 function logError(message) {
   console.log(message);
