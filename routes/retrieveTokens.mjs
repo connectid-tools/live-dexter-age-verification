@@ -12,8 +12,8 @@ let tokenLogs = []; // To store logs for the `/retrieve-tokens` response
 router.get('/retrieve-tokens', async (req, res) => {
   console.log('--- /retrieve-tokens endpoint hit ---');
 
-  let loggedError = false; // Flag to track if an error has already been logged
-  let loggedSuccess = false; // To track if success has been logged
+  let loggedError = false; 
+  let loggedSuccess = false; 
 
   // Extract the authorization code from query params
   const { code } = req.query;
@@ -57,13 +57,13 @@ router.get('/retrieve-tokens', async (req, res) => {
       return res.status(400).json({ error: tokenSet.error_description, logs: tokenLogs });
     }
 
-    // Success path: Log the success and set the `loggedSuccess` flag to true
+    // Log the success and set the `loggedSuccess` flag to true
     tokenLogs.push({ type: 'Success', message: 'Token retrieved successfully', timestamp: new Date() });
     loggedSuccess = true;
 
-    // If no errors, clear cookies and return successful response
+    // Clear cookies and return the successful response
     if (loggedSuccess) {
-      clearCookies(res); // Clear cookies
+      clearCookies(res);
       console.log('Cookies cleared successfully');
       return res.status(200).json({
         claims,
@@ -74,10 +74,10 @@ router.get('/retrieve-tokens', async (req, res) => {
     }
 
   } catch (error) {
-    // Log the entire error object to inspect it
+    // Log the full error object
     console.error('Error retrieving tokens:', error);
 
-    // Add more detailed logging if available
+    // Detailed error handling and returning response
     let errorMessage = 'Unknown error occurred';
     if (error.response) {
       errorMessage = `SDK Error: ${error.response.data.error_description || 'Unknown SDK error'}`;
@@ -88,7 +88,6 @@ router.get('/retrieve-tokens', async (req, res) => {
         details: error.response.data // Log more details from the error response
       });
     } else if (error.message) {
-      // Fallback to a generic message if no SDK response is available
       errorMessage = `Error: ${error.message}`;
       tokenLogs.push({
         type: 'Error',
@@ -96,7 +95,6 @@ router.get('/retrieve-tokens', async (req, res) => {
         timestamp: new Date()
       });
     } else {
-      // Log the full error object for inspection if no clear message
       tokenLogs.push({
         type: 'Error',
         message: 'Unexpected error structure',
@@ -105,7 +103,7 @@ router.get('/retrieve-tokens', async (req, res) => {
       });
     }
 
-    // Return the error logs
+    // Return the error logs to the frontend
     return res.status(500).json({ error: errorMessage, logs: tokenLogs });
   }
 });
