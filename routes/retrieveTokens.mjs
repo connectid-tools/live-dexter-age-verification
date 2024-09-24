@@ -2,7 +2,7 @@ import express from 'express';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from '../config.js';
 import { clearCookies } from '../utils/cookieUtils.mjs';
-import { jwtDecode } from 'jwt-decode';
+import jwtDecode from 'jwt-decode';
 
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
@@ -72,11 +72,18 @@ router.get('/retrieve-tokens', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Full error object:', error);
-  
+    console.error('Error retrieving tokens:', error);
+
     let errorMessage = 'Unknown error occurred';
     let errorDetails = {};
     let errorObject = {};
+
+    // Capture full error object for detailed logging
+    const fullError = {
+      message: error.message || 'No message provided',
+      stack: error.stack || 'No stack trace available',
+      ...error
+    };
   
     // Check if the error response exists
     if (error.response && error.response.data) {
@@ -95,11 +102,11 @@ router.get('/retrieve-tokens', async (req, res) => {
     } else if (error.message) {
         // Handle the case where error has a message property
         errorMessage = `Error: ${error.message}`;
-        errorDetails = error;  // Log the entire error object
+        errorDetails = fullError;  // Log the full error object including stack trace
     } else {
         // Catch any unexpected error structure
         errorMessage = 'Unexpected error structure';
-        errorDetails = error; // Log entire error object if no response or message is present
+        errorDetails = fullError; // Log entire error object if no response or message is present
     }
   
     tokenLogs.push({
@@ -110,6 +117,8 @@ router.get('/retrieve-tokens', async (req, res) => {
       error_object: errorObject, // Include parsed error details
     });
   
+    clearCookies(res); // Clear cookies even if there's an error
+
     // Send the error, error details, and logs to the frontend
     return res.status(500).json({ 
       error: errorMessage, 
