@@ -99,6 +99,8 @@ router.get('/retrieve-tokens', async (req, res) => {
       loggedSuccess = true;
     }
 
+
+
     // Test 5 - `alg: none`
     if (!loggedError && tokenSet.id_token_header?.alg === 'none') {
       tokenLogs.push({ 
@@ -109,6 +111,12 @@ router.get('/retrieve-tokens', async (req, res) => {
       loggedError = true;
       return res.status(400).json({ error: 'The id_token was signed with alg: none', logs: tokenLogs });
     }
+
+    // Function to check the signing algorithm
+    function checkSigningAlgorithm(tokenSet, expectedAlgorithm) {
+      console.log('Checking `alg` value:', tokenSet.id_token_header?.alg, 'against expected algorithm:', expectedAlgorithm);
+    }
+    checkSigningAlgorithm(tokenSet, expectedAlgorithm);
 
     // Test 6 - Mismatched signing algorithm
     if (!loggedError && tokenSet.id_token_header?.alg !== expectedAlgorithm) {
