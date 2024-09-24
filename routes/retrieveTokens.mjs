@@ -53,15 +53,15 @@ router.get('/retrieve-tokens', async (req, res) => {
     const expectedAlgorithm = 'PS256';
 
     // Test 1 - Happy path flow with tokens retrieved
-    // if (!loggedError && !loggedSuccess) {
-    //   tokenLogs.push({
-    //     type: 'Success',
-    //     message: 'Success: Happy path flow completed, tokens retrieved',
-    //     timestamp: new Date()
-    //   });
-    //   loggedSuccess = true;
-    //   return res.status(200).json({ message: 'Success: Happy path flow completed, tokens retrieved', logs: tokenLogs });
-    // }
+    if (!loggedError && !loggedSuccess) {
+      tokenLogs.push({
+        type: 'Success',
+        message: 'Success: Happy path flow completed, tokens retrieved',
+        timestamp: new Date()
+      });
+      loggedSuccess = true;
+      return res.status(200).json({ message: 'Success: Happy path flow completed, tokens retrieved', logs: tokenLogs });
+    }
     
     // Test 2 - Mismatched `iss` value
     console.log('Checking `iss` value:', token.decoded.iss, 'against expected issuer:', expectedIssuer);
@@ -112,22 +112,33 @@ router.get('/retrieve-tokens', async (req, res) => {
       return res.status(400).json({ error: 'The id_token was signed with alg: none', logs: tokenLogs });
     }
 
+
+    // Function to manually decode the JWT header
+    function decodeJwtHeader(token) {
+      const encodedHeader = token.split('.')[0];
+      const decodedHeader = JSON.parse(Buffer.from(encodedHeader, 'base64').toString('utf8'));
+      return decodedHeader;
+    }
+
     // Function to check the signing algorithm
     function checkSigningAlgorithm(tokenSet, expectedAlgorithm) {
-      console.log('Checking `alg` value:', tokenSet.id_token_header?.alg, 'against expected algorithm:', expectedAlgorithm);
-    }
-    checkSigningAlgorithm(tokenSet, expectedAlgorithm);
+      const decodedHeader = decodeJwtHeader(tokenSet.id_token); // Manually decode the JWT header
+      console.log('Checking `alg` value:', decodedHeader.alg, 'against expected algorithm:', expectedAlgorithm);
 
-    // Test 6 - Mismatched signing algorithm
-    if (!loggedError && tokenSet.id_token_header?.alg !== expectedAlgorithm) {
-      tokenLogs.push({ 
-        type: 'Error', 
-        message: `id_token algorithm ${tokenSet.id_token_header?.alg} does not match expected ${expectedAlgorithm}`, 
-        timestamp: new Date() 
-      });
-      loggedError = true;
-      return res.status(400).json({ error: 'The id_token algorithm does not match the expected algorithm', logs: tokenLogs });
+      // Test 6 - Mismatched signing algorithm
+      if (decodedHeader.alg !== expectedAlgorithm) {
+        tokenLogs.push({ 
+          type: 'Error', 
+          message: `id_token algorithm ${decodedHeader.alg} does not match expected ${expectedAlgorithm}`, 
+          timestamp: new Date() 
+        });
+        loggedError = true;
+        return res.status(400).json({ error: 'The id_token algorithm does not match the expected algorithm', logs: tokenLogs });
+      }
     }
+
+    // Inside the try block, after retrieving the tokens:
+    checkSigningAlgorithm(tokenSet, expectedAlgorithm);
 
     // Test 7 - Expired `exp` value
     if (!loggedError && token.decoded.exp && token.decoded.exp < Math.floor(Date.now() / 1000)) {
