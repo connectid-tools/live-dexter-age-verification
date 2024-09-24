@@ -74,38 +74,39 @@ router.get('/retrieve-tokens', async (req, res) => {
     }
 
   } catch (error) {
-    // Log the entire error object to inspect it
+    // Log the entire error object
     console.error('Error retrieving tokens:', error);
 
-    // Add more detailed logging if available
     let errorMessage = 'Unknown error occurred';
-    if (error.response) {
-      errorMessage = `SDK Error: ${error.response.data.error_description || 'Unknown SDK error'}`;
-      tokenLogs.push({
-        type: 'Error',
-        message: errorMessage,
-        timestamp: new Date(),
-        details: error.response.data // Log more details from the error response
-      });
-    } else if (error.message) {
-      errorMessage = `Error: ${error.message}`;
-      tokenLogs.push({
-        type: 'Error',
-        message: errorMessage,
-        timestamp: new Date()
-      });
-    } else {
-      tokenLogs.push({
-        type: 'Error',
-        message: 'Unexpected error structure',
-        timestamp: new Date(),
-        details: error
-      });
-    }
+    let errorDetails = {};
 
-    // Return the error logs to the frontend, including full details
-    return res.status(500).json({ error: errorMessage, logs: tokenLogs });
-  }
+    if (error.response && error.response.data) {
+        // Log error.response.data to inspect its contents
+        console.log('Full error details:', error.response.data);
+
+        errorMessage = `SDK Error: ${error.response.data.error_description || 'Unknown SDK error'}`;
+        errorDetails = error.response.data;
+        tokenLogs.push({
+            type: 'Error',
+            message: errorMessage,
+            timestamp: new Date(),
+            details: errorDetails
+        });
+    } else if (error.message) {
+        errorMessage = `Error: ${error.message}`;
+        tokenLogs.push({
+            type: 'Error',
+            message: errorMessage,
+            timestamp: new Date(),
+        });
+    } else {
+        tokenLogs.push({
+            type: 'Error',
+            message: 'Unexpected error structure',
+            timestamp: new Date(),
+            details: error
+        });
+    }
 });
 
 export default router;
