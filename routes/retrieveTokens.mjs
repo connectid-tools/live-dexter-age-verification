@@ -9,6 +9,17 @@ const rpClient = new RelyingPartyClientSdk(config);
 
 let tokenLogs = []; // To store logs for the `/retrieve-tokens` response
 
+// Wrap the call to capture internal SDK errors
+async function retrieveTokensWithErrorHandling(...args) {
+  try {
+    return await rpClient.retrieveTokens(...args);
+  } catch (error) {
+    // Log the error here before it is re-thrown
+    console.error('SDK Error occurred:', error.message);
+    throw error; // Re-throw the error to be handled by the catch block in the route handler
+  }
+}
+
 router.get('/retrieve-tokens', async (req, res) => {
   console.info('--- /retrieve-tokens endpoint hit ---');  // Info log for endpoint hit
 
@@ -30,13 +41,16 @@ router.get('/retrieve-tokens', async (req, res) => {
 
   try {
     console.info('Getting tokens');  // Info log for starting token retrieval
-    const tokenSet = await rpClient.retrieveTokens(
+    
+    // Use the wrapped SDK call to capture any internal errors like `iss` mismatch
+    const tokenSet = await retrieveTokensWithErrorHandling(
       authorisation_server_id,
       req.query,
       code_verifier,
       state,
       nonce
     );
+    
     console.info('Tokens successfully retrieved');
 
     // Handle the successful token retrieval
@@ -112,7 +126,5 @@ function handleFullError(error) {
   // Return a general error message if no SDK response exists
   return JSON.stringify(fullError, null, 2);
 }
-
-
 
 export default router;
