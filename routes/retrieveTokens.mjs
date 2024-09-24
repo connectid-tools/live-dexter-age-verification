@@ -107,6 +107,7 @@ router.get('/retrieve-tokens', async (req, res) => {
             details: error
         });
     }
+    return res.status(500).json({ error: errorMessage, logs: tokenLogs });
   }
 });
 
