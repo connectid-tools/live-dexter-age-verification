@@ -82,9 +82,11 @@ router.get('/retrieve-tokens', async (req, res) => {
     const fullError = {
       message: error.message || 'No message provided',
       stack: error.stack || 'No stack trace available',
+      response: error.response ? JSON.stringify(error.response, null, 2) : 'No response object',
+      config: error.config || 'No config provided',
       ...error
     };
-  
+    
     // Check if the error response exists
     if (error.response && error.response.data) {
         const { error: errorCode, error_description, error_uri } = error.response.data;
