@@ -89,12 +89,19 @@ function handleFullError(error) {
   const fullError = {
     message: error.message || 'No message provided',
     stack: error.stack || 'No stack trace available',
-    response: error.response ? JSON.stringify(error.response, null, 2) : 'No response object',
-    config: error.config || 'No config provided',
+    response: error.response 
+      ? JSON.stringify(error.response, null, 2) 
+      : 'No response object (error occurred before an HTTP request)',
+    config: error.config 
+      ? JSON.stringify(error.config, null, 2) 
+      : 'No config provided (error might have occurred before request)',
     ...error
   };
-  
-  // If the SDK error has a response, log the details
+
+  // Log the structured error details to the console
+  console.error('Captured error details:', fullError);
+
+  // If there is an SDK error with a response, return detailed SDK response info
   if (error.response) {
     return JSON.stringify({
       message: `SDK Error: ${error.response.data.error_description || 'Unknown error'}`,
@@ -102,8 +109,10 @@ function handleFullError(error) {
     }, null, 2);
   }
 
-  // Log a general error if no SDK response exists
+  // Return a general error message if no SDK response exists
   return JSON.stringify(fullError, null, 2);
 }
+
+
 
 export default router;
