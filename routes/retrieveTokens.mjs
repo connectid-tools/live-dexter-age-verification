@@ -8,9 +8,11 @@ const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
 let tokenLogs = []; // To store logs for the `/retrieve-tokens` response
+let hasLoggedError = false; // Flag to prevent multiple logging
 
 router.get('/retrieve-tokens', async (req, res) => {
   console.log('--- /retrieve-tokens endpoint hit ---');
+  hasLoggedError = false;  // Reset flag for each request
 
   // Extract the authorization code from query params
   const { code } = req.query;
@@ -18,7 +20,7 @@ router.get('/retrieve-tokens', async (req, res) => {
 
   // Validate that the authorization code is present
   if (!code) {
-    tokenLogs.push({ type: 'Error', message: 'Code parameter is required', timestamp: new Date() });
+    logError('Code parameter is required');
     return res.status(400).json({ error: 'Code parameter is required', logs: tokenLogs });
   }
 
@@ -26,7 +28,7 @@ router.get('/retrieve-tokens', async (req, res) => {
   const { authorisation_server_id, code_verifier, state, nonce } = req.cookies;
 
   if (!authorisation_server_id || !code_verifier || !state || !nonce) {
-    tokenLogs.push({ type: 'Error', message: 'Missing required cookies for token retrieval', timestamp: new Date() });
+    logError('Missing required cookies for token retrieval');
     return res.status(400).json({ error: 'Missing required cookies for token retrieval', logs: tokenLogs });
   }
 
@@ -63,46 +65,53 @@ router.get('/retrieve-tokens', async (req, res) => {
       xFapiInteractionId: tokenSet.xFapiInteractionId
     });
 
-} catch (error) {
-    // Capture the full error object from the SDK
-    const fullError = {
-        message: error.message || 'No message provided',
-        stack: error.stack || 'No stack trace available',
-        response: error.response ? JSON.stringify(error.response, null, 2) : 'No response object',
-        config: error.config || 'No config provided',
-        ...error
-    };
-    
-    // Check if the SDK returned a detailed response (like the "missing required JWT property azp" error)
-    if (error.response) {
-        console.error('SDK returned an error response:', error.response);
-        // Log the detailed SDK response
-        tokenLogs.push({
-            type: 'Error',
-            message: `SDK Error: ${error.response.data.error_description || 'Unknown error'}`,
-            details: error.response.data,
-            timestamp: new Date(),
-        });
-    } else {
-        console.error('General error occurred:', fullError);
-        tokenLogs.push({
-            type: 'Error',
-            message: error.message || 'Unknown error occurred',
-            details: fullError,
-            timestamp: new Date(),
-        });
+  } catch (error) {
+    if (!hasLoggedError) {
+      // Only log the first error
+      hasLoggedError = true;
+      handleFullError(error);
     }
 
     // Do not clear cookies on error
     return res.status(500).json({
-        error: error.message || 'Unknown error occurred',
-        logs: tokenLogs,
+      error: error.message || 'Unknown error occurred',
+      logs: tokenLogs,
     });
+  }
+});
+
+function logError(message) {
+  console.log(message);
+  tokenLogs.push({ type: 'Error', message, timestamp: new Date() });
 }
 
+function handleFullError(error) {
+  // Capture the full error object from the SDK
+  const fullError = {
+    message: error.message || 'No message provided',
+    stack: error.stack || 'No stack trace available',
+    response: error.response ? JSON.stringify(error.response, null, 2) : 'No response object',
+    config: error.config || 'No config provided',
+    ...error
+  };
   
-
-  
-});
+  if (error.response) {
+    console.error('SDK returned an error response:', error.response);
+    tokenLogs.push({
+      type: 'Error',
+      message: `SDK Error: ${error.response.data.error_description || 'Unknown error'}`,
+      details: error.response.data,
+      timestamp: new Date(),
+    });
+  } else {
+    console.error('General error occurred:', fullError);
+    tokenLogs.push({
+      type: 'Error',
+      message: error.message || 'Unknown error occurred',
+      details: fullError,
+      timestamp: new Date(),
+    });
+  }
+}
 
 export default router;
