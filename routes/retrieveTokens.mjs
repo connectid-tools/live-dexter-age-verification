@@ -31,7 +31,7 @@ router.get('/retrieve-tokens', async (req, res) => {
   }
 
   try {
-    // Call the SDK to retrieve tokens
+    console.log('Getting tokens');
     const tokenSet = await rpClient.retrieveTokens(
       authorisation_server_id,
       req.query,
@@ -39,25 +39,26 @@ router.get('/retrieve-tokens', async (req, res) => {
       state,
       nonce
     );
+    console.log('Tokens successfully retrieved');
     
     const claims = tokenSet.claims();
     const token = {
       decoded: jwtDecode(tokenSet.id_token),
       raw: tokenSet.id_token,
     };
-
+  
     tokenLogs = []; // Clear previous logs
-
+  
     // Handle SDK errors within the token set
     if (tokenSet.error_description) {
       console.log(`SDK Error encountered: ${tokenSet.error_description}`);
       tokenLogs.push({ type: 'Error', message: tokenSet.error_description, timestamp: new Date() });
       return res.status(400).json({ error: tokenSet.error_description, logs: tokenLogs });
     }
-
+  
     // Success path: Log the success
     tokenLogs.push({ type: 'Success', message: 'Token retrieved successfully', timestamp: new Date() });
-
+  
     // Clear cookies and return success response
     clearCookies(res); // Only clear cookies on success
     console.log('Cookies cleared successfully');
@@ -67,15 +68,15 @@ router.get('/retrieve-tokens', async (req, res) => {
       logs: tokenLogs,
       xFapiInteractionId: tokenSet.xFapiInteractionId
     });
-
+  
   } catch (error) {
     console.error('Error retrieving tokens:', error);
-
+  
     let errorMessage = 'Unknown error occurred';
     let errorDetails = {};
     let errorObject = {};
     let xFapiInteractionId = 'No interaction ID'; // Default if not found
-
+  
     // Capture full error object for detailed logging
     const fullError = {
       message: error.message || 'No message provided',
@@ -99,12 +100,12 @@ router.get('/retrieve-tokens', async (req, res) => {
           error_description: String(error_description || 'No description provided'),
           error_uri: String(error_uri || 'No URI provided'),
         };
-
+  
         // Extract x-fapi-interaction-id from the headers if available
         if (error.response.headers && error.response.headers['x-fapi-interaction-id']) {
           xFapiInteractionId = error.response.headers['x-fapi-interaction-id'];
         }
-
+  
         // Combine the xFapiInteractionId and error message together
         errorMessage += `, x-fapi-interaction-id: ${xFapiInteractionId}, ${error_description || 'No additional description'}`;
     } else if (error.message) {
@@ -125,9 +126,9 @@ router.get('/retrieve-tokens', async (req, res) => {
       error_object: errorObject, // Include parsed error details
       xFapiInteractionId: xFapiInteractionId // Include the x-fapi-interaction-id
     });
-
+  
     // Do not clear cookies on error
-
+  
     // Send the error, error details, and logs to the frontend
     return res.status(500).json({ 
       error: errorMessage, 
@@ -135,6 +136,7 @@ router.get('/retrieve-tokens', async (req, res) => {
       logs: tokenLogs 
     });
   }
+  
 
   
 });
