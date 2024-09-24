@@ -50,19 +50,6 @@ router.get('/retrieve-tokens', async (req, res) => {
 
     tokenLogs = []; // Clear previous logs
 
-    // Check for `aud` mismatch manually
-    const expectedAud = "https://rp.directory.sandbox.connectid.com.au/openid_relying_party/a849178a-f0a4-45ed-8472-a50c4d5299ae";
-    if (token.decoded.aud !== expectedAud) {
-      const audMismatchMessage = `aud mismatch: Expected ${expectedAud}, got ${token.decoded.aud}`;
-      console.error(audMismatchMessage); // Log this error on the server
-      tokenLogs.push({
-        type: 'Error',
-        message: audMismatchMessage,
-        timestamp: new Date()
-      });
-      return res.status(400).json({ error: audMismatchMessage, logs: tokenLogs });
-    }
-
     if (tokenSet.error_description) {
       console.log(`SDK Error encountered: ${tokenSet.error_description}`);
       tokenLogs.push({ type: 'Error', message: tokenSet.error_description, timestamp: new Date() });
@@ -116,7 +103,7 @@ router.get('/retrieve-tokens', async (req, res) => {
       });
     }
 
-    // Return the error logs to the frontend
+    // Return the error logs to the frontend, including full details
     return res.status(500).json({ error: errorMessage, logs: tokenLogs });
   }
 });
