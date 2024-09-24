@@ -77,6 +77,7 @@ router.get('/retrieve-tokens', async (req, res) => {
       logs: tokenLogs,  // Sends logs to the frontend
     });
   }
+});
 
 function logError(message) {
   console.log(message);
