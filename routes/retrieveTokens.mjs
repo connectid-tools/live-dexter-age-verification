@@ -54,7 +54,6 @@ router.get('/retrieve-tokens', async (req, res) => {
     if (tokenSet.error_description) {
       console.log(`SDK Error encountered: ${tokenSet.error_description}`);
       tokenLogs.push({ type: 'Error', message: tokenSet.error_description, timestamp: new Date() });
-      clearCookies(res); // Clear cookies even if there's an error
       return res.status(400).json({ error: tokenSet.error_description, logs: tokenLogs });
     }
 
@@ -62,7 +61,7 @@ router.get('/retrieve-tokens', async (req, res) => {
     tokenLogs.push({ type: 'Success', message: 'Token retrieved successfully', timestamp: new Date() });
 
     // Clear cookies and return success response
-    clearCookies(res); 
+    clearCookies(res); // Only clear cookies on success
     console.log('Cookies cleared successfully');
     return res.status(200).json({
       claims,
@@ -107,6 +106,9 @@ router.get('/retrieve-tokens', async (req, res) => {
         if (error.response.headers && error.response.headers['x-fapi-interaction-id']) {
           xFapiInteractionId = error.response.headers['x-fapi-interaction-id'];
         }
+
+        // Combine the xFapiInteractionId and error message together
+        errorMessage += `, x-fapi-interaction-id: ${xFapiInteractionId}, ${error_description || 'No additional description'}`;
     } else if (error.message) {
         // Handle the case where error has a message property
         errorMessage = `Error: ${error.message}`;
@@ -125,7 +127,9 @@ router.get('/retrieve-tokens', async (req, res) => {
       error_object: errorObject, // Include parsed error details
       xFapiInteractionId: xFapiInteractionId // Include the x-fapi-interaction-id
     });
-  
+
+    // Do not clear cookies on error
+
     // Send the error, error details, and logs to the frontend
     return res.status(500).json({ 
       error: errorMessage, 
@@ -133,6 +137,7 @@ router.get('/retrieve-tokens', async (req, res) => {
       logs: tokenLogs 
     });
   }
+
 });
 
 export default router;
