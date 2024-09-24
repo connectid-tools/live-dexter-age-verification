@@ -72,17 +72,16 @@ router.get('/retrieve-tokens', async (req, res) => {
     });
 
   } catch (error) {
-    // Handle and log the error
-    console.error('Error retrieving tokens:', error);
-
+    console.error('Full error object:', error);
+  
     let errorMessage = 'Unknown error occurred';
     let errorDetails = {};
     let errorObject = {};
-
+  
     // Check if the error response exists
     if (error.response && error.response.data) {
         const { error: errorCode, error_description, error_uri } = error.response.data;
-
+  
         console.log('Full error response:', error.response.data);
         errorMessage = `SDK Error: ${error_description || 'Unknown SDK error'}`;
         errorDetails = error.response.data;
@@ -102,7 +101,7 @@ router.get('/retrieve-tokens', async (req, res) => {
         errorMessage = 'Unexpected error structure';
         errorDetails = error; // Log entire error object if no response or message is present
     }
-
+  
     tokenLogs.push({
       type: 'Error',
       message: errorMessage,
@@ -110,9 +109,9 @@ router.get('/retrieve-tokens', async (req, res) => {
       details: errorDetails, // Include full error details in logs
       error_object: errorObject, // Include parsed error details
     });
-
+  
     clearCookies(res); // Clear cookies even if there's an error
-
+  
     // Send the error, error details, and logs to the frontend
     return res.status(500).json({ 
       error: errorMessage, 
