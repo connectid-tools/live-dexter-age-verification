@@ -59,11 +59,11 @@ router.get('/retrieve-tokens', async (req, res) => {
     clearCookies(res);
     console.info('Cookies cleared successfully');  // Info log for successful cookie clearance
     
-    // Return success response
+    // Return success response with logs
     return res.status(200).json({
       claims,
       token,
-      logs: tokenLogs,
+      logs: tokenLogs,  // Include logs in response
       xFapiInteractionId: tokenSet.xFapiInteractionId
     });
 
@@ -78,11 +78,11 @@ router.get('/retrieve-tokens', async (req, res) => {
     clearCookies(res);
     console.warn('Cookies cleared on error');  // Warn log for cookie clearance on error
     
-    // Return the full error details, including stack and response
+    // Return error response with logs
     return res.status(500).json({
       error: error.message || 'Unknown error occurred',
-      sdkErrorDetails: JSON.stringify(handleFullError(error)), // Send SDK error details as a string
-      logs: tokenLogs,  // Sends logs to the frontend
+      sdkErrorDetails: handleFullError(error), // Send full SDK error object to frontend
+      logs: tokenLogs,  // Include logs in response
     });
   }
 });
