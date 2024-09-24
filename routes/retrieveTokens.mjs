@@ -55,23 +55,25 @@ router.get('/retrieve-tokens', async (req, res) => {
     // Success path: Log the success
     tokenLogs.push({ type: 'Success', message: 'Token retrieved successfully', timestamp: new Date() });
 
-    // Clear cookies and return success response
-    clearCookies(res); // Only clear cookies on success
-    console.log('Cookies cleared successfully');
-    return res.status(200).json({
+    // Return success response first
+    res.status(200).json({
       claims,
       token,
       logs: tokenLogs,
       xFapiInteractionId: tokenSet.xFapiInteractionId
     });
 
+    // Clear cookies only after successful validation and response
+    clearCookies(res);
+    console.log('Cookies cleared successfully');
+    
   } catch (error) {
     if (!hasLoggedError) {
       hasLoggedError = true;
       const sdkErrorMessage = handleFullError(error); // Logs and processes SDK error
       tokenLogs.push({ type: 'Error', message: sdkErrorMessage, timestamp: new Date() });
     }
-  
+
     return res.status(500).json({
       error: error.message || 'Unknown error occurred',
       logs: tokenLogs,  // Sends logs to the frontend
@@ -111,6 +113,9 @@ function handleFullError(error) {
       timestamp: new Date(),
     });
   }
+
+  // Return a message to be displayed in the logs
+  return fullError.message;
 }
 
 export default router;
