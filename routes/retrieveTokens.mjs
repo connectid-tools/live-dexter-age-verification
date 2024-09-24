@@ -59,25 +59,25 @@ router.get('/retrieve-tokens', async (req, res) => {
       return decodedHeader;
     }
 
-      // Check signing algorithm earlier
-      function checkSigningAlgorithm(tokenSet, expectedAlgorithm) {
-        const decodedHeader = decodeJwtHeader(tokenSet.id_token); // Manually decode the JWT header
-
-        // Check algorithm
-        console.log('Checking `alg` value:', decodedHeader.alg, 'against expected algorithm:', expectedAlgorithm);
-        if (decodedHeader.alg !== expectedAlgorithm) {
-          tokenLogs.push({ 
-            type: 'Error', 
-            message: `id_token algorithm ${decodedHeader.alg} does not match expected ${expectedAlgorithm}`, 
-            timestamp: new Date() 
-          });
-          loggedError = true;
-          return res.status(400).json({ error: 'The id_token algorithm does not match the expected algorithm', logs: tokenLogs });
-        }
+    // Function to check the signing algorithm
+    function checkSigningAlgorithm(tokenSet, expectedAlgorithm) {
+      const decodedHeader = decodeJwtHeader(tokenSet.id_token); // Manually decode the JWT header
+      console.log('Checking `alg` value:', decodedHeader.alg, 'against expected algorithm:', expectedAlgorithm);
+      
+      // Test 6 - Mismatched signing algorithm
+      if (decodedHeader.alg !== expectedAlgorithm) {
+        tokenLogs.push({ 
+          type: 'Error', 
+          message: `id_token algorithm ${decodedHeader.alg} does not match expected ${expectedAlgorithm}`, 
+          timestamp: new Date() 
+        });
+        loggedError = true;
+        return res.status(400).json({ error: 'The id_token algorithm does not match the expected algorithm', logs: tokenLogs });
       }
+    }
 
-      // Inside the try block, after retrieving the tokens:
-      checkSigningAlgorithm(tokenSet, expectedAlgorithm);
+    // Inside the try block, after retrieving the tokens:
+    checkSigningAlgorithm(tokenSet, expectedAlgorithm);
 
       // Test 2 - Mismatched `iss` value (from the payload, not the header)
       console.log('Checking `iss` value:', token.decoded.iss, 'against expected issuer:', expectedIssuer);
@@ -129,25 +129,7 @@ router.get('/retrieve-tokens', async (req, res) => {
     }
   
     
-    // Function to check the signing algorithm
-    function checkSigningAlgorithm(tokenSet, expectedAlgorithm) {
-      const decodedHeader = decodeJwtHeader(tokenSet.id_token); // Manually decode the JWT header
-      console.log('Checking `alg` value:', decodedHeader.alg, 'against expected algorithm:', expectedAlgorithm);
-      
-      // Test 6 - Mismatched signing algorithm
-      if (decodedHeader.alg !== expectedAlgorithm) {
-        tokenLogs.push({ 
-          type: 'Error', 
-          message: `id_token algorithm ${decodedHeader.alg} does not match expected ${expectedAlgorithm}`, 
-          timestamp: new Date() 
-        });
-        loggedError = true;
-        return res.status(400).json({ error: 'The id_token algorithm does not match the expected algorithm', logs: tokenLogs });
-      }
-    }
 
-    // Inside the try block, after retrieving the tokens:
-    checkSigningAlgorithm(tokenSet, expectedAlgorithm);
     
     // Test 7 - Expired `exp` value
     if (!loggedError && token.decoded.exp && token.decoded.exp < Math.floor(Date.now() / 1000)) {
