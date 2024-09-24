@@ -52,20 +52,10 @@ router.get('/retrieve-tokens', async (req, res) => {
     const expectedClientId = "https://rp.directory.sandbox.connectid.com.au/openid_relying_party/a849178a-f0a4-45ed-8472-a50c4d5299ae";
     const expectedAlgorithm = 'PS256';
 
-    // Test 1 - Happy path flow with tokens retrieved
-    if (!loggedError && !loggedSuccess) {
-      tokenLogs.push({
-        type: 'Success',
-        message: 'Success: Happy path flow completed, tokens retrieved',
-        timestamp: new Date()
-      });
-      loggedSuccess = true;
-      return res.status(200).json({ message: 'Success: Happy path flow completed, tokens retrieved', logs: tokenLogs });
-    }
     
     // Test 2 - Mismatched `iss` value
     console.log('Checking `iss` value:', token.decoded.iss, 'against expected issuer:', expectedIssuer);
-
+    
     if (token.decoded.iss !== expectedIssuer) {
       console.log('Mismatched `iss` value detected'); // Log that the mismatch was detected
       tokenLogs.push({ 
@@ -89,7 +79,7 @@ router.get('/retrieve-tokens', async (req, res) => {
       loggedError = true;
       return res.status(400).json({ error: 'The aud value in the id_token does not match the expected client ID', logs: tokenLogs });
     }
-
+    
     if (!loggedError && Array.isArray(token.decoded.aud) && token.decoded.aud.length === 1 && token.decoded.aud[0] === expectedClientId) {
       tokenLogs.push({
         type: 'Success',
@@ -98,9 +88,9 @@ router.get('/retrieve-tokens', async (req, res) => {
       });
       loggedSuccess = true;
     }
-
-
-
+    
+    
+    
     // Test 5 - `alg: none`
     if (!loggedError && tokenSet.id_token_header?.alg === 'none') {
       tokenLogs.push({ 
@@ -111,7 +101,7 @@ router.get('/retrieve-tokens', async (req, res) => {
       loggedError = true;
       return res.status(400).json({ error: 'The id_token was signed with alg: none', logs: tokenLogs });
     }
-
+    
 
     // Function to manually decode the JWT header
     function decodeJwtHeader(token) {
@@ -119,12 +109,12 @@ router.get('/retrieve-tokens', async (req, res) => {
       const decodedHeader = JSON.parse(Buffer.from(encodedHeader, 'base64').toString('utf8'));
       return decodedHeader;
     }
-
+    
     // Function to check the signing algorithm
     function checkSigningAlgorithm(tokenSet, expectedAlgorithm) {
       const decodedHeader = decodeJwtHeader(tokenSet.id_token); // Manually decode the JWT header
       console.log('Checking `alg` value:', decodedHeader.alg, 'against expected algorithm:', expectedAlgorithm);
-
+      
       // Test 6 - Mismatched signing algorithm
       if (decodedHeader.alg !== expectedAlgorithm) {
         tokenLogs.push({ 
@@ -139,7 +129,7 @@ router.get('/retrieve-tokens', async (req, res) => {
 
     // Inside the try block, after retrieving the tokens:
     checkSigningAlgorithm(tokenSet, expectedAlgorithm);
-
+    
     // Test 7 - Expired `exp` value
     if (!loggedError && token.decoded.exp && token.decoded.exp < Math.floor(Date.now() / 1000)) {
       tokenLogs.push({ 
@@ -215,7 +205,7 @@ router.get('/retrieve-tokens', async (req, res) => {
       loggedError = true;
       return res.status(400).json({ error: 'The nonce value is missing in the id_token but was expected', logs: tokenLogs });
     }
-
+    
     // Test 14 - Invalid issuer in the token
     if (!loggedError && token.decoded.iss !== expectedIssuer) {
       tokenLogs.push({ 
@@ -226,7 +216,7 @@ router.get('/retrieve-tokens', async (req, res) => {
       loggedError = true;
       return res.status(400).json({ error: 'The issuer in the id_token from the token endpoint is invalid', logs: tokenLogs });
     }
-
+    
     // Test 15 - Missing issuer in authorization response
     if (!loggedError && !token.decoded.iss) {
       tokenLogs.push({ 
@@ -276,6 +266,17 @@ router.get('/retrieve-tokens', async (req, res) => {
       loggedSuccess = true;
     }
 
+    // Test 1 - Happy path flow with tokens retrieved
+    if (!loggedError && !loggedSuccess) {
+      tokenLogs.push({
+        type: 'Success',
+        message: 'Success: Happy path flow completed, tokens retrieved',
+        timestamp: new Date()
+      });
+      loggedSuccess = true;
+      return res.status(200).json({ message: 'Success: Happy path flow completed, tokens retrieved', logs: tokenLogs });
+    }
+    
     // If no errors, clear cookies and return successful response
     if (loggedSuccess) {
       clearCookies(res);
