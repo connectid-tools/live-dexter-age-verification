@@ -2,7 +2,7 @@ import express from 'express';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from '../config.js';
 import { clearCookies } from '../utils/cookieUtils.mjs';
-import jwtDecode from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
