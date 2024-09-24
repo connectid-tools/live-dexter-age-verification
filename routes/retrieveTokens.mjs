@@ -67,18 +67,16 @@ router.get('/retrieve-tokens', async (req, res) => {
 
   } catch (error) {
     if (!hasLoggedError) {
-      // Only log the first error
       hasLoggedError = true;
-      handleFullError(error);
+      const sdkErrorMessage = handleFullError(error); // Logs and processes SDK error
+      tokenLogs.push({ type: 'Error', message: sdkErrorMessage, timestamp: new Date() });
     }
-
-    // Do not clear cookies on error
+  
     return res.status(500).json({
       error: error.message || 'Unknown error occurred',
-      logs: tokenLogs,
+      logs: tokenLogs,  // Sends logs to the frontend
     });
   }
-});
 
 function logError(message) {
   console.log(message);
