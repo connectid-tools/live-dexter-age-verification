@@ -56,13 +56,16 @@ router.get('/retrieve-tokens', async (req, res) => {
     });
 
   } catch (error) {
+    const logs = [{ type: 'Error', message: error.message, timestamp: new Date() }];
     clearCookies(res);
 
     return res.status(500).json({
       error: error.message || 'Unknown error occurred',
       sdkErrorDetails: error,
+      logs: logs,  // Return logs in the response
     });
   }
 });
+
 
 export default router;
