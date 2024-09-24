@@ -2,7 +2,7 @@ import express from 'express';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from '../config.js';
 import { clearCookies } from '../utils/cookieUtils.mjs';
-import { jwtDecode } from 'jwt-decode';
+import jwtDecode from 'jwt-decode';
 
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
@@ -13,7 +13,7 @@ router.get('/retrieve-tokens', async (req, res) => {
   console.log('--- /retrieve-tokens endpoint hit ---');
 
   let loggedError = false; 
-  let loggedSuccess = false; 
+  let loggedSuccess = false;
 
   // Extract the authorization code from query params
   const { code } = req.query;
@@ -50,6 +50,19 @@ router.get('/retrieve-tokens', async (req, res) => {
 
     tokenLogs = []; // Clear previous logs
 
+    // Check for `aud` mismatch manually
+    const expectedAud = "https://rp.directory.sandbox.connectid.com.au/openid_relying_party/a849178a-f0a4-45ed-8472-a50c4d5299ae";
+    if (token.decoded.aud !== expectedAud) {
+      const audMismatchMessage = `aud mismatch: Expected ${expectedAud}, got ${token.decoded.aud}`;
+      console.error(audMismatchMessage); // Log this error on the server
+      tokenLogs.push({
+        type: 'Error',
+        message: audMismatchMessage,
+        timestamp: new Date()
+      });
+      return res.status(400).json({ error: audMismatchMessage, logs: tokenLogs });
+    }
+
     if (tokenSet.error_description) {
       console.log(`SDK Error encountered: ${tokenSet.error_description}`);
       tokenLogs.push({ type: 'Error', message: tokenSet.error_description, timestamp: new Date() });
@@ -57,13 +70,13 @@ router.get('/retrieve-tokens', async (req, res) => {
       return res.status(400).json({ error: tokenSet.error_description, logs: tokenLogs });
     }
 
-    // Log the success and set the `loggedSuccess` flag to true
+    // Success path: Log the success and set the `loggedSuccess` flag to true
     tokenLogs.push({ type: 'Success', message: 'Token retrieved successfully', timestamp: new Date() });
     loggedSuccess = true;
 
-    // Clear cookies and return the successful response
+    // If no errors, clear cookies and return successful response
     if (loggedSuccess) {
-      clearCookies(res);
+      clearCookies(res); // Clear cookies
       console.log('Cookies cleared successfully');
       return res.status(200).json({
         claims,
@@ -74,10 +87,10 @@ router.get('/retrieve-tokens', async (req, res) => {
     }
 
   } catch (error) {
-    // Log the full error object
+    // Log the entire error object to inspect it
     console.error('Error retrieving tokens:', error);
 
-    // Detailed error handling and returning response
+    // Add more detailed logging if available
     let errorMessage = 'Unknown error occurred';
     if (error.response) {
       errorMessage = `SDK Error: ${error.response.data.error_description || 'Unknown SDK error'}`;
