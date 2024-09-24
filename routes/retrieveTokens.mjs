@@ -74,12 +74,39 @@ router.get('/retrieve-tokens', async (req, res) => {
     }
 
   } catch (error) {
-    // Catch errors thrown by the SDK
+    // Log the entire error object to inspect it
     console.error('Error retrieving tokens:', error);
 
-    // Log and return the error as it is from the SDK
-    tokenLogs.push({ type: 'Error', message: `SDK Error: ${error.message}`, timestamp: new Date() });
-    return res.status(500).json({ error: error.message, logs: tokenLogs });
+    // Add more detailed logging if available
+    let errorMessage = 'Unknown error occurred';
+    if (error.response) {
+      errorMessage = `SDK Error: ${error.response.data.error_description || 'Unknown SDK error'}`;
+      tokenLogs.push({
+        type: 'Error',
+        message: errorMessage,
+        timestamp: new Date(),
+        details: error.response.data // Log more details from the error response
+      });
+    } else if (error.message) {
+      // Fallback to a generic message if no SDK response is available
+      errorMessage = `Error: ${error.message}`;
+      tokenLogs.push({
+        type: 'Error',
+        message: errorMessage,
+        timestamp: new Date()
+      });
+    } else {
+      // Log the full error object for inspection if no clear message
+      tokenLogs.push({
+        type: 'Error',
+        message: 'Unexpected error structure',
+        timestamp: new Date(),
+        details: error
+      });
+    }
+
+    // Return the error logs
+    return res.status(500).json({ error: errorMessage, logs: tokenLogs });
   }
 });
 
