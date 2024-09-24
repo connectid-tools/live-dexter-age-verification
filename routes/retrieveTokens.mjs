@@ -52,21 +52,47 @@ router.get('/retrieve-tokens', async (req, res) => {
     const expectedClientId = "https://rp.directory.sandbox.connectid.com.au/openid_relying_party/a849178a-f0a4-45ed-8472-a50c4d5299ae";
     const expectedAlgorithm = 'PS256';
 
-    
-    // Test 2 - Mismatched `iss` value
-    console.log('Checking `iss` value:', token.decoded.iss, 'against expected issuer:', expectedIssuer);
-    
-    if (token.decoded.iss !== expectedIssuer) {
-      console.log('Mismatched `iss` value detected'); // Log that the mismatch was detected
-      tokenLogs.push({ 
-        type: 'Error', 
-        message: '`iss` value in id_token does not match expected issuer', 
-        details: `Received: ${token.decoded.iss}, Expected: ${expectedIssuer}`,
-        timestamp: new Date() 
-      });
-      loggedError = true;
-      return res.status(400).json({ error: 'The iss value in the id_token does not match the authorization server\'s issuer', logs: tokenLogs });
+    // Function to manually decode the JWT header
+    function decodeJwtHeader(token) {
+      const encodedHeader = token.split('.')[0];
+      const decodedHeader = JSON.parse(Buffer.from(encodedHeader, 'base64').toString('utf8'));
+      return decodedHeader;
     }
+
+      // Check signing algorithm earlier
+      function checkSigningAlgorithm(tokenSet, expectedAlgorithm) {
+        const decodedHeader = decodeJwtHeader(tokenSet.id_token); // Manually decode the JWT header
+
+        // Check algorithm
+        console.log('Checking `alg` value:', decodedHeader.alg, 'against expected algorithm:', expectedAlgorithm);
+        if (decodedHeader.alg !== expectedAlgorithm) {
+          tokenLogs.push({ 
+            type: 'Error', 
+            message: `id_token algorithm ${decodedHeader.alg} does not match expected ${expectedAlgorithm}`, 
+            timestamp: new Date() 
+          });
+          loggedError = true;
+          return res.status(400).json({ error: 'The id_token algorithm does not match the expected algorithm', logs: tokenLogs });
+        }
+      }
+
+      // Inside the try block, after retrieving the tokens:
+      checkSigningAlgorithm(tokenSet, expectedAlgorithm);
+
+      // Test 2 - Mismatched `iss` value (from the payload, not the header)
+      console.log('Checking `iss` value:', token.decoded.iss, 'against expected issuer:', expectedIssuer);
+
+      if (token.decoded.iss !== expectedIssuer) {
+        console.log('Mismatched `iss` value detected'); // Log that the mismatch was detected
+        tokenLogs.push({ 
+          type: 'Error', 
+          message: '`iss` value in id_token does not match expected issuer', 
+          details: `Received: ${token.decoded.iss}, Expected: ${expectedIssuer}`,
+          timestamp: new Date() 
+        });
+        loggedError = true;
+        return res.status(400).json({ error: 'The iss value in the id_token does not match the authorization server\'s issuer', logs: tokenLogs });
+      }
 
     // Test 3 - Mismatched `aud` value
     if (!loggedError && token.decoded.aud !== expectedClientId) {
@@ -101,14 +127,7 @@ router.get('/retrieve-tokens', async (req, res) => {
       loggedError = true;
       return res.status(400).json({ error: 'The id_token was signed with alg: none', logs: tokenLogs });
     }
-    
-
-    // Function to manually decode the JWT header
-    function decodeJwtHeader(token) {
-      const encodedHeader = token.split('.')[0];
-      const decodedHeader = JSON.parse(Buffer.from(encodedHeader, 'base64').toString('utf8'));
-      return decodedHeader;
-    }
+  
     
     // Function to check the signing algorithm
     function checkSigningAlgorithm(tokenSet, expectedAlgorithm) {
