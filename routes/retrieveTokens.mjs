@@ -13,20 +13,9 @@ async function retrieveTokensWithErrorHandling(...args) {
     return await rpClient.retrieveTokens(...args);
   } catch (error) {
     // Log the error here before it is re-thrown
-    console.error('Error inside retrieveTokensWithErrorHandling:', error.message);
-
-    // Optionally capture more error details here (stack, response, etc.)
-    const sdkErrorMessage = {
-      message: error.message || 'No message provided',
-      stack: error.stack || 'No stack trace available',
-      response: error.response
-        ? JSON.stringify(error.response, null, 2)
-        : 'No response object (error occurred before an HTTP request)',
-      config: error.config || 'No config provided (error might have occurred before request)',
-    };
-
+    console.error('Error retrieving tokens:', error.message);
     // Return the processed error message
-    throw sdkErrorMessage; // Throw the processed error message to handle it in the route
+    throw error; // Throw the processed error message to handle it in the route
   }
 }
 
