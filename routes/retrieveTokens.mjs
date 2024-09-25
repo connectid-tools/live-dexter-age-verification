@@ -7,6 +7,12 @@ import { jwtDecode } from 'jwt-decode';
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
+// Log with timestamp and level (manual formatting)
+function logWithTimestamp(level, message) {
+  const timestamp = new Date().toISOString();
+  console.log(`${timestamp} ${level}: ${message}`);
+}
+
 // Wrap the call to capture internal SDK errors
 async function retrieveTokensWithErrorHandling(...args) {
   try {
@@ -15,14 +21,14 @@ async function retrieveTokensWithErrorHandling(...args) {
     const xFapiInteractionId = error.xFapiInteractionId || 'Unknown';  // Extract x-fapi-interaction-id if available
     const authorisationServerId = args[0];  // Assuming the first arg is the authorisation server id
 
-    // Log structured error message with detailed context
-    console.error(
-      `Error retrieving tokens with authorisation server ${authorisationServerId}, x-fapi-interaction-id: ${xFapiInteractionId}, ${error.message}`, 
-      { stack: error.stack, details: error }
+    // Manually format the log to include timestamp and error level
+    logWithTimestamp('error', 
+      `Error retrieving tokens with authorisation server ${authorisationServerId}, x-fapi-interaction-id: ${xFapiInteractionId}, ${error.message}`
     );
+
+    console.error({ stack: error.stack, details: error });  // Additional error details for debugging
     
-    // Return the processed error message
-    throw error; // Re-throw the processed error message to handle it in the route
+    throw error;  // Re-throw the processed error message to handle it in the route
   }
 }
 
