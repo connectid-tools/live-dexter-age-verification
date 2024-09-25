@@ -29,7 +29,7 @@ async function retrieveTokensWithErrorHandling(rpClientInstance, ...args) {
   }
 }
 
-router.get('/retrieve-ttokens', async (req, res) => {
+router.get('/retrieve-tokens', async (req, res) => {
   const { code } = req.query;
 
   if (!code) {
@@ -53,26 +53,27 @@ router.get('/retrieve-ttokens', async (req, res) => {
       nonce
     );
 
-    // If token retrieval was successful, send the tokens and xFapiInteractionId to the frontend
-    if (tokenSet && tokenSet.claims) {
-      const claims = tokenSet.claims();
-      const token = {
-        decoded: jwtDecode(tokenSet.id_token),
-        raw: tokenSet.id_token,
-      };
-      return res.status(200).json({
-        claims,
-        token,
-        xFapiInteractionId: tokenSet.xFapiInteractionId, // Use the successfully retrieved xFapiInteractionId
+    // Check if tokenSet is an error object
+    if (tokenSet?.errorMessage) {
+      // If token retrieval failed (iss mismatch or other error), send the error message to the frontend
+      const { errorMessage, xFapiInteractionId, details } = tokenSet;
+      return res.status(500).json({
+        error: errorMessage,
+        xFapiInteractionId: xFapiInteractionId,
+        details, // Send the error details to the frontend
       });
     }
 
-    // If token retrieval failed (iss mismatch or other error), send the error message to the frontend
-    const { errorMessage, xFapiInteractionId, details } = tokenSet;
-    return res.status(500).json({
-      error: errorMessage,
-      xFapiInteractionId: xFapiInteractionId,
-      details, // Send the error details to the frontend
+    // If token retrieval was successful, send the tokens and xFapiInteractionId to the frontend
+    const claims = tokenSet.claims();
+    const token = {
+      decoded: jwtDecode(tokenSet.id_token),
+      raw: tokenSet.id_token,
+    };
+    return res.status(200).json({
+      claims,
+      token,
+      xFapiInteractionId: tokenSet.xFapiInteractionId, // Use the successfully retrieved xFapiInteractionId
     });
 
   } catch (error) {
