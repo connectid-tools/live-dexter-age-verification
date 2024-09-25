@@ -3,7 +3,7 @@ const router = express.Router();
 
 import { createLogger, format, transports } from 'winston';
 
-export const getLogger = (logLevel: 'debug' | 'info' = 'info') => {
+export const getLogger = (logLevel = 'info') => {
   const logFormat = format.printf(({ level, message, timestamp }) => `${timestamp} ${level}: ${message}`);
   return createLogger({
     level: logLevel,
