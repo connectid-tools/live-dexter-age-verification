@@ -19,23 +19,22 @@ function getXFapiInteractionId(error) {
 // Wrap the call to capture internal SDK errors
 async function retrieveTokensWithErrorHandling(rpClientInstance, ...args) {
   try {
-    // Call the SDK method with correct context
-    return await rpClientInstance.retrieveTokens(...args);
+    // Bind the SDK's `retrieveTokens` method to ensure the correct `this` context
+    return await rpClientInstance.retrieveTokens.bind(rpClientInstance)(...args);
   } catch (error) {
     const xFapiInteractionId = getXFapiInteractionId(error);
-    const authorisationServerId = args[0];  // Assuming the first arg is the authorisation server id
+    const authorisationServerId = args[0];
 
-    // Log the error using the SDK's logger instance (rpClientInstance.logger)
     rpClientInstance.logger.error(
       `Error retrieving tokens with authorisation server ${authorisationServerId}, x-fapi-interaction-id: ${xFapiInteractionId}, ${error.message}`
     );
 
-    // Log full stack trace and details for debugging
     rpClientInstance.logger.debug({ stack: error.stack, details: error });
     
-    throw error;  // Re-throw the processed error message to handle it in the route
+    throw error;
   }
 }
+
 
 router.get('/retrieve-tokens', async (req, res) => {
   const { code } = req.query;
