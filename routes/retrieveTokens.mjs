@@ -8,6 +8,8 @@ import { getLogger } from '../utils/logger.mjs';  // Adjust the path to your log
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config); // This includes the logger from the SDK
 
+const logger = getLogger('info');  // Define the logger
+
 // Extract the x-fapi-interaction-id from the SDK error, if available
 function getXFapiInteractionId(error) {
   if (error && error.response && error.response.headers) {
