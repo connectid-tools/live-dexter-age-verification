@@ -71,6 +71,9 @@ router.get('/retrieve-tokens', async (req, res) => {
       raw: tokenSet.id_token,
     };
 
+    // Clear cookies before sending a response
+    clearCookies(res);
+
     return res.status(200).json({
       claims,
       token,
@@ -89,6 +92,9 @@ router.get('/retrieve-tokens', async (req, res) => {
       xFapiInteractionId: xFapiInteractionId,
     });
 
+    // Clear cookies before sending an error response
+    clearCookies(res);
+
     // Return error response to the frontend
     return res.status(500).json({
       error: 'Operation failed',
@@ -101,9 +107,6 @@ router.get('/retrieve-tokens', async (req, res) => {
         xFapiInteractionId: xFapiInteractionId, // Include this in your response
       }
     });
-  } finally {
-    // Clear cookies after response, whether successful or not
-    clearCookies(res);
   }
 });
 
