@@ -24,7 +24,7 @@ async function retrieveTokensWithErrorHandling(...args) {
   try {
     return await rpClient.retrieveTokens(...args);
   } catch (error) {
-    const xFapiInteractionId = getXFapiInteractionId(error);
+    const xFapiInteractionId = getXFapiInteractionId(error) || 'Unknown';
     const authorisationServerId = args[0];  // Assuming the first arg is the authorisation server id
 
     // Use winston logger instead of console for logging
@@ -32,7 +32,8 @@ async function retrieveTokensWithErrorHandling(...args) {
       `Error retrieving tokens with authorisation server ${authorisationServerId}, x-fapi-interaction-id: ${xFapiInteractionId}, ${error.message}`
     );
 
-    logger.debug({ stack: error.stack, details: error });  // Log full stack trace for debugging
+    // Log full stack trace and details for debugging
+    logger.debug({ stack: error.stack, details: error });
     
     throw error;  // Re-throw the processed error message to handle it in the route
   }
@@ -75,16 +76,21 @@ router.get('/retrieve-tokens', async (req, res) => {
     });
 
   } catch (error) {
-    const logs = [{ type: 'Error', message: error.message, timestamp: new Date() }];
+    const logs = [
+      { type: 'Error', message: error.message, timestamp: new Date() },
+      { type: 'Debug', message: error.stack, details: error.details, timestamp: new Date() }
+    ];
+  
     clearCookies(res);
-
-    // Log the error using winston logger
+  
+    // Log the error using winston logger (server-side)
     logger.error(`Error occurred: ${error.message}`);
-
+  
+    // Return the error and logs to the frontend
     return res.status(500).json({
       error: error.message || 'Unknown error occurred',
       sdkErrorDetails: error,
-      logs: logs,  // Return logs in the response
+      logs: logs  // Return logs in the response
     });
   }
 });
