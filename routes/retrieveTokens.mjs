@@ -55,8 +55,8 @@ router.get('/retrieve-tokens', async (req, res) => {
 
     // Check if tokenSet is an error object
     if (tokenSet?.errorMessage) {
-      // If token retrieval failed (iss mismatch or other error), send the error message to the frontend
       const { errorMessage, xFapiInteractionId, details } = tokenSet;
+      clearCookies(res); // Clear cookies before sending the error response
       return res.status(500).json({
         error: errorMessage,
         xFapiInteractionId: xFapiInteractionId,
@@ -70,6 +70,9 @@ router.get('/retrieve-tokens', async (req, res) => {
       decoded: jwtDecode(tokenSet.id_token),
       raw: tokenSet.id_token,
     };
+    
+    clearCookies(res); // Clear cookies before sending the successful response
+
     return res.status(200).json({
       claims,
       token,
@@ -77,10 +80,9 @@ router.get('/retrieve-tokens', async (req, res) => {
     });
 
   } catch (error) {
+    // Catch unexpected server errors
+    clearCookies(res); // Ensure cookies are cleared before sending the error response
     return res.status(500).json({ error: 'Unexpected server error' });
-  } finally {
-    // Clear cookies after response, whether successful or not
-    clearCookies(res);
   }
 });
 
