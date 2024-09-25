@@ -55,11 +55,10 @@ router.get('/retrieve-tokens', async (req, res) => {
 
     // Check if tokenSet is an error object
     if (tokenSet?.errorMessage) {
-      const { errorMessage, xFapiInteractionId, details } = tokenSet;
+      const { errorMessage, details } = tokenSet;
       clearCookies(res); // Clear cookies before sending the error response
       return res.status(500).json({
         error: errorMessage,
-        xFapiInteractionId: xFapiInteractionId,
         details: JSON.stringify(details, null, 2) // Pretty print the details object
       });
     }
