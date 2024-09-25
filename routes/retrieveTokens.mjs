@@ -1,3 +1,5 @@
+// Backend Code Update (to prevent headers sent issue and ensure x-fapi-interaction-id consistency)
+
 import express from 'express';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from '../config.js';
@@ -6,8 +8,8 @@ import { jwtDecode } from 'jwt-decode';
 import { getLogger } from '../utils/logger.mjs';  // Adjust the path to your logger file
 
 const router = express.Router();
-const rpClient = new RelyingPartyClientSdk(config); // This includes the logger from the SDK
-const logger = getLogger('info');  // Define the logger
+const rpClient = new RelyingPartyClientSdk(config);
+const logger = getLogger('info');
 
 // Simplified function to extract the x-fapi-interaction-id from the error
 function getXFapiInteractionId(error) {
@@ -17,7 +19,6 @@ function getXFapiInteractionId(error) {
 // Wrap the call to capture internal SDK errors and retrieve the xFapiInteractionId from the tokenSet
 async function retrieveTokensWithErrorHandling(rpClientInstance, ...args) {
   try {
-    // Retrieve tokens and capture the xFapiInteractionId from the tokenSet
     const tokenSet = await rpClientInstance.retrieveTokens(...args);
 
     // Log success, including the xFapiInteractionId
@@ -30,16 +31,15 @@ async function retrieveTokensWithErrorHandling(rpClientInstance, ...args) {
     const authorisationServerId = args[0];
     const xFapiInteractionId = getXFapiInteractionId(error);
 
-    // Log the error using the xFapiInteractionId from the error response
+    // Log the error with x-fapi-interaction-id
     rpClientInstance.logger.error(
       `Error retrieving tokens with authorisation server ${authorisationServerId}, x-fapi-interaction-id: ${xFapiInteractionId}, ${error.message}`
     );
 
-    rpClientInstance.logger.debug({ stack: error.stack, details: error });
-    
-    throw error;  // Re-throw the processed error message to handle it in the route
+    throw error;
   }
 }
+
 router.get('/retrieve-tokens', async (req, res) => {
   const { code } = req.query;
 
@@ -69,6 +69,7 @@ router.get('/retrieve-tokens', async (req, res) => {
       raw: tokenSet.id_token,
     };
 
+    // Clear cookies before sending a response
     clearCookies(res);
 
     return res.status(200).json({
@@ -80,7 +81,7 @@ router.get('/retrieve-tokens', async (req, res) => {
   } catch (error) {
     const xFapiInteractionId = getXFapiInteractionId(error);
 
-    // Log the error only once, with the correct interaction ID
+    // Log error details once, including xFapiInteractionId
     logger.error('Error during operation:', {
       message: error.message,
       name: error.name,
@@ -89,7 +90,10 @@ router.get('/retrieve-tokens', async (req, res) => {
       xFapiInteractionId: xFapiInteractionId,
     });
 
-    clearCookies(res);
+    // Do not clear cookies here if headers have already been sent
+    if (!res.headersSent) {
+      clearCookies(res);
+    }
 
     return res.status(500).json({
       error: 'Operation failed',
@@ -100,10 +104,9 @@ router.get('/retrieve-tokens', async (req, res) => {
         stack: error.stack,
         details: error.details || null,
         xFapiInteractionId: xFapiInteractionId,
-      },
+      }
     });
   }
 });
-
 
 export default router;
