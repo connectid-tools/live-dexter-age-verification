@@ -1,5 +1,3 @@
-// Backend Code Update (to prevent headers sent issue and ensure x-fapi-interaction-id consistency)
-
 import express from 'express';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from '../config.js';
@@ -8,8 +6,8 @@ import { jwtDecode } from 'jwt-decode';
 import { getLogger } from '../utils/logger.mjs';  // Adjust the path to your logger file
 
 const router = express.Router();
-const rpClient = new RelyingPartyClientSdk(config);
-const logger = getLogger('info');
+const rpClient = new RelyingPartyClientSdk(config); // This includes the logger from the SDK
+const logger = getLogger('info');  // Define the logger
 
 // Simplified function to extract the x-fapi-interaction-id from the error
 function getXFapiInteractionId(error) {
@@ -19,28 +17,19 @@ function getXFapiInteractionId(error) {
 // Wrap the call to capture internal SDK errors and retrieve the xFapiInteractionId from the tokenSet
 async function retrieveTokensWithErrorHandling(rpClientInstance, ...args) {
   try {
-    const tokenSet = await rpClientInstance.retrieveTokens(...args);
-
-    // Log success, including the xFapiInteractionId
-    rpClientInstance.logger.info(
-      `Successfully retrieved tokens, x-fapi-interaction-id: ${tokenSet.xFapiInteractionId}`
-    );
-
-    return tokenSet;
+    // Retrieve tokens and capture the xFapiInteractionId from the tokenSet
+    return await rpClientInstance.retrieveTokens(...args);
   } catch (error) {
-    const authorisationServerId = args[0];
+    // Get the x-fapi-interaction-id from the error response headers
     const xFapiInteractionId = getXFapiInteractionId(error);
 
-    // Log the error with x-fapi-interaction-id
-    rpClientInstance.logger.error(
-      `Error retrieving tokens with authorisation server ${authorisationServerId}, x-fapi-interaction-id: ${xFapiInteractionId}, ${error.message}`
-    );
-
-    throw error;
+    // Return the error details back to the frontend
+    const errorMessage = error.message || 'Error retrieving tokens';
+    return { errorMessage, xFapiInteractionId, details: error };
   }
 }
 
-router.get('/retrieve-tokens', async (req, res) => {
+router.get('/retrieve-ttokens', async (req, res) => {
   const { code } = req.query;
 
   if (!code) {
@@ -54,6 +43,7 @@ router.get('/retrieve-tokens', async (req, res) => {
   }
 
   try {
+    // Retrieve the token set and handle any errors that occur
     const tokenSet = await retrieveTokensWithErrorHandling(
       rpClient,
       authorisation_server_id,
@@ -63,49 +53,33 @@ router.get('/retrieve-tokens', async (req, res) => {
       nonce
     );
 
-    const claims = tokenSet.claims();
-    const token = {
-      decoded: jwtDecode(tokenSet.id_token),
-      raw: tokenSet.id_token,
-    };
+    // If token retrieval was successful, send the tokens and xFapiInteractionId to the frontend
+    if (tokenSet && tokenSet.claims) {
+      const claims = tokenSet.claims();
+      const token = {
+        decoded: jwtDecode(tokenSet.id_token),
+        raw: tokenSet.id_token,
+      };
+      return res.status(200).json({
+        claims,
+        token,
+        xFapiInteractionId: tokenSet.xFapiInteractionId, // Use the successfully retrieved xFapiInteractionId
+      });
+    }
 
-    // Clear cookies before sending a response
-    clearCookies(res);
-
-    return res.status(200).json({
-      claims,
-      token,
-      xFapiInteractionId: tokenSet.xFapiInteractionId,
+    // If token retrieval failed (iss mismatch or other error), send the error message to the frontend
+    const { errorMessage, xFapiInteractionId, details } = tokenSet;
+    return res.status(500).json({
+      error: errorMessage,
+      xFapiInteractionId: xFapiInteractionId,
+      details, // Send the error details to the frontend
     });
 
   } catch (error) {
-    const xFapiInteractionId = getXFapiInteractionId(error);
-
-    // Log error details once, including xFapiInteractionId
-    logger.error('Error during operation:', {
-      message: error.message,
-      name: error.name,
-      stack: error.stack,
-      details: error.details || 'No additional details available',
-      xFapiInteractionId: xFapiInteractionId,
-    });
-
-    // Do not clear cookies here if headers have already been sent
-    if (!res.headersSent) {
-      clearCookies(res);
-    }
-
-    return res.status(500).json({
-      error: 'Operation failed',
-      details: error.message,
-      fullError: {
-        message: error.message,
-        name: error.name,
-        stack: error.stack,
-        details: error.details || null,
-        xFapiInteractionId: xFapiInteractionId,
-      }
-    });
+    return res.status(500).json({ error: 'Unexpected server error' });
+  } finally {
+    // Clear cookies after response, whether successful or not
+    clearCookies(res);
   }
 });
 
