@@ -2,87 +2,96 @@ import express from 'express';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from '../config.js';
 import { clearCookies } from '../utils/cookieUtils.mjs';
-import { jwtDecode } from 'jwt-decode';
-import { getLogger } from '../utils/logger.mjs';  // Adjust the path to your logger file
+import { jwtDecode } from 'jwt-decode'
 
 const router = express.Router();
-const rpClient = new RelyingPartyClientSdk(config); // This includes the logger from the SDK
-const logger = getLogger('info');  // Define the logger
+const rpClient = new RelyingPartyClientSdk(config);
 
-// Simplified function to extract the x-fapi-interaction-id from the error
-function getXFapiInteractionId(error) {
-  return error?.response?.headers?.['x-fapi-interaction-id'] || 'Unknown';
-}
-
-// Wrap the call to capture internal SDK errors and retrieve the xFapiInteractionId from the tokenSet
-async function retrieveTokensWithErrorHandling(rpClientInstance, ...args) {
-  try {
-    // Retrieve tokens and capture the xFapiInteractionId from the tokenSet
-    return await rpClientInstance.retrieveTokens(...args);
-  } catch (error) {
-    // Get the x-fapi-interaction-id from the error response headers
-    const xFapiInteractionId = getXFapiInteractionId(error);
-
-    // Return the error details back to the frontend
-    const errorMessage = error.message || 'Error retrieving tokens';
-    return { errorMessage, xFapiInteractionId, details: error };
-  }
-}
+// Import jwtDecode dynamically for ESM compatibility
+// async function getJwtDecode() {
+//   const { default: jwtDecode } = await import('jwt-decode');
+//   return jwtDecode;
+// }
 
 router.get('/retrieve-tokens', async (req, res) => {
-  const { code } = req.query;
+  console.log('--- /retrieve-tokens endpoint hit ---');
 
+  // Extract the authorization code from query params
+  const { code } = req.query;
+  console.log(`Received code: ${code}`);
+
+  // Validate that the authorization code is present
   if (!code) {
+    console.error('Code parameter is missing');
     return res.status(400).json({ error: 'Code parameter is required' });
   }
 
+  // Retrieve necessary cookies for token retrieval
   const { authorisation_server_id, code_verifier, state, nonce } = req.cookies;
+  console.log('Cookies received:');
+  console.log(`authorisation_server_id: ${authorisation_server_id}`);
+  console.log(`code_verifier: ${code_verifier}`);
+  console.log(`state: ${state}`);
+  console.log(`nonce: ${nonce}`);
 
+  // Check if any required cookie is missing
   if (!authorisation_server_id || !code_verifier || !state || !nonce) {
+    console.error('Missing required cookies for token retrieval');
     return res.status(400).json({ error: 'Missing required cookies for token retrieval' });
   }
 
   try {
-    // Retrieve the token set and handle any errors that occur
-    const tokenSet = await retrieveTokensWithErrorHandling(
-      rpClient,
-      authorisation_server_id,
-      req.query,
-      code_verifier,
-      state,
-      nonce
+    console.log('Attempting to retrieve tokens with the following details:');
+    console.log(`authorisation_server_id: ${authorisation_server_id}`);
+    console.log(`code_verifier: ${code_verifier}`);
+    console.log(`state: ${state}`);
+    console.log(`nonce: ${nonce}`);
+
+    // Call the rpClient's retrieveTokens method to exchange the code for tokens
+    const tokenSet = await rpClient.retrieveTokens(
+      authorisation_server_id, // Authorization server ID
+      req.query,                // Contains the authorization code (i.e., code)
+      code_verifier,           // Code verifier used in the PKCE flow
+      state,                   // State to match the original request
+      nonce                    // Nonce to match the original request
     );
 
-    // Check if tokenSet is an error object
-    if (tokenSet?.errorMessage) {
-      const { errorMessage, details } = tokenSet;
-      clearCookies(res); // Clear cookies before sending the error response
-      return res.status(500).json({
-        error: errorMessage,
-        details: JSON.stringify(details, null, 2) // Pretty print the details object
-      });
-    }
-    
+    console.log('Tokens successfully retrieved');
+    console.log('Full Token Set:', JSON.stringify(tokenSet, null, 2));
 
-    // If token retrieval was successful, send the tokens and xFapiInteractionId to the frontend
+    // Check if the state is missing in the response
+    if (!tokenSet.state) {
+      console.error('State is missing in the tokenSet response');
+    }
+
+    // Extract the claims and tokens
     const claims = tokenSet.claims();
+    // const jwtDecode = await getJwtDecode();
     const token = {
-      decoded: jwtDecode(tokenSet.id_token),
+      decoded: JSON.stringify(jwtDecode(tokenSet.id_token), null, 2),
       raw: tokenSet.id_token,
     };
-    
-    clearCookies(res); // Clear cookies before sending the successful response
 
-    return res.status(200).json({
-      claims,
-      token,
-      xFapiInteractionId: tokenSet.xFapiInteractionId, // Use the successfully retrieved xFapiInteractionId
-    });
+    console.log(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
+    console.log(`Returned raw id_token: ${token.raw}`);
+    console.log(`Returned decoded id_token: ${token.decoded}`);
+    console.log(`Returned xFapiInteractionId: ${tokenSet.xFapiInteractionId}`);
 
+    console.log('Claims:', claims);
+    console.log('ID Token (raw):', token.raw);
+    console.log('ID Token (decoded):', token.decoded);
+
+
+    // Clear cookies AFTER ensuring the tokens have been retrieved and no further actions need cookies
+    clearCookies(res);
+    console.log('Cookies cleared successfully');
+
+    // Return the claims and token info as a response
+    console.log('Returning token and claims info in the response');
+    return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId });
   } catch (error) {
-    // Catch unexpected server errors
-    clearCookies(res); // Ensure cookies are cleared before sending the error response
-    return res.status(500).json({ error: 'Unexpected server error' });
+    console.error('Error retrieving tokenset:', error);
+    return res.status(500).json({ error: error.toString() });
   }
 });
 
