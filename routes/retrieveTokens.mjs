@@ -10,43 +10,30 @@ const rpClient = new RelyingPartyClientSdk(config); // This includes the logger 
 
 const logger = getLogger('info');  // Define the logger
 
-// Enhanced function to extract the x-fapi-interaction-id from the SDK error
-function getXFapiInteractionId(error) {
-  // Check for multiple possible locations where x-fapi-interaction-id might be stored
-  if (error && error.response) {
-    if (error.response.headers && error.response.headers['x-fapi-interaction-id']) {
-      return error.response.headers['x-fapi-interaction-id'];
-    }
-    // Check if it's in the data object (some SDKs may store headers differently)
-    if (error.response.data && error.response.data['x-fapi-interaction-id']) {
-      return error.response.data['x-fapi-interaction-id'];
-    }
-    // Check if it's part of the error message in some cases
-    if (error.response.message && error.response.message.includes('x-fapi-interaction-id')) {
-      const matches = error.response.message.match(/x-fapi-interaction-id: (\S+)/);
-      return matches ? matches[1] : 'Unknown';
-    }
-  }
-  return 'Unknown';
-}
-
-
-// Wrap the call to capture internal SDK errors
+// Wrap the call to capture internal SDK errors and retrieve the xFapiInteractionId from the tokenSet
 async function retrieveTokensWithErrorHandling(rpClientInstance, ...args) {
   try {
-    // Bind the SDK's `retrieveTokens` method to ensure the correct `this` context
-    return await rpClientInstance.retrieveTokens.bind(rpClientInstance)(...args);
+    // Retrieve tokens and capture the xFapiInteractionId from the tokenSet
+    const tokenSet = await rpClientInstance.retrieveTokens(...args);
+    
+    // Log success, including the xFapiInteractionId
+    rpClientInstance.logger.info(
+      `Successfully retrieved tokens, x-fapi-interaction-id: ${tokenSet.xFapiInteractionId}`
+    );
+    
+    return tokenSet;
   } catch (error) {
-    const xFapiInteractionId = getXFapiInteractionId(error);
     const authorisationServerId = args[0];
+    const xFapiInteractionId = error.response?.headers['x-fapi-interaction-id'] || 'Unknown';
 
+    // Log the error using the xFapiInteractionId from the error response
     rpClientInstance.logger.error(
       `Error retrieving tokens with authorisation server ${authorisationServerId}, x-fapi-interaction-id: ${xFapiInteractionId}, ${error.message}`
     );
 
     rpClientInstance.logger.debug({ stack: error.stack, details: error });
     
-    throw error;
+    throw error;  // Re-throw the processed error message to handle it in the route
   }
 }
 
@@ -86,14 +73,13 @@ router.get('/retrieve-tokens', async (req, res) => {
     return res.status(200).json({
       claims,
       token,
-      xFapiInteractionId: tokenSet.xFapiInteractionId,
+      xFapiInteractionId: tokenSet.xFapiInteractionId, // Use the successfully retrieved xFapiInteractionId
     });
 
   } catch (error) {
-    const xFapiInteractionId = getXFapiInteractionId(error);
+    const xFapiInteractionId = error.response?.headers['x-fapi-interaction-id'] || 'Unknown';
     
-    // Use the external logger or SDK's logger here based on your preference.
-    // I'll use the external logger for consistency
+    // Log error details
     logger.error('Error during operation:', {
       message: error.message,
       name: error.name,
@@ -105,16 +91,12 @@ router.get('/retrieve-tokens', async (req, res) => {
     // Log the full error object to inspect its structure
     logger.error('Full error object:', error);
 
-    // Construct logs using only the available properties
     const logs = [
       { type: 'Error', message: error.message || 'Unknown error', timestamp: new Date() },
       { type: 'Debug', message: error.stack || 'No stack trace available', details: error.details || 'No additional details', timestamp: new Date() }
     ];
   
     clearCookies(res);
-  
-    // Log the error to the backend logger
-    logger.error(`Error occurred: ${error.message || 'Unknown error occurred'}`);
   
     // Return the error and logs to the frontend
     return res.status(500).json({
