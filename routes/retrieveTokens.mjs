@@ -13,7 +13,7 @@ async function retrieveTokensWithErrorHandling(...args) {
     return await rpClient.retrieveTokens(...args);
   } catch (error) {
     // Log the error here before it is re-thrown
-    console.error('Error retrieving tokens:', error.message);
+    console.error('Error retrieving tokens:', error.message, error);
     // Return the processed error message
     throw error; // Throw the processed error message to handle it in the route
   }
