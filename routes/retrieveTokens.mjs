@@ -76,23 +76,34 @@ router.get('/retrieve-tokens', async (req, res) => {
     });
 
   } catch (error) {
+    // Log the full error object to inspect its structure
+    logger.error('Full error object:', error);
+
+    // Construct logs using only the available properties
     const logs = [
-      { type: 'Error', message: error.message, timestamp: new Date() },
-      { type: 'Debug', message: error.stack, details: error.details, timestamp: new Date() }
+      { type: 'Error', message: error.message || 'Unknown error', timestamp: new Date() },
+      { type: 'Debug', message: error.stack || 'No stack trace available', details: error.details || 'No additional details', timestamp: new Date() }
     ];
   
     clearCookies(res);
   
-    // Log the error using the logger
-    logger.error(`Error occurred: ${error.message}`);
+    // Log the error to the backend logger
+    logger.error(`Error occurred: ${error.message || 'Unknown error occurred'}`);
   
     // Return the error and logs to the frontend
     return res.status(500).json({
       error: error.message || 'Unknown error occurred',
-      sdkErrorDetails: error,
+      sdkErrorDetails: {
+        message: error.message,
+        name: error.name,
+        code: error.code,  // if available
+        statusCode: error.statusCode,  // if available
+      },
       logs: logs  // Return logs in the response
     });
-  }
+    
+}
+
 });
 
 export default router;
