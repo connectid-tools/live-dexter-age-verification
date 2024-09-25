@@ -7,12 +7,6 @@ import { jwtDecode } from 'jwt-decode'
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
-// Import jwtDecode dynamically for ESM compatibility
-// async function getJwtDecode() {
-//   const { default: jwtDecode } = await import('jwt-decode');
-//   return jwtDecode;
-// }
-
 router.get('/retrieve-tokens', async (req, res) => {
   console.log('--- /retrieve-tokens endpoint hit ---');
 
