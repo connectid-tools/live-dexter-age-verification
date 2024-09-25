@@ -3,25 +3,37 @@ import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from '../config.js';
 import { clearCookies } from '../utils/cookieUtils.mjs';
 import { jwtDecode } from 'jwt-decode';
-import { getLogger } from '../utils/logger.mjs';
+import { getLogger } from '../utils/logger.mjs';  // Adjust the path to your logger file
 
 const router = express.Router();
-const rpClient = new RelyingPartyClientSdk(config);
-const logger = getLogger('info');
+const rpClient = new RelyingPartyClientSdk(config); // This includes the logger from the SDK
 
+// Extract the x-fapi-interaction-id from the SDK error, if available
 function getXFapiInteractionId(error) {
-  return error?.response?.headers['x-fapi-interaction-id'] || 'Unknown';
+  if (error && error.response && error.response.headers) {
+    return error.response.headers['x-fapi-interaction-id'] || 'Unknown';
+  }
+  return 'Unknown';
 }
 
-async function retrieveTokensWithErrorHandling(...args) {
+// Wrap the call to capture internal SDK errors
+async function retrieveTokensWithErrorHandling(rpClientInstance, ...args) {
   try {
-    return await rpClient.retrieveTokens(...args);
+    // Call the SDK method with correct context
+    return await rpClientInstance.retrieveTokens(...args);
   } catch (error) {
     const xFapiInteractionId = getXFapiInteractionId(error);
-    const authorisationServerId = args[0];
-    logger.error(`Error retrieving tokens from server ${authorisationServerId}, x-fapi-interaction-id: ${xFapiInteractionId}, ${error.message}`);
-    logger.debug({ stack: error.stack, details: error });
-    throw error;
+    const authorisationServerId = args[0];  // Assuming the first arg is the authorisation server id
+
+    // Log the error using the SDK's logger instance (rpClientInstance.logger)
+    rpClientInstance.logger.error(
+      `Error retrieving tokens with authorisation server ${authorisationServerId}, x-fapi-interaction-id: ${xFapiInteractionId}, ${error.message}`
+    );
+
+    // Log full stack trace and details for debugging
+    rpClientInstance.logger.debug({ stack: error.stack, details: error });
+    
+    throw error;  // Re-throw the processed error message to handle it in the route
   }
 }
 
@@ -39,7 +51,16 @@ router.get('/retrieve-tokens', async (req, res) => {
   }
 
   try {
-    const tokenSet = await retrieveTokensWithErrorHandling(authorisation_server_id, req.query, code_verifier, state, nonce);
+    // Pass rpClient as the context when calling retrieveTokensWithErrorHandling
+    const tokenSet = await retrieveTokensWithErrorHandling(
+      rpClient,
+      authorisation_server_id,
+      req.query,
+      code_verifier,
+      state,
+      nonce
+    );
+
     const claims = tokenSet.claims();
     const token = {
       decoded: jwtDecode(tokenSet.id_token),
@@ -56,17 +77,32 @@ router.get('/retrieve-tokens', async (req, res) => {
 
   } catch (error) {
     const xFapiInteractionId = getXFapiInteractionId(error);
+    
+    // Use the external logger or SDK's logger here based on your preference.
+    // I'll use the external logger for consistency
     logger.error('Error during operation:', {
       message: error.message,
       name: error.name,
       stack: error.stack,
       details: error.details || 'No additional details available',
-      xFapiInteractionId,
+      xFapiInteractionId: xFapiInteractionId,
     });
-    logger.error('Complete error object:', error);
 
+    // Log the full error object to inspect its structure
+    logger.error('Full error object:', error);
+
+    // Construct logs using only the available properties
+    const logs = [
+      { type: 'Error', message: error.message || 'Unknown error', timestamp: new Date() },
+      { type: 'Debug', message: error.stack || 'No stack trace available', details: error.details || 'No additional details', timestamp: new Date() }
+    ];
+  
     clearCookies(res);
-
+  
+    // Log the error to the backend logger
+    logger.error(`Error occurred: ${error.message || 'Unknown error occurred'}`);
+  
+    // Return the error and logs to the frontend
     return res.status(500).json({
       error: 'Operation failed',
       details: error.message,
@@ -75,8 +111,9 @@ router.get('/retrieve-tokens', async (req, res) => {
         name: error.name,
         stack: error.stack,
         details: error.details || null,
-        xFapiInteractionId,
+        xFapiInteractionId: xFapiInteractionId, // Include this in your response
       },
+      logs: logs  // Return logs in the response
     });
   }
 });
