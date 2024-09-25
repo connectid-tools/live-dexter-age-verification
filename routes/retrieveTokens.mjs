@@ -3,14 +3,20 @@ import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from '../config.js';
 import { clearCookies } from '../utils/cookieUtils.mjs';
 import { jwtDecode } from 'jwt-decode';
+import { getLogger } from '../utils/logger.mjs';  // Adjust the path to your logger file
 
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
-// Log with timestamp and level (manual formatting)
-function logWithTimestamp(level, message) {
-  const timestamp = new Date().toISOString();
-  console.log(`${timestamp} ${level}: ${message}`);
+// Initialize the logger
+const logger = getLogger('info');
+
+// Extract the x-fapi-interaction-id from the SDK error, if available
+function getXFapiInteractionId(error) {
+  if (error && error.response && error.response.headers) {
+    return error.response.headers['x-fapi-interaction-id'] || 'Unknown';
+  }
+  return 'Unknown';
 }
 
 // Wrap the call to capture internal SDK errors
@@ -18,15 +24,15 @@ async function retrieveTokensWithErrorHandling(...args) {
   try {
     return await rpClient.retrieveTokens(...args);
   } catch (error) {
-    const xFapiInteractionId = error.xFapiInteractionId || 'Unknown';  // Extract x-fapi-interaction-id if available
+    const xFapiInteractionId = getXFapiInteractionId(error);
     const authorisationServerId = args[0];  // Assuming the first arg is the authorisation server id
 
-    // Manually format the log to include timestamp and error level
-    logWithTimestamp('error', 
+    // Use winston logger instead of console for logging
+    logger.error(
       `Error retrieving tokens with authorisation server ${authorisationServerId}, x-fapi-interaction-id: ${xFapiInteractionId}, ${error.message}`
     );
 
-    console.error({ stack: error.stack, details: error });  // Additional error details for debugging
+    logger.debug({ stack: error.stack, details: error });  // Log full stack trace for debugging
     
     throw error;  // Re-throw the processed error message to handle it in the route
   }
@@ -71,6 +77,9 @@ router.get('/retrieve-tokens', async (req, res) => {
   } catch (error) {
     const logs = [{ type: 'Error', message: error.message, timestamp: new Date() }];
     clearCookies(res);
+
+    // Log the error using winston logger
+    logger.error(`Error occurred: ${error.message}`);
 
     return res.status(500).json({
       error: error.message || 'Unknown error occurred',
