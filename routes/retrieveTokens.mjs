@@ -60,9 +60,10 @@ router.get('/retrieve-tokens', async (req, res) => {
       return res.status(500).json({
         error: errorMessage,
         xFapiInteractionId: xFapiInteractionId,
-        details, // Send the error details to the frontend
+        details: JSON.stringify(details, null, 2) // Pretty print the details object
       });
     }
+    
 
     // If token retrieval was successful, send the tokens and xFapiInteractionId to the frontend
     const claims = tokenSet.claims();
