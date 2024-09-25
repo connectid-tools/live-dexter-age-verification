@@ -40,7 +40,6 @@ async function retrieveTokensWithErrorHandling(rpClientInstance, ...args) {
     throw error;  // Re-throw the processed error message to handle it in the route
   }
 }
-
 router.get('/retrieve-tokens', async (req, res) => {
   const { code } = req.query;
 
@@ -55,7 +54,6 @@ router.get('/retrieve-tokens', async (req, res) => {
   }
 
   try {
-    // Retrieve the token set and handle any errors that occur
     const tokenSet = await retrieveTokensWithErrorHandling(
       rpClient,
       authorisation_server_id,
@@ -71,19 +69,18 @@ router.get('/retrieve-tokens', async (req, res) => {
       raw: tokenSet.id_token,
     };
 
-    // Clear cookies before sending a response
     clearCookies(res);
 
     return res.status(200).json({
       claims,
       token,
-      xFapiInteractionId: tokenSet.xFapiInteractionId, // Use the successfully retrieved xFapiInteractionId
+      xFapiInteractionId: tokenSet.xFapiInteractionId,
     });
 
   } catch (error) {
     const xFapiInteractionId = getXFapiInteractionId(error);
 
-    // Log error details once, including xFapiInteractionId
+    // Log the error only once, with the correct interaction ID
     logger.error('Error during operation:', {
       message: error.message,
       name: error.name,
@@ -92,10 +89,8 @@ router.get('/retrieve-tokens', async (req, res) => {
       xFapiInteractionId: xFapiInteractionId,
     });
 
-    // Clear cookies before sending an error response
     clearCookies(res);
 
-    // Return error response to the frontend
     return res.status(500).json({
       error: 'Operation failed',
       details: error.message,
@@ -104,10 +99,11 @@ router.get('/retrieve-tokens', async (req, res) => {
         name: error.name,
         stack: error.stack,
         details: error.details || null,
-        xFapiInteractionId: xFapiInteractionId, // Include this in your response
-      }
+        xFapiInteractionId: xFapiInteractionId,
+      },
     });
   }
 });
+
 
 export default router;
