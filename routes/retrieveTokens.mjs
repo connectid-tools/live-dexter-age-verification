@@ -24,10 +24,10 @@ async function retrieveTokensWithErrorHandling(...args) {
   try {
     return await rpClient.retrieveTokens(...args);
   } catch (error) {
-    const xFapiInteractionId = getXFapiInteractionId(error) || 'Unknown';
+    const xFapiInteractionId = getXFapiInteractionId(error);
     const authorisationServerId = args[0];  // Assuming the first arg is the authorisation server id
 
-    // Use winston logger instead of console for logging
+    // Log the error when retrieving tokens, including the `iss` value mismatch
     logger.error(
       `Error retrieving tokens with authorisation server ${authorisationServerId}, x-fapi-interaction-id: ${xFapiInteractionId}, ${error.message}`
     );
@@ -83,7 +83,7 @@ router.get('/retrieve-tokens', async (req, res) => {
   
     clearCookies(res);
   
-    // Log the error using winston logger (server-side)
+    // Log the error using the logger
     logger.error(`Error occurred: ${error.message}`);
   
     // Return the error and logs to the frontend
