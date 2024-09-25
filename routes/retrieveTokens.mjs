@@ -10,13 +10,26 @@ const rpClient = new RelyingPartyClientSdk(config); // This includes the logger 
 
 const logger = getLogger('info');  // Define the logger
 
-// Extract the x-fapi-interaction-id from the SDK error, if available
+// Enhanced function to extract the x-fapi-interaction-id from the SDK error
 function getXFapiInteractionId(error) {
-  if (error && error.response && error.response.headers) {
-    return error.response.headers['x-fapi-interaction-id'] || 'Unknown';
+  // Check for multiple possible locations where x-fapi-interaction-id might be stored
+  if (error && error.response) {
+    if (error.response.headers && error.response.headers['x-fapi-interaction-id']) {
+      return error.response.headers['x-fapi-interaction-id'];
+    }
+    // Check if it's in the data object (some SDKs may store headers differently)
+    if (error.response.data && error.response.data['x-fapi-interaction-id']) {
+      return error.response.data['x-fapi-interaction-id'];
+    }
+    // Check if it's part of the error message in some cases
+    if (error.response.message && error.response.message.includes('x-fapi-interaction-id')) {
+      const matches = error.response.message.match(/x-fapi-interaction-id: (\S+)/);
+      return matches ? matches[1] : 'Unknown';
+    }
   }
   return 'Unknown';
 }
+
 
 // Wrap the call to capture internal SDK errors
 async function retrieveTokensWithErrorHandling(rpClientInstance, ...args) {
