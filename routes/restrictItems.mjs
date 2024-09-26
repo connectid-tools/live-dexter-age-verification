@@ -10,11 +10,11 @@ router.post('/', async (req, res) => {
 
   // Skip validation if token is valid or if a code exists
   if ((tokenData && tokenData.expiresAt > Date.now()) || code) {
-    console.log('Token valid or code found, skipping cart validation.');
+    // console.log('Token valid or code found, skipping cart validation.');
     return res.status(200).json({ message: 'User authenticated or code provided, cart validation skipped.' });
   }
 
-  console.log('No valid token or code, proceeding with cart validation.');
+  // console.log('No valid token or code, proceeding with cart validation.');
 
   try {
     const result = await restrictedItemsService.validateCart(cartId);
