@@ -10,7 +10,7 @@ let jwtExpiry = 0;
 // Function to refresh JWT Token
 export async function refreshJWTToken() {
     try {
-        console.log('Refreshing JWT token...');
+        // console.log('Refreshing JWT token...');
         const storeHash = process.env.STORE_HASH;
         const accessToken = process.env.ACCESS_TOKEN;
         const storeDomain = process.env.STORE_DOMAIN;
@@ -47,12 +47,12 @@ export async function refreshJWTToken() {
         }
 
         const data = await response.json();
-        console.log('Response Data:', data);
+        // console.log('Response Data:', data);
 
         if (data && data.data && data.data.token) {
             jwtToken = data.data.token;
             jwtExpiry = Math.floor(Date.now() / 1000) + 3600; // Update expiry time
-            console.log('JWT token refreshed successfully:', jwtToken);
+            // console.log('JWT token refreshed successfully:', jwtToken);
         } else {
             throw new Error('Invalid response format while refreshing JWT token');
         }
@@ -70,13 +70,13 @@ function isTokenExpired() {
 // Function to get JWT token, refreshes if expired
 async function getJwtToken() {
     if (isTokenExpired()) {
-        console.log('JWT token is missing or expired. Fetching a new token...');
+        // console.log('JWT token is missing or expired. Fetching a new token...');
         await refreshJWTToken();
     } else {
-        console.log('JWT token is valid. Using existing token:', jwtToken);
+        // console.log('JWT token is valid. Using existing token:', jwtToken);
     }
 
-    console.log('Current JWT Token:', jwtToken); // Log the token whenever it's accessed
+    // console.log('Current JWT Token:', jwtToken); // Log the token whenever it's accessed
     return jwtToken;
 }
 
