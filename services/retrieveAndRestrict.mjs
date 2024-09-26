@@ -23,7 +23,7 @@ async function initializeRestrictedSKUs() {
     }
   });
 
-  console.log('Restricted SKUs initialized:', Array.from(restrictedSKUs));
+  // console.log('Restricted SKUs initialized:', Array.from(restrictedSKUs));
 }
 
 async function fetchProductsByCategory(categoryId) {
@@ -77,7 +77,7 @@ async function fetchProductsByCategory(categoryId) {
       });
 
       const responseBody = await response.text();
-      console.log('Full response for category fetch:', responseBody);
+      // console.log('Full response for category fetch:', responseBody);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status} Response: ${responseBody}`);
@@ -128,25 +128,25 @@ async function checkAndRemoveRestrictedItems(cartId) {
       return { message: 'No items found in cart or error fetching cart.', removedItems };
   }
 
-  console.log('Checking for restricted items...');
+  // console.log('Checking for restricted items...');
 
   for (const item of cartItems) {
-      console.log(`Checking item SKU: ${item.sku}`);
+      // console.log(`Checking item SKU: ${item.sku}`);
       try {
           if (restrictedSKUs.has(item.sku.trim().toUpperCase())) {
-              console.log(`Restricted item detected (SKU: ${item.sku}, Name: ${item.name}). Removing from cart.`);
+              // console.log(`Restricted item detected (SKU: ${item.sku}, Name: ${item.name}). Removing from cart.`);
               await removeItemFromCart(cartId, item.id);
               removedItems.push({ sku: item.sku, name: item.name });  // Ensure 'name' is included
           } else {
-              console.log(`Item SKU: ${item.sku} is allowed.`);
+              // console.log(`Item SKU: ${item.sku} is allowed.`);
           }
       } catch (error) {
           console.error(`Error processing item with SKU ${item.sku}:`, error);
       }
   }
 
-  console.log('Cart checked for restricted items.');
-  console.log('Removed Items:', removedItems);
+  // console.log('Cart checked for restricted items.');
+  // console.log('Removed Items:', removedItems);
 
   return { message: 'Cart checked and updated for restricted items.', removedItems };
 }
@@ -179,7 +179,7 @@ async function fetchCartItems(cartId) {
       ...responseData.data.line_items.custom_items || [],
     ];
 
-    console.log(`Fetched all cart items: ${JSON.stringify(allCartItems)}`);
+    // console.log(`Fetched all cart items: ${JSON.stringify(allCartItems)}`);
     return allCartItems;
   } catch (error) {
     console.error('Error fetching cart items:', error);
@@ -208,7 +208,7 @@ async function removeItemFromCart(cartId, itemId) {
       throw new Error(`Failed to remove item from cart: ${errorData.title}`);
     }
 
-    console.log(`Item with ID ${itemId} removed from cart ${cartId} successfully.`);
+    // console.log(`Item with ID ${itemId} removed from cart ${cartId} successfully.`);
   } catch (error) {
     console.error('Error removing item from cart:', error);
     throw error;
@@ -224,7 +224,7 @@ async function validateCart(cartId) {
     // Fetch the updated cart after removing restricted items
     const updatedCartItems = await fetchCartItems(cartId);
 
-    console.log('Cart validated successfully:', { removedItems, updatedCartItems });
+    // console.log('Cart validated successfully:', { removedItems, updatedCartItems });
     return { removedItems, updatedCartItems };  // Return both removed items and updated cart items
   } catch (error) {
     console.error('Error validating cart:', error);

@@ -10,7 +10,7 @@ let restrictedSKUs = new Set();
 
 // Function to initialize and refresh restricted SKUs
 export async function initializeRestrictedSKUs() {
-    console.log('Starting to initialize restricted SKUs...');
+    // console.log('Starting to initialize restricted SKUs...');
     const knifeCategoryId = parseInt(process.env.CATEGORY_ID, 10);
     try {
         const fetchedSKUs = await fetchProductsByCategory(knifeCategoryId);
@@ -40,7 +40,7 @@ export async function initializeRestrictedSKUs() {
             }
         });
 
-        console.log('Restricted SKUs initialized:', Array.from(restrictedSKUs));
+        // console.log('Restricted SKUs initialized:', Array.from(restrictedSKUs));
     } catch (error) {
         console.error('Error initializing restricted SKUs:', error);
     }
@@ -75,7 +75,7 @@ export async function fetchCartItems(cartId) {
             ...responseData.data.line_items.custom_items || []
         ];
 
-        console.log(`Fetched all cart items: ${JSON.stringify(allCartItems)}`);
+        // console.log(`Fetched all cart items: ${JSON.stringify(allCartItems)}`);
         return allCartItems;
     } catch (error) {
         console.error('Error fetching cart items:', error);
@@ -159,7 +159,7 @@ export async function fetchProductsByCategory(categoryId) {
             });
 
             const responseBody = await response.text();
-            console.log('Full response for category fetch:', responseBody);
+            // console.log('Full response for category fetch:', responseBody);
 
             if (!response.ok) {
                 if (response.status === 401 && responseBody.includes('JWT is expired')) {
