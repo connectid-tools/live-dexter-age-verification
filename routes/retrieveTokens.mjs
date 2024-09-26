@@ -60,7 +60,6 @@ router.get('/retrieve-tokens', async (req, res) => {
 
     // Extract the claims and tokens
     const claims = tokenSet.claims();
-    // const jwtDecode = await getJwtDecode();
     const token = {
       decoded: JSON.stringify(jwtDecode(tokenSet.id_token), null, 2),
       raw: tokenSet.id_token,
@@ -71,11 +70,6 @@ router.get('/retrieve-tokens', async (req, res) => {
     console.log(`Returned decoded id_token: ${token.decoded}`);
     console.log(`Returned xFapiInteractionId: ${tokenSet.xFapiInteractionId}`);
 
-    console.log('Claims:', claims);
-    console.log('ID Token (raw):', token.raw);
-    console.log('ID Token (decoded):', token.decoded);
-
-
     // Clear cookies AFTER ensuring the tokens have been retrieved and no further actions need cookies
     clearCookies(res);
     console.log('Cookies cleared successfully');
@@ -85,7 +79,13 @@ router.get('/retrieve-tokens', async (req, res) => {
     return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId });
   } catch (error) {
     console.error('Error retrieving tokenset:', error);
-    return res.status(500).json({ error: error.toString() });
+    
+    // Return structured error response
+    return res.status(500).json({
+      error: 'Token Retrieval Failed',
+      errorMessage: error.message || 'An unknown error occurred',
+      errorCode: error.code || '500'
+    });
   }
 });
 
