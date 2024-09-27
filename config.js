@@ -28,7 +28,7 @@ export const config = {
 
     // registry_participants_uri: 'https://api.sandbox.connectid.com.au/oidf-conformance/participants?alias=a/sheldonandhammond',
     registry_participants_uri: 'https://data.directory.sandbox.connectid.com.au/participants',
-    include_uncertified_participants: true,
+    include_uncertified_participants: false,
 
     purpose: 'Your details will be shared for the purpose of verifying you are over 18 to prevent sale of knives to minors this information is shared with Sheldon and Hammond',
 
