@@ -6,6 +6,9 @@
 
 import app from '../app.mjs'; // Update to .mjs extension
 import http from 'http';
+import { getLogger } from '../utils/logger.mjs'; // Import the logger
+const logger = getLogger('info');  // Create a logger instance with the desired log level
+
 
 /**
  * Get port from environment and store in Express.
@@ -64,11 +67,11 @@ function onError(error) {
   // handle specific listen errors with friendly messages
   switch (error.code) {
     case 'EACCES':
-      console.error(bind + ' requires elevated privileges');
+      logger.error(bind + ' requires elevated privileges');
       process.exit(1);
       break;
     case 'EADDRINUSE':
-      console.error(bind + ' is already in use');
+      logger.error(bind + ' is already in use');
       process.exit(1);
       break;
     default:
@@ -87,10 +90,10 @@ function onListening() {
     : 'port ' + addr.port;
 
   for (let line of startupMessage.split("\n")) {
-    console.log(line);
+    logger.log(line);
   }
 
-  console.log('Server listening on ' + bind + ' 🚀');
+  logger.log('Server listening on ' + bind + ' 🚀');
 }
 
 

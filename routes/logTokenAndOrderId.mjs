@@ -1,5 +1,7 @@
 import express from 'express';
 import AWS from 'aws-sdk';
+import { getLogger } from '../utils/logger.mjs'; // Import the logger
+const logger = getLogger('info');  // Create a logger instance with the desired log level
 
 const router = express.Router();
 
@@ -35,7 +37,7 @@ function extractTxnFromAuthToken(authToken) {
         }
         return null;
     } catch (error) {
-        console.error('Error extracting txn from authToken:', error);
+        logger.error('Error extracting txn from authToken:', error);
         return null;
     }
 }
@@ -93,16 +95,16 @@ async function uploadLogToSpace(logData) {
             Body: updatedLog,
         };
         await s3.putObject(uploadParams).promise();
-        console.log('Log appended and uploaded successfully to DigitalOcean Spaces.');
+        logger.log('Log appended and uploaded successfully to DigitalOcean Spaces.');
         return true;
     } catch (error) {
         if (error.code === 'NoSuchKey') {
             // If the file doesn't exist, create a new one
             await s3.putObject(params).promise();
-            console.log('Log file created and uploaded successfully to DigitalOcean Spaces.');
+            logger.log('Log file created and uploaded successfully to DigitalOcean Spaces.');
             return true;
         } else {
-            console.error('Error uploading log to DigitalOcean Spaces:', error);
+            logger.error('Error uploading log to DigitalOcean Spaces:', error);
             return false;
         }
     }
@@ -128,7 +130,7 @@ router.post('/', async (req, res) => {
         const isDuplicate = await checkForDuplicateLog(orderId, txn);
 
         if (isDuplicate) {
-            console.log('Duplicate log entry found. Skipping logging.');
+            logger.log('Duplicate log entry found. Skipping logging.');
             return res.status(200).json({ message: 'Duplicate log entry. No action taken.' });
         }
 
@@ -139,14 +141,14 @@ router.post('/', async (req, res) => {
         const uploadSuccess = await uploadLogToSpace(logEntry);
 
         if (uploadSuccess) {
-            console.log('Log entry uploaded successfully.');
+            logger.log('Log entry uploaded successfully.');
             res.status(200).json({ message: 'Order ID, txn, and timestamp logged successfully to DigitalOcean Spaces' });
         } else {
-            console.error('Failed to upload log entry.');
+            logger.error('Failed to upload log entry.');
             res.status(500).json({ error: 'Failed to log order and txn.' });
         }
     } catch (error) {
-        console.error('Error logging order and txn:', error);
+        logger.error('Error logging order and txn:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });

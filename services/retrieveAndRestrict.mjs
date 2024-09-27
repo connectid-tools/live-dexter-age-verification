@@ -1,6 +1,8 @@
 import dotenv from 'dotenv';
 import fetch from 'node-fetch';
 import { getJwtToken } from './refreshJWTToken.mjs';  // Import only getJwtToken
+import { getLogger } from '../utils/logger.mjs'; // Import the logger
+const logger = getLogger('info');  // Create a logger instance with the desired log level
 
 dotenv.config();
 
@@ -23,7 +25,7 @@ async function initializeRestrictedSKUs() {
     }
   });
 
-  // console.log('Restricted SKUs initialized:', Array.from(restrictedSKUs));
+  // logger.log('Restricted SKUs initialized:', Array.from(restrictedSKUs));
 }
 
 async function fetchProductsByCategory(categoryId) {
@@ -77,7 +79,7 @@ async function fetchProductsByCategory(categoryId) {
       });
 
       const responseBody = await response.text();
-      // console.log('Full response for category fetch:', responseBody);
+      // logger.log('Full response for category fetch:', responseBody);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status} Response: ${responseBody}`);
@@ -86,18 +88,18 @@ async function fetchProductsByCategory(categoryId) {
       const data = JSON.parse(responseBody);
 
       if (data.errors && data.errors.length > 0) {
-        console.error('GraphQL errors:', data.errors);
+        logger.error('GraphQL errors:', data.errors);
         throw new Error(`GraphQL error: ${data.errors.map(error => error.message).join(', ')}`);
       }
 
       if (!data.data.site.category) {
-        console.warn(`Category with ID ${categoryId} not found.`);
+        logger.warn(`Category with ID ${categoryId} not found.`);
         return [];
       }
 
       const products = data.data.site.category.products;
       if (!products || products.edges.length === 0) {
-        console.warn(`No products found for category ID ${categoryId}.`);
+        logger.warn(`No products found for category ID ${categoryId}.`);
         return [];
       }
 
@@ -113,7 +115,7 @@ async function fetchProductsByCategory(categoryId) {
 
     return allProducts;
   } catch (error) {
-    console.error('Error fetching products by category:', error.message);
+    logger.error('Error fetching products by category:', error.message);
     throw error;
   }
 }
@@ -124,29 +126,29 @@ async function checkAndRemoveRestrictedItems(cartId) {
   let removedItems = [];
 
   if (!cartItems || cartItems.length === 0) {
-      console.error('No items found in cart or error fetching cart.');
+      logger.error('No items found in cart or error fetching cart.');
       return { message: 'No items found in cart or error fetching cart.', removedItems };
   }
 
-  // console.log('Checking for restricted items...');
+  // logger.log('Checking for restricted items...');
 
   for (const item of cartItems) {
-      // console.log(`Checking item SKU: ${item.sku}`);
+      // logger.log(`Checking item SKU: ${item.sku}`);
       try {
           if (restrictedSKUs.has(item.sku.trim().toUpperCase())) {
-              // console.log(`Restricted item detected (SKU: ${item.sku}, Name: ${item.name}). Removing from cart.`);
+              // logger.log(`Restricted item detected (SKU: ${item.sku}, Name: ${item.name}). Removing from cart.`);
               await removeItemFromCart(cartId, item.id);
               removedItems.push({ sku: item.sku, name: item.name });  // Ensure 'name' is included
           } else {
-              // console.log(`Item SKU: ${item.sku} is allowed.`);
+              // logger.log(`Item SKU: ${item.sku} is allowed.`);
           }
       } catch (error) {
-          console.error(`Error processing item with SKU ${item.sku}:`, error);
+          logger.error(`Error processing item with SKU ${item.sku}:`, error);
       }
   }
 
-  // console.log('Cart checked for restricted items.');
-  // console.log('Removed Items:', removedItems);
+  // logger.log('Cart checked for restricted items.');
+  // logger.log('Removed Items:', removedItems);
 
   return { message: 'Cart checked and updated for restricted items.', removedItems };
 }
@@ -168,7 +170,7 @@ async function fetchCartItems(cartId) {
 
     const responseData = await response.json();
     if (!response.ok) {
-      console.error('Error fetching cart items:', responseData);
+      logger.error('Error fetching cart items:', responseData);
       throw new Error(`Failed to fetch cart items: ${responseData.title}`);
     }
 
@@ -179,10 +181,10 @@ async function fetchCartItems(cartId) {
       ...responseData.data.line_items.custom_items || [],
     ];
 
-    // console.log(`Fetched all cart items: ${JSON.stringify(allCartItems)}`);
+    // logger.log(`Fetched all cart items: ${JSON.stringify(allCartItems)}`);
     return allCartItems;
   } catch (error) {
-    console.error('Error fetching cart items:', error);
+    logger.error('Error fetching cart items:', error);
     throw error;
   }
 }
@@ -204,13 +206,13 @@ async function removeItemFromCart(cartId, itemId) {
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('Failed to remove item from cart:', errorData);
+      logger.error('Failed to remove item from cart:', errorData);
       throw new Error(`Failed to remove item from cart: ${errorData.title}`);
     }
 
-    // console.log(`Item with ID ${itemId} removed from cart ${cartId} successfully.`);
+    // logger.log(`Item with ID ${itemId} removed from cart ${cartId} successfully.`);
   } catch (error) {
-    console.error('Error removing item from cart:', error);
+    logger.error('Error removing item from cart:', error);
     throw error;
   }
 }
@@ -224,10 +226,10 @@ async function validateCart(cartId) {
     // Fetch the updated cart after removing restricted items
     const updatedCartItems = await fetchCartItems(cartId);
 
-    // console.log('Cart validated successfully:', { removedItems, updatedCartItems });
+    // logger.log('Cart validated successfully:', { removedItems, updatedCartItems });
     return { removedItems, updatedCartItems };  // Return both removed items and updated cart items
   } catch (error) {
-    console.error('Error validating cart:', error);
+    logger.error('Error validating cart:', error);
     throw error;
   }
 }

@@ -1,6 +1,8 @@
 import dotenv from 'dotenv';
 import fetch from 'node-fetch';
 import { getJwtToken } from './refreshJWTToken.mjs';  // Import only getJwtToken
+import { getLogger } from '../utils/logger.mjs'; // Import the logger
+const logger = getLogger('info');  // Create a logger instance with the desired log level
 
 // Load environment variables from .env file
 dotenv.config();
@@ -10,13 +12,13 @@ let restrictedSKUs = new Set();
 
 // Function to initialize and refresh restricted SKUs
 export async function initializeRestrictedSKUs() {
-    // console.log('Starting to initialize restricted SKUs...');
+    // logger.log('Starting to initialize restricted SKUs...');
     const knifeCategoryId = parseInt(process.env.CATEGORY_ID, 10);
     try {
         const fetchedSKUs = await fetchProductsByCategory(knifeCategoryId);
 
         if (!fetchedSKUs || fetchedSKUs.length === 0) {
-            console.warn('No SKUs fetched for the category. Please check the GraphQL query and response.');
+            logger.warn('No SKUs fetched for the category. Please check the GraphQL query and response.');
             return;
         }
 
@@ -24,7 +26,7 @@ export async function initializeRestrictedSKUs() {
             if (baseSku) {
                 restrictedSKUs.add(baseSku.trim().toUpperCase()); // Normalize SKUs when adding
             } else {
-                console.warn('baseSku is undefined or null:', baseSku);
+                logger.warn('baseSku is undefined or null:', baseSku);
             }
 
             if (variantSkus && Array.isArray(variantSkus)) {
@@ -32,17 +34,17 @@ export async function initializeRestrictedSKUs() {
                     if (sku) {
                         restrictedSKUs.add(sku.trim().toUpperCase()); // Normalize SKUs when adding
                     } else {
-                        console.warn('variantSku is undefined or null:', sku);
+                        logger.warn('variantSku is undefined or null:', sku);
                     }
                 });
             } else {
-                console.warn('variantSkus is undefined, null, or not an array:', variantSkus);
+                logger.warn('variantSkus is undefined, null, or not an array:', variantSkus);
             }
         });
 
-        // console.log('Restricted SKUs initialized:', Array.from(restrictedSKUs));
+        // logger.log('Restricted SKUs initialized:', Array.from(restrictedSKUs));
     } catch (error) {
-        console.error('Error initializing restricted SKUs:', error);
+        logger.error('Error initializing restricted SKUs:', error);
     }
 }
 
@@ -64,7 +66,7 @@ export async function fetchCartItems(cartId) {
 
         const responseData = await response.json();
         if (!response.ok) {
-            console.error('Error fetching cart items:', responseData);
+            logger.error('Error fetching cart items:', responseData);
             throw new Error(`Failed to fetch cart items: ${responseData.title}`);
         }
 
@@ -75,10 +77,10 @@ export async function fetchCartItems(cartId) {
             ...responseData.data.line_items.custom_items || []
         ];
 
-        // console.log(`Fetched all cart items: ${JSON.stringify(allCartItems)}`);
+        // logger.log(`Fetched all cart items: ${JSON.stringify(allCartItems)}`);
         return allCartItems;
     } catch (error) {
-        console.error('Error fetching cart items:', error);
+        logger.error('Error fetching cart items:', error);
         throw error;
     }
 }
@@ -103,7 +105,7 @@ export async function handleRestrictedItemsRequest(req, res) {
             res.status(200).json({ restrictedItems: [] });
         }
     } catch (error) {
-        console.error('Error handling restricted items request:', error);
+        logger.error('Error handling restricted items request:', error);
         res.status(500).json({ error: 'Failed to retrieve restricted items' });
     }
 }
@@ -159,11 +161,11 @@ export async function fetchProductsByCategory(categoryId) {
             });
 
             const responseBody = await response.text();
-            // console.log('Full response for category fetch:', responseBody);
+            // logger.log('Full response for category fetch:', responseBody);
 
             if (!response.ok) {
                 if (response.status === 401 && responseBody.includes('JWT is expired')) {
-                    console.error('JWT expired. Attempting to refresh token...');
+                    logger.error('JWT expired. Attempting to refresh token...');
                     await refreshJWTToken();
                     return fetchProductsByCategory(categoryId);
                 }
@@ -173,18 +175,18 @@ export async function fetchProductsByCategory(categoryId) {
             const data = JSON.parse(responseBody);
 
             if (data.errors && data.errors.length > 0) {
-                console.error('GraphQL errors:', data.errors);
+                logger.error('GraphQL errors:', data.errors);
                 throw new Error(`GraphQL error: ${data.errors.map(error => error.message).join(', ')}`);
             }
 
             if (!data.data.site.category) {
-                console.warn(`Category with ID ${categoryId} not found.`);
+                logger.warn(`Category with ID ${categoryId} not found.`);
                 return [];
             }
 
             const products = data.data.site.category.products;
             if (!products || products.edges.length === 0) {
-                console.warn(`No products found for category ID ${categoryId}.`);
+                logger.warn(`No products found for category ID ${categoryId}.`);
                 return [];
             }
 
@@ -201,7 +203,7 @@ export async function fetchProductsByCategory(categoryId) {
         return allProducts;
 
     } catch (error) {
-        console.error('Error fetching products by category:', error.message);
+        logger.error('Error fetching products by category:', error.message);
         throw error;
     }
 }
