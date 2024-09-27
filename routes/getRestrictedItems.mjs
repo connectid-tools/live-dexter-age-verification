@@ -1,4 +1,3 @@
-import { tokenStore } from '../utils/tokenManager.mjs';
 import express from 'express';
 import { restrictedSKUs, initializeRestrictedSKUs, fetchCartItems } from '../services/checkRestrictedItems.mjs';
 
@@ -9,7 +8,7 @@ router.post('/', async (req, res) => {
   const tokenData = tokenStore.get(cartId);
 
   // Check if a valid token or a code exists, and skip validation if true
-  if ((tokenData && tokenData.expiresAt > Date.now()) || code) {
+  if (code) {
     // console.log('Token valid or code found, skipping restricted item checks.');
     return res.status(200).json({ message: 'User authenticated or code provided, restricted items check skipped.' });
   }

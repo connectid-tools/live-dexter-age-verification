@@ -1,4 +1,3 @@
-import { tokenStore } from '../utils/tokenManager.mjs';
 import express from 'express';
 import restrictedItemsService from '../services/retrieveAndRestrict.mjs';
 
@@ -6,15 +5,14 @@ const router = express.Router();
 
 router.post('/', async (req, res) => {
   const { cartId, code } = req.body;  // Extract both cartId and code
-  const tokenData = tokenStore.get(cartId);
 
-  // Skip validation if token is valid or if a code exists
-  if ((tokenData && tokenData.expiresAt > Date.now()) || code) {
-    // console.log('Token valid or code found, skipping cart validation.');
-    return res.status(200).json({ message: 'User authenticated or code provided, cart validation skipped.' });
+  // Skip validation if a code exists
+  if (code) {
+    // console.log('Code found, skipping cart validation.');
+    return res.status(200).json({ message: 'Code provided, cart validation skipped.' });
   }
 
-  // console.log('No valid token or code, proceeding with cart validation.');
+  // console.log('No code found, proceeding with cart validation.');
 
   try {
     const result = await restrictedItemsService.validateCart(cartId);
