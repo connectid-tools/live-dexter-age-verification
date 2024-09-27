@@ -6,7 +6,6 @@ import path from 'path';
 import logger from 'morgan';
 import cors, { setCorsHeaders } from './middleware/cors.mjs';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.mjs';
-import { clearExpiredTokens } from './utils/tokenManager.mjs';
 import indexRouter from './routes/index.mjs';
 import validateCartRouter from './routes/restrictItems.mjs';
 import getRestrictedItemsRouter from './routes/getRestrictedItems.mjs';
@@ -14,7 +13,6 @@ import selectBankRouter from './routes/selectBank.mjs';
 import retrieveTokensRouter from './routes/retrieveTokens.mjs';
 import tokenExpiryRouter from './routes/tokenExpiry.mjs';
 import logOrderRouter from './routes/logTokenAndOrderId.mjs';
-import getLogs from './routes/getLogs.mjs';
 import cookieParser from 'cookie-parser';
 
 const app = express();
@@ -37,11 +35,9 @@ app.use(selectBankRouter);
 app.use(retrieveTokensRouter);
 app.use(tokenExpiryRouter);
 app.use(logOrderRouter);
-app.use(getLogs);
 
 
 // Token management
-setInterval(clearExpiredTokens, 5 * 60 * 1000);
 
 // Error handling
 app.use(notFoundHandler);
