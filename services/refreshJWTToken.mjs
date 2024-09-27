@@ -16,7 +16,7 @@ export async function refreshJWTToken() {
         const storeHash = process.env.STORE_HASH;
         const accessToken = process.env.ACCESS_TOKEN;
         const storeDomain = process.env.STORE_DOMAIN;
-        const endPoinDomain = process.env.ENDPOINT_DOMAIN;
+        const endPointDomain = process.env.ENDPOINT_DOMAIN;
 
         if (!storeHash || !accessToken) {
             throw new Error('Missing required environment variables: STORE_HASH or ACCESS_TOKEN');
@@ -33,7 +33,7 @@ export async function refreshJWTToken() {
             body: JSON.stringify({
                 allowed_cors_origins: [
                     `https://${storeDomain}`,
-                    `https://${endPoinDomain}.ondigitalocean.app`
+                    `https://${endPointDomain}.ondigitalocean.app`
                 ],
                 channel_id: 1,
                 expires_at: Math.floor(Date.now() / 1000) + 3600, // Expire in one hour
