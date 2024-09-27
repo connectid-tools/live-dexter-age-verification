@@ -7,7 +7,7 @@ import { jwtDecode } from 'jwt-decode'
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
-router.get('/retrieve-tokens', async (req, res) => {
+router.get('/', async (req, res) => {
   // console.log('--- /retrieve-tokens endpoint hit ---');
 
   // Extract the authorization code from query params

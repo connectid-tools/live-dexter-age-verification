@@ -108,7 +108,7 @@ async function uploadLogToSpace(logData) {
     }
 }
 
-router.post('/log-order', async (req, res) => {
+router.post('/', async (req, res) => {
     const { orderId, authToken } = req.body;
 
     // Return error if authToken or orderId is missing

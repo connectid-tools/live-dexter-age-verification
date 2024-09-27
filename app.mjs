@@ -30,9 +30,9 @@ app.use(cookieParser());
 app.use('/', indexRouter);
 app.use('/validate-cart', validateCartRouter);
 app.use('/restricted-items', getRestrictedItemsRouter);
-app.use(selectBankRouter);
-app.use(retrieveTokensRouter);
-app.use(logOrderRouter);
+app.use('/select-bank', selectBankRouter);
+app.use('/retrieve-tokens', retrieveTokensRouter);
+app.use('/log-order', logOrderRouter);
 
 
 // Token management
