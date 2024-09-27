@@ -130,7 +130,7 @@ router.post('/', async (req, res) => {
         const isDuplicate = await checkForDuplicateLog(orderId, txn);
 
         if (isDuplicate) {
-            logger.log('Duplicate log entry found. Skipping logging.');
+            logger.info('Duplicate log entry found. Skipping logging.');
             return res.status(200).json({ message: 'Duplicate log entry. No action taken.' });
         }
 
@@ -141,7 +141,7 @@ router.post('/', async (req, res) => {
         const uploadSuccess = await uploadLogToSpace(logEntry);
 
         if (uploadSuccess) {
-            logger.log('Log entry uploaded successfully.');
+            logger.info('Log entry uploaded successfully.');
             res.status(200).json({ message: 'Order ID, txn, and timestamp logged successfully to DigitalOcean Spaces' });
         } else {
             logger.error('Failed to upload log entry.');

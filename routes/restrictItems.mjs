@@ -10,11 +10,11 @@ router.post('/', async (req, res) => {
 
   // Skip validation if a code exists
   if (code) {
-    // logger.log('Code found, skipping cart validation.');
+    // logger.info('Code found, skipping cart validation.');
     return res.status(200).json({ message: 'Code provided, cart validation skipped.' });
   }
 
-  // logger.log('No code found, proceeding with cart validation.');
+  // logger.info('No code found, proceeding with cart validation.');
 
   try {
     const result = await restrictedItemsService.validateCart(cartId);
