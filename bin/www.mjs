@@ -6,9 +6,6 @@
 
 import app from '../app.mjs'; // Update to .mjs extension
 import http from 'http';
-import { getLogger } from '../utils/logger.mjs'; // Import the logger
-const logger = getLogger('info');  // Create a logger instance with the desired log level
-
 
 /**
  * Get port from environment and store in Express.
