@@ -13,6 +13,9 @@ import selectBankRouter from './routes/selectBank.mjs';
 import retrieveTokensRouter from './routes/retrieveTokens.mjs';
 import logOrderRouter from './routes/logTokenAndOrderId.mjs';
 import cookieParser from 'cookie-parser';
+import { getLogger } from '../utils/logger.mjs'; // Import the logger
+
+const logger = getLogger('info');  // Create a logger instance with the desired log level
 
 const app = express();
 const port = 3001;
