@@ -95,13 +95,13 @@ async function uploadLogToSpace(logData) {
             Body: updatedLog,
         };
         await s3.putObject(uploadParams).promise();
-        logger.log('Log appended and uploaded successfully to DigitalOcean Spaces.');
+        logger.info('Log appended and uploaded successfully to DigitalOcean Spaces.');
         return true;
     } catch (error) {
         if (error.code === 'NoSuchKey') {
             // If the file doesn't exist, create a new one
             await s3.putObject(params).promise();
-            logger.log('Log file created and uploaded successfully to DigitalOcean Spaces.');
+            logger.info('Log file created and uploaded successfully to DigitalOcean Spaces.');
             return true;
         } else {
             logger.error('Error uploading log to DigitalOcean Spaces:', error);
