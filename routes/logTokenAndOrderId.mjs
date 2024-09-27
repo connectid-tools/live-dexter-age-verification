@@ -9,8 +9,8 @@ const router = express.Router();
 const spacesEndpoint = new AWS.Endpoint('syd1.digitaloceanspaces.com'); // Adjust region accordingly
 const s3 = new AWS.S3({
     endpoint: spacesEndpoint,
-    accessKeyId: process.env.SPACES_KEY, // Set this in your environment variables
-    secretAccessKey: process.env.SPACES_SECRET, // Set this in your environment variables
+    accessKeyId: process.env.DO_SPACES_KEY, // Set this in your environment variables
+    secretAccessKey: process.env.DO_SPACES_SECRET, // Set this in your environment variables
 });
 
 // Function to extract the txn value from authToken
@@ -47,7 +47,7 @@ function extractTxnFromAuthToken(authToken) {
 async function checkForDuplicateLog(orderId, txn) {
     const params = {
         Bucket: 'shtransactionlogs',
-        Key: 'sh-demo-txn-logs/txnLogs.txt',
+        Key: `${process.env.DO_SPACES_FILE}`,
     };
 
     try {
@@ -75,7 +75,7 @@ async function checkForDuplicateLog(orderId, txn) {
 async function uploadLogToSpace(logData) {
     const params = {
         Bucket: 'shtransactionlogs', // Your Space name
-        Key: 'sh-demo-txn-logs/txnLogs.txt', // Path to the file in the Space
+        Key: `/${process.env.DO_SPACES_FILE}`, // Path to the file in the Space
         Body: logData,
         ContentType: 'text/plain',
         ACL: 'private', // Or 'public-read', depending on your permissions
