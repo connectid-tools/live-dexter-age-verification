@@ -64,11 +64,11 @@ function onError(error) {
   // handle specific listen errors with friendly messages
   switch (error.code) {
     case 'EACCES':
-      logger.error(bind + ' requires elevated privileges');
+      console.error(bind + ' requires elevated privileges');
       process.exit(1);
       break;
     case 'EADDRINUSE':
-      logger.error(bind + ' is already in use');
+      console.error(bind + ' is already in use');
       process.exit(1);
       break;
     default:
@@ -87,10 +87,10 @@ function onListening() {
     : 'port ' + addr.port;
 
   for (let line of startupMessage.split("\n")) {
-    logger.log(line);
+    console.log(line);
   }
 
-  logger.log('Server listening on ' + bind + ' 🚀');
+  console.log('Server listening on ' + bind + ' 🚀');
 }
 
 
