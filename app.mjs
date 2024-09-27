@@ -11,7 +11,6 @@ import validateCartRouter from './routes/restrictItems.mjs';
 import getRestrictedItemsRouter from './routes/getRestrictedItems.mjs';
 import selectBankRouter from './routes/selectBank.mjs';
 import retrieveTokensRouter from './routes/retrieveTokens.mjs';
-import tokenExpiryRouter from './routes/tokenExpiry.mjs';
 import logOrderRouter from './routes/logTokenAndOrderId.mjs';
 import cookieParser from 'cookie-parser';
 
@@ -33,7 +32,6 @@ app.use('/validate-cart', validateCartRouter);
 app.use('/restricted-items', getRestrictedItemsRouter);
 app.use(selectBankRouter);
 app.use(retrieveTokensRouter);
-app.use(tokenExpiryRouter);
 app.use(logOrderRouter);
 
 
