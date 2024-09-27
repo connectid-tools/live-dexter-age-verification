@@ -75,7 +75,7 @@ async function checkForDuplicateLog(orderId, txn) {
 async function uploadLogToSpace(logData) {
     const params = {
         Bucket: 'shtransactionlogs', // Your Space name
-        Key: `/${process.env.DO_SPACES_FILE}`, // Path to the file in the Space
+        Key: `${process.env.DO_SPACES_FILE}`, // Path to the file in the Space
         Body: logData,
         ContentType: 'text/plain',
         ACL: 'private', // Or 'public-read', depending on your permissions
