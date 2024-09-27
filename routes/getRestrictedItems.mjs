@@ -5,7 +5,6 @@ const router = express.Router();
 
 router.post('/', async (req, res) => {
   const { cartId, code } = req.body;  // Extract both cartId and code
-  const tokenData = tokenStore.get(cartId);
 
   // Check if a valid token or a code exists, and skip validation if true
   if (code) {
