@@ -217,8 +217,6 @@ async function removeItemFromCart(cartId, itemId) {
   }
 }
 
-const endpoint_domain = process.env.ENDPOINT_DOMAIN;
-
 async function validateCart(cartId) {
   try {
     const removedItems = await checkAndRemoveRestrictedItems(cartId);
