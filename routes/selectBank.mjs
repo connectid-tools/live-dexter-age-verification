@@ -13,8 +13,8 @@ router.post('/', async (req, res) => {
   const purpose = req.body.purpose || config.data.purpose;
   const authServerId = req.body.authorisationServerId;
 
-  logger.info('--- Received request with payload ---');
-  logger.info('Payload:', JSON.stringify(req.body, null, 2)); // Log the incoming request payload
+  // logger.info('--- Received request with payload ---');
+  // logger.info('Payload:', JSON.stringify(req.body, null, 2)); // Log the incoming request payload
 
   // Check if the `authorisationServerId` is missing
   if (!authServerId) {
@@ -31,11 +31,11 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    logger.info('--- Sending PAR request to auth server ---');
-    logger.info(`- Authorisation Server ID: ${authServerId}`);
-    logger.info(`- Essential Claims: ${JSON.stringify(essentialClaims)}`);
-    logger.info(`- Voluntary Claims: ${JSON.stringify(voluntaryClaims)}`);
-    logger.info(`- Purpose: ${purpose}`);
+    // logger.info('--- Sending PAR request to auth server ---');
+    // logger.info(`- Authorisation Server ID: ${authServerId}`);
+    // logger.info(`- Essential Claims: ${JSON.stringify(essentialClaims)}`);
+    // logger.info(`- Voluntary Claims: ${JSON.stringify(voluntaryClaims)}`);
+    // logger.info(`- Purpose: ${purpose}`);
 
     // Send the pushed authorization request
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
@@ -45,12 +45,12 @@ router.post('/', async (req, res) => {
       purpose
     );
 
-    logger.info('--- PAR request sent successfully ---');
-    logger.info(`- Auth URL: ${authUrl}`);
-    logger.info(`- Code Verifier: ${code_verifier}`);
-    logger.info(`- State: ${state}`);
-    logger.info(`- Nonce: ${nonce}`);
-    logger.info(`- xFapiInteractionId: ${xFapiInteractionId}`);
+    // logger.info('--- PAR request sent successfully ---');
+    // logger.info(`- Auth URL: ${authUrl}`);
+    // logger.info(`- Code Verifier: ${code_verifier}`);
+    // logger.info(`- State: ${state}`);
+    // logger.info(`- Nonce: ${nonce}`);
+    // logger.info(`- xFapiInteractionId: ${xFapiInteractionId}`);
 
     // Cookie options
     const cookieOptions = {

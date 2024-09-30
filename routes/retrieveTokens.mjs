@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
 
   // Extract the authorization code from query params
   const { code } = req.query;
-  logger.info(`Received code: ${code}`);
+  // logger.info(`Received code: ${code}`);
 
   // Validate that the authorization code is present
   if (!code) {
@@ -67,10 +67,10 @@ router.get('/', async (req, res) => {
       raw: tokenSet.id_token,
     };
 
-    logger.info(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
-    logger.info(`Returned raw id_token: ${token.raw}`);
-    logger.info(`Returned decoded id_token: ${token.decoded}`);
-    logger.info(`Returned xFapiInteractionId: ${tokenSet.xFapiInteractionId}`);
+    // logger.info(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
+    // logger.info(`Returned raw id_token: ${token.raw}`);
+    // logger.info(`Returned decoded id_token: ${token.decoded}`);
+    // logger.info(`Returned xFapiInteractionId: ${tokenSet.xFapiInteractionId}`);
 
     // Clear cookies AFTER ensuring the tokens have been retrieved and no further actions need cookies
     clearCookies(res);
