@@ -12,6 +12,9 @@ const rpClient = new RelyingPartyClientSdk(config);
 router.get('/', async (req, res) => {
   logger.info('--- /retrieve-tokens endpoint hit ---');
 
+  // Log headers for debugging
+  logger.info('Request headers:', JSON.stringify(req.headers, null, 2));
+
   // Extract the authorization code from query params
   const { code } = req.query;
   // logger.info(`Received code: ${code}`);
@@ -22,18 +25,39 @@ router.get('/', async (req, res) => {
     return res.status(400).json({ error: 'Code parameter is required' });
   }
 
-  // Retrieve necessary cookies for token retrieval
-  const { authorisation_server_id, code_verifier, state, nonce } = req.cookies;
-  logger.info('Cookies received:');
-  logger.info(`authorisation_server_id: ${authorisation_server_id}`);
-  logger.info(`code_verifier: ${code_verifier}`);
-  logger.info(`state: ${state}`);
-  logger.info(`nonce: ${nonce}`);
+ // Retrieve necessary cookies for token retrieval
+ const { authorisation_server_id, code_verifier, state, nonce } = req.cookies;
+ logger.info('Cookies received:');
+ logger.info(`authorisation_server_id: ${authorisation_server_id || 'None'}`);
+ logger.info(`code_verifier: ${code_verifier || 'None'}`);
+ logger.info(`state: ${state || 'None'}`);
+ logger.info(`nonce: ${nonce || 'None'}`);
 
-  // Check if any required cookie is missing
-  if (!authorisation_server_id || !code_verifier || !state || !nonce) {
+ // Log user-agent for mobile vs desktop issues
+ const userAgent = req.headers['user-agent'];
+ logger.info(`User-agent: ${userAgent}`);
+
+ // Log if CSRF token exists (you may be using a different middleware for CSRF, adjust accordingly)
+ if (req.headers['x-csrf-token']) {
+   logger.info(`CSRF token: ${req.headers['x-csrf-token']}`);
+ } else {
+   logger.warn('CSRF token is missing');
+ }
+
+   // Check if any required cookie is missing
+   if (!authorisation_server_id || !code_verifier || !state || !nonce) {
     logger.error('Missing required cookies for token retrieval');
-    return res.status(400).json({ error: 'Missing required cookies for token retrieval' });
+    
+    // Return additional details about which cookie is missing
+    return res.status(400).json({
+      error: 'Missing required cookies for token retrieval',
+      missingCookies: {
+        authorisation_server_id: authorisation_server_id ? 'Present' : 'Missing',
+        code_verifier: code_verifier ? 'Present' : 'Missing',
+        state: state ? 'Present' : 'Missing',
+        nonce: nonce ? 'Present' : 'Missing',
+      }
+    });
   }
 
   try {

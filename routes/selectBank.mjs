@@ -58,7 +58,7 @@ router.post('/', async (req, res) => {
       sameSite: 'None',  // Allows cross-site cookies
       secure: true,      // Ensure secure transmission
       httpOnly: true,    // Prevent JavaScript access to cookies (if necessary)
-      maxAge: 3 * 60 * 1000 // 3 minutes
+      maxAge: 10 * 60 * 1000  // 10 minutes
     };
 
     // Log the cookies before setting
