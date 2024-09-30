@@ -23,7 +23,10 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(path.resolve(), 'public')));
+
+app.options('*', cors(corsOptions));  // Ensure preflight requests are handled for all routes
 app.use(cors);
+
 app.use(setCorsHeaders);
 app.use(cookieParser());
 
