@@ -4,7 +4,7 @@ dotenv.config();
 import express from 'express';
 import path from 'path';
 import logger from 'morgan';
-import cors, { setCorsHeaders } from './middleware/cors.mjs';
+import cors, { setCorsHeaders, corsOptions } from './middleware/cors.mjs';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.mjs';
 import indexRouter from './routes/index.mjs';
 import validateCartRouter from './routes/restrictItems.mjs';
@@ -13,7 +13,6 @@ import selectBankRouter from './routes/selectBank.mjs';
 import retrieveTokensRouter from './routes/retrieveTokens.mjs';
 import logOrderRouter from './routes/logTokenAndOrderId.mjs';
 import cookieParser from 'cookie-parser';
-
 
 const app = express();
 const port = 3001;
@@ -28,7 +27,6 @@ app.options('*', cors(corsOptions));  // Ensure preflight requests are handled f
 app.use(cors);
 
 app.use(setCorsHeaders);
-app.use(cors(corsOptions)); // Apply CORS middleware with options
 app.use(cookieParser());
 
 // Routes
