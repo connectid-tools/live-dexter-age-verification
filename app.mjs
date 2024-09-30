@@ -24,6 +24,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(path.resolve(), 'public')));
 
 // Apply CORS middleware with options before routes
+app.use(cors(corsOptions));      // <-- Ensure CORS is applied here
 app.use(setCorsHeaders);
 app.use(cookieParser());
 
