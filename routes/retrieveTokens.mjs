@@ -10,11 +10,11 @@ const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
 router.get('/', async (req, res) => {
-  // logger.info('--- /retrieve-tokens endpoint hit ---');
+  logger.info('--- /retrieve-tokens endpoint hit ---');
 
   // Extract the authorization code from query params
   const { code } = req.query;
-  // logger.info(`Received code: ${code}`);
+  logger.info(`Received code: ${code}`);
 
   // Validate that the authorization code is present
   if (!code) {
@@ -24,11 +24,11 @@ router.get('/', async (req, res) => {
 
   // Retrieve necessary cookies for token retrieval
   const { authorisation_server_id, code_verifier, state, nonce } = req.cookies;
-  // logger.info('Cookies received:');
-  // logger.info(`authorisation_server_id: ${authorisation_server_id}`);
-  // logger.info(`code_verifier: ${code_verifier}`);
-  // logger.info(`state: ${state}`);
-  // logger.info(`nonce: ${nonce}`);
+  logger.info('Cookies received:');
+  logger.info(`authorisation_server_id: ${authorisation_server_id}`);
+  logger.info(`code_verifier: ${code_verifier}`);
+  logger.info(`state: ${state}`);
+  logger.info(`nonce: ${nonce}`);
 
   // Check if any required cookie is missing
   if (!authorisation_server_id || !code_verifier || !state || !nonce) {
@@ -37,11 +37,11 @@ router.get('/', async (req, res) => {
   }
 
   try {
-    // logger.info('Attempting to retrieve tokens with the following details:');
-    // logger.info(`authorisation_server_id: ${authorisation_server_id}`);
-    // logger.info(`code_verifier: ${code_verifier}`);
-    // logger.info(`state: ${state}`);
-    // logger.info(`nonce: ${nonce}`);
+    logger.info('Attempting to retrieve tokens with the following details:');
+    logger.info(`authorisation_server_id: ${authorisation_server_id}`);
+    logger.info(`code_verifier: ${code_verifier}`);
+    logger.info(`state: ${state}`);
+    logger.info(`nonce: ${nonce}`);
 
     // Call the rpClient's retrieveTokens method to exchange the code for tokens
     const tokenSet = await rpClient.retrieveTokens(
@@ -52,8 +52,8 @@ router.get('/', async (req, res) => {
       nonce                    // Nonce to match the original request
     );
 
-    // logger.info('Tokens successfully retrieved');
-    // logger.info('Full Token Set:', JSON.stringify(tokenSet, null, 2));
+    logger.info('Tokens successfully retrieved');
+    logger.info('Full Token Set:', JSON.stringify(tokenSet, null, 2));
 
     // Check if the state is missing in the response
     // if (!tokenSet.state) {
@@ -67,17 +67,17 @@ router.get('/', async (req, res) => {
       raw: tokenSet.id_token,
     };
 
-    // logger.info(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
-    // logger.info(`Returned raw id_token: ${token.raw}`);
-    // logger.info(`Returned decoded id_token: ${token.decoded}`);
-    // logger.info(`Returned xFapiInteractionId: ${tokenSet.xFapiInteractionId}`);
+    logger.info(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
+    logger.info(`Returned raw id_token: ${token.raw}`);
+    logger.info(`Returned decoded id_token: ${token.decoded}`);
+    logger.info(`Returned xFapiInteractionId: ${tokenSet.xFapiInteractionId}`);
 
     // Clear cookies AFTER ensuring the tokens have been retrieved and no further actions need cookies
     clearCookies(res);
-    // logger.info('Cookies cleared successfully');
+    logger.info('Cookies cleared successfully');
 
     // Return the claims and token info as a response
-    // logger.info('Returning token and claims info in the response');
+    logger.info('Returning token and claims info in the response');
     return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId });
   } catch (error) {
     logger.error('Error retrieving tokenset:', error);
