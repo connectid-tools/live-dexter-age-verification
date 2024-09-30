@@ -28,6 +28,7 @@ app.options('*', cors(corsOptions));  // Ensure preflight requests are handled f
 app.use(cors);
 
 app.use(setCorsHeaders);
+app.use(cors(corsOptions)); // Apply CORS middleware with options
 app.use(cookieParser());
 
 // Routes
