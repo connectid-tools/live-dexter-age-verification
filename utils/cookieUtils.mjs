@@ -4,10 +4,10 @@ const router = express.Router();
 // Named export for clearCookies function
 export const clearCookies = (res) => {
     const cookieOptions = { secure: true, sameSite: 'None' };    
-    res.clearCookie('state');
-    res.clearCookie('nonce');
-    res.clearCookie('code_verifier');
-    res.clearCookie('authorisation_server_id');
+    res.clearCookie('state', cookieOptions);
+    res.clearCookie('nonce', cookieOptions);
+    res.clearCookie('code_verifier', cookieOptions);
+    res.clearCookie('authorisation_server_id', cookieOptions);
 };
 
 // Default export for the router
