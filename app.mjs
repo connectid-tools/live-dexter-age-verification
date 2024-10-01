@@ -4,7 +4,7 @@ dotenv.config();
 import express from 'express';
 import path from 'path';
 import logger from 'morgan';
-import cors, { corsOptions } from './middleware/cors.mjs';
+import cors, { corsOptions, allowedOrigins } from './middleware/cors.mjs';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.mjs';
 import indexRouter from './routes/index.mjs';
 import validateCartRouter from './routes/restrictItems.mjs';
