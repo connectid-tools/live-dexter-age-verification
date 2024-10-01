@@ -10,23 +10,27 @@ const allowedOrigins = [
 // CORS Options for Express
 export const corsOptions = {
   origin: function (origin, callback) {
-    // Handle cases where 'origin' is undefined
-    if (typeof origin === 'undefined') {
-      console.log('No Origin header found, allowing request.');
-      return callback(null, true);  // Allow requests with no origin (server-to-server or Postman)
+    // Explicitly handle undefined origin
+    if (!origin) {
+      // Allow requests with no origin (e.g., same-origin or server-to-server requests)
+      console.log('No Origin header found. Allowing request.');
+      return callback(null, true);  // Allow the request
     }
 
     // Check if the origin is in the allowed list
     if (allowedOrigins.includes(origin)) {
-      callback(null, true);  // Allow the request
-    } else {
-      callback(new Error('Not allowed by CORS'));  // Block the request
+      return callback(null, true);  // Allow the request
     }
+
+    // If the origin is not allowed, log it and block the request
+    console.log('Origin not allowed:', origin);
+    return callback(new Error('Not allowed by CORS'));  // Block the request
   },
   methods: ['GET', 'POST', 'OPTIONS'],  // Define allowed HTTP methods
   allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN'],  // Add any custom headers if necessary
   credentials: true  // Allow credentials (cookies, etc.)
 };
+
 
 // Middleware to set custom CORS headers
 export const setCorsHeaders = (req, res, next) => {
