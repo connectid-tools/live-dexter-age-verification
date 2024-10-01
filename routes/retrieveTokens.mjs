@@ -49,7 +49,7 @@ router.get('/', async (req, res) => {
     logger.info(`- Setting state: ${state}`);
     logger.info(`- Setting nonce: ${nonce}`);
     logger.info(`- Setting code_verifier: ${codeVerifier}`);
-    logger.info(`- Setting authorisation_server_id: ${authServerId}`);
+    logger.info(`- Setting authorisation_server_id: ${authorisationServerId}`);
 
 
     // Extract and log the returned claims and tokens
