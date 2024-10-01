@@ -1,6 +1,6 @@
 import express from 'express';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
-import jwtDecode from 'jwt-decode'; // Assuming you use this for token decoding
+import { jwtDecode } from 'jwt-decode'; // Assuming you use this for token decoding
 import { config } from '../config.js';
 import { getLogger } from '../utils/logger.mjs'; // Import the logger
 
@@ -41,6 +41,13 @@ router.get('/', async (req, res) => {
       state,
       nonce
     );
+
+        // Log the cookies before setting them
+        logger.info('--- Setting cookies ---');
+        logger.info(`- Setting state: ${state}`);
+        logger.info(`- Setting nonce: ${nonce}`);
+        logger.info(`- Setting code_verifier: ${code_verifier}`);
+        logger.info(`- Setting authorisation_server_id: ${authServerId}`);
 
     // Extract and log the returned claims and tokens
     const claims = tokenSet.claims();
