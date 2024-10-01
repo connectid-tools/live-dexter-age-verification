@@ -52,14 +52,15 @@ router.post('/', async (req, res) => {
     // logger.info(`- Nonce: ${nonce}`);
     // logger.info(`- xFapiInteractionId: ${xFapiInteractionId}`);
 
-    // Cookie options
-    const cookieOptions = {
-      path: '/',
-      sameSite: 'None',  // Allows cross-site cookies
-      secure: true,      // Ensure secure transmission
-      httpOnly: true,    // Prevent JavaScript access to cookies (if necessary)
-      maxAge: 10 * 60 * 1000  // 10 minutes
-    };
+  // Relaxed cookie options for testing
+  const cookieOptions = {
+    path: '/',
+    sameSite: 'Lax',  // Temporarily use 'Lax' for more relaxed cross-site behavior
+    secure: false,    // Remove secure temporarily (works over HTTP as well)
+    httpOnly: false,  // Allow JavaScript access for testing purposes
+    maxAge: 10 * 60 * 1000  // 10 minutes
+  };
+
 
     // Log the cookies before setting
     logger.info('--- Setting cookies ---');
