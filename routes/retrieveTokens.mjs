@@ -1,8 +1,9 @@
 import express from 'express';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
-import { jwtDecode } from 'jwt-decode'; // Assuming you use this for token decoding
+import jwtDecode from 'jwt-decode'; // Assuming you use this for token decoding
 import { config } from '../config.js';
 import { getLogger } from '../utils/logger.mjs'; // Import the logger
+import { clearCookies } from '../utils/cookieUtils.mjs'; // Import the clearCookies function
 
 const logger = getLogger('info');  // Create a logger instance with the desired log level
 const router = express.Router();
@@ -11,6 +12,8 @@ const rpClient = new RelyingPartyClientSdk(config);
 router.get('/', async (req, res) => {
   // Check if the authorization code is present in the query
   if (!req.query.code) {
+    // Clear cookies if no authorization code is present
+    clearCookies(res);
     return res.status(400).json({ error: 'No code parameter in query string' });
   }
 
@@ -42,12 +45,12 @@ router.get('/', async (req, res) => {
       nonce
     );
 
-        // Log the cookies before setting them
-        logger.info('--- Setting cookies ---');
-        logger.info(`- Setting state: ${state}`);
-        logger.info(`- Setting nonce: ${nonce}`);
-        logger.info(`- Setting code_verifier: ${code_verifier}`);
-        logger.info(`- Setting authorisation_server_id: ${authServerId}`);
+    logger.info('--- Setting cookies ---');
+    logger.info(`- Setting state: ${state}`);
+    logger.info(`- Setting nonce: ${nonce}`);
+    logger.info(`- Setting code_verifier: ${code_verifier}`);
+    logger.info(`- Setting authorisation_server_id: ${authServerId}`);
+
 
     // Extract and log the returned claims and tokens
     const claims = tokenSet.claims();

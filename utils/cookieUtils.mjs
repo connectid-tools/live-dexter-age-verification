@@ -7,7 +7,7 @@ export const clearCookies = (res) => {
     res.clearCookie('state', cookieOptions);
     res.clearCookie('nonce', cookieOptions);
     res.clearCookie('code_verifier', cookieOptions);
-    res.clearCookie('authorisation_server_id', cookieOptions);
+    // res.clearCookie('authorisation_server_id', cookieOptions);
 };
 
 // Default export for the router
