@@ -58,7 +58,6 @@ router.post('/', async (req, res) => {
   sameSite: 'None',
   secure: true,
   httpOnly: true,
-  domain: 'yourdomain.com', // Set your domain explicitly (replace with your actual domain)
   maxAge: 10 * 60 * 1000
 };
 
