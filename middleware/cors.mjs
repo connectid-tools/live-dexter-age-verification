@@ -7,22 +7,26 @@ const allowedOrigins = [
   // `https://api.bigcommerce.com`
 ];
 
-// CORS Options for Express
 export const corsOptions = {
   origin: function (origin, callback) {
-    // Explicitly handle undefined origin
+    console.log('Incoming origin:', origin);  // Log the incoming origin header
+
+    // Handle requests with no origin (e.g., same-origin or server-to-server)
     if (!origin) {
-      // Allow requests with no origin (e.g., same-origin or server-to-server requests)
       console.log('No Origin header found. Allowing request.');
       return callback(null, true);  // Allow the request
     }
 
+    // Log the allowed origins for comparison
+    console.log('Allowed origins:', allowedOrigins);
+
     // Check if the origin is in the allowed list
     if (allowedOrigins.includes(origin)) {
+      console.log('Origin allowed:', origin);
       return callback(null, true);  // Allow the request
     }
 
-    // If the origin is not allowed, log it and block the request
+    // Log the blocked origin
     console.log('Origin not allowed:', origin);
     return callback(new Error('Not allowed by CORS'));  // Block the request
   },
@@ -30,6 +34,7 @@ export const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN'],  // Add any custom headers if necessary
   credentials: true  // Allow credentials (cookies, etc.)
 };
+
 
 
 // // Middleware to set custom CORS headers

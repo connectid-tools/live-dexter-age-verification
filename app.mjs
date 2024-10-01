@@ -17,6 +17,17 @@ import cookieParser from 'cookie-parser';
 const app = express();
 const port = 3001;
 
+app.use((req, res, next) => {
+  console.log('Request Headers:', req.headers);
+  next();
+});
+
+// Log environment variables and allowedOrigins
+console.log('STORE_DOMAIN:', process.env.STORE_DOMAIN);
+console.log('ENDPOINT_DOMAIN:', process.env.ENDPOINT_DOMAIN);
+console.log('Allowed Origins:', allowedOrigins);
+
+
 // Middleware setup
 app.use(logger('dev'));
 app.use(express.json());
