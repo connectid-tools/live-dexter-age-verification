@@ -2,7 +2,7 @@ import express from 'express';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from '../config.js';
 import { clearCookies } from '../utils/cookieUtils.mjs';
-import { jwtDecode } from 'jwt-decode'
+import { jwtDecode } from 'jwt-decode';
 import { getLogger } from '../utils/logger.mjs'; // Import the logger
 const logger = getLogger('info');  // Create a logger instance with the desired log level
 
@@ -15,42 +15,50 @@ router.get('/', async (req, res) => {
   // Log headers for debugging
   logger.info('Request headers:', JSON.stringify(req.headers, null, 2));
 
+  // Log all cookies received in the request
+  logger.info('All cookies received:', JSON.stringify(req.cookies, null, 2));
+
   // Extract the authorization code from query params
   const { code } = req.query;
-  // logger.info(`Received code: ${code}`);
-
-  // Validate that the authorization code is present
   if (!code) {
     logger.error('Code parameter is missing');
     return res.status(400).json({ error: 'Code parameter is required' });
   }
 
- // Retrieve necessary cookies for token retrieval
- const { authorisation_server_id, code_verifier, state, nonce } = req.cookies;
- logger.info('Cookies received:');
- logger.info(`authorisation_server_id: ${authorisation_server_id || 'None'}`);
- logger.info(`code_verifier: ${code_verifier || 'None'}`);
- logger.info(`state: ${state || 'None'}`);
- logger.info(`nonce: ${nonce || 'None'}`);
+  // Retrieve necessary cookies for token retrieval
+  const { authorisation_server_id, code_verifier, state, nonce } = req.cookies;
 
- // Log user-agent for mobile vs desktop issues
- const userAgent = req.headers['user-agent'];
- logger.info(`User-agent: ${userAgent}`);
+  logger.info('Cookies needed for token retrieval:');
+  logger.info(`authorisation_server_id: ${authorisation_server_id || 'None'}`);
+  logger.info(`code_verifier: ${code_verifier || 'None'}`);
+  logger.info(`state: ${state || 'None'}`);
+  logger.info(`nonce: ${nonce || 'None'}`);
 
+  // Log user-agent for mobile vs desktop issues
+  const userAgent = req.headers['user-agent'];
+  logger.info(`User-agent: ${userAgent}`);
 
-   // Check if any required cookie is missing
-   if (!authorisation_server_id || !code_verifier || !state || !nonce) {
+  // Additional debugging information for mobile users
+  if (/mobile/i.test(userAgent)) {
+    logger.warn('Request is coming from a mobile browser');
+  }
+
+  // Check if any required cookie is missing
+  if (!authorisation_server_id || !code_verifier || !state || !nonce) {
     logger.error('Missing required cookies for token retrieval');
-    
-    // Return additional details about which cookie is missing
+
+    // Log detailed cookie status
+    const missingCookies = {
+      authorisation_server_id: authorisation_server_id ? 'Present' : 'Missing',
+      code_verifier: code_verifier ? 'Present' : 'Missing',
+      state: state ? 'Present' : 'Missing',
+      nonce: nonce ? 'Present' : 'Missing',
+    };
+    logger.error('Detailed missing cookies:', JSON.stringify(missingCookies));
+
     return res.status(400).json({
       error: 'Missing required cookies for token retrieval',
-      missingCookies: {
-        authorisation_server_id: authorisation_server_id ? 'Present' : 'Missing',
-        code_verifier: code_verifier ? 'Present' : 'Missing',
-        state: state ? 'Present' : 'Missing',
-        nonce: nonce ? 'Present' : 'Missing',
-      }
+      missingCookies,
     });
   }
 
@@ -73,11 +81,6 @@ router.get('/', async (req, res) => {
     logger.info('Tokens successfully retrieved');
     logger.info('Full Token Set:', JSON.stringify(tokenSet, null, 2));
 
-    // Check if the state is missing in the response
-    // if (!tokenSet.state) {
-    //   logger.error('State is missing in the tokenSet response');
-    // }
-
     // Extract the claims and tokens
     const claims = tokenSet.claims();
     const token = {
@@ -85,10 +88,7 @@ router.get('/', async (req, res) => {
       raw: tokenSet.id_token,
     };
 
-    // logger.info(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
-    // logger.info(`Returned raw id_token: ${token.raw}`);
-    // logger.info(`Returned decoded id_token: ${token.decoded}`);
-    // logger.info(`Returned xFapiInteractionId: ${tokenSet.xFapiInteractionId}`);
+    logger.info('Returned token details:', JSON.stringify(token, null, 2));
 
     // Clear cookies AFTER ensuring the tokens have been retrieved and no further actions need cookies
     clearCookies(res);
@@ -99,12 +99,12 @@ router.get('/', async (req, res) => {
     return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId });
   } catch (error) {
     logger.error('Error retrieving tokenset:', error);
-    
+
     // Return structured error response
     return res.status(500).json({
       error: 'Token Retrieval Failed',
       errorMessage: error.message || 'An unknown error occurred',
-      errorCode: error.code || '500'
+      errorCode: error.code || '500',
     });
   }
 });
