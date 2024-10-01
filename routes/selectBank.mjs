@@ -1,5 +1,6 @@
 import express from 'express';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
+import path from 'path'
 import { config } from '../config.js';
 import { getLogger } from '../utils/logger.mjs'; // Import the logger
 const logger = getLogger('info');  // Create a logger instance with the desired log level
@@ -51,14 +52,14 @@ router.post('/', async (req, res) => {
       purpose
     );
 
-// Relaxed cookie options for testing
- const cookieOptions = {
-  path: '/',  // Ensure this is root
-  sameSite: 'None',
-  secure: true,
-  httpOnly: true,
-  maxAge: 10 * 60 * 1000
-};
+// // Relaxed cookie options for testing
+//  const cookieOptions = {
+//   path: '/',  // Ensure this is root
+//   sameSite: 'None',
+//   secure: true,
+//   httpOnly: true,
+//   maxAge: 10 * 60 * 1000
+// };
 
 
     // Log the cookies before setting
@@ -69,10 +70,11 @@ router.post('/', async (req, res) => {
     logger.info(`- Setting authorisation_server_id: ${authServerId}`);
 
     // Set cookies to maintain state
-    res.cookie('state', state, cookieOptions)
-    res.cookie('nonce', nonce, cookieOptions)
-    res.cookie('code_verifier', code_verifier, cookieOptions)
-    res.cookie('authorisation_server_id', authServerId, cookieOptions)
+     const path = ''
+     res.cookie('state', state, { path, sameSite: 'none', secure: true })
+     res.cookie('nonce', nonce, { path, sameSite: 'none', secure: true })
+     res.cookie('code_verifier', code_verifier, { path, sameSite: 'none', secure: true })
+     res.cookie('authorisation_server_id', authServerId, { path, sameSite: 'none', secure: true })
 
     logger.info(
       `PAR sent to authorisationServerId='${authServerId}', returning url='${authUrl}', x-fapi-interaction-id='${xFapiInteractionId}'`
