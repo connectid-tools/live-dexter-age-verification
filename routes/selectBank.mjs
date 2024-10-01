@@ -51,6 +51,15 @@ router.post('/', async (req, res) => {
       purpose
     );
 
+// Relaxed cookie options for testing
+ const cookieOptions = {
+  path: '/',  // Ensure this is root
+  sameSite: 'None',
+  secure: true,
+  httpOnly: true,
+  maxAge: 10 * 60 * 1000
+};
+
 
     // Log the cookies before setting
     logger.info('--- Setting cookies ---');
@@ -60,10 +69,10 @@ router.post('/', async (req, res) => {
     logger.info(`- Setting authorisation_server_id: ${authServerId}`);
 
     // Set cookies to maintain state
-    res.cookie('state', state, { path, sameSite: 'none', secure: true })
-    res.cookie('nonce', nonce, { path, sameSite: 'none', secure: true })
-    res.cookie('code_verifier', code_verifier, { path, sameSite: 'none', secure: true })
-    res.cookie('authorisation_server_id', authServerId, { path, sameSite: 'none', secure: true })
+    res.cookie('state', state, cookieOptions)
+    res.cookie('nonce', nonce, cookieOptions)
+    res.cookie('code_verifier', code_verifier, cookieOptions)
+    res.cookie('authorisation_server_id', authServerId, cookieOptions)
 
     logger.info(
       `PAR sent to authorisationServerId='${authServerId}', returning url='${authUrl}', x-fapi-interaction-id='${xFapiInteractionId}'`
