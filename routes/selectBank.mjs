@@ -51,14 +51,6 @@ router.post('/', async (req, res) => {
       purpose
     );
 
-    // logger.info('--- PAR request sent successfully ---');
-    // logger.info(`- Auth URL: ${authUrl}`);
-    // logger.info(`- Code Verifier: ${code_verifier}`);
-    // logger.info(`- State: ${state}`);
-    // logger.info(`- Nonce: ${nonce}`);
-    // logger.info(`- xFapiInteractionId: ${xFapiInteractionId}`);
-
-  // Relaxed cookie options for testing
 
     // Log the cookies before setting
     logger.info('--- Setting cookies ---');
