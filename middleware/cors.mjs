@@ -41,4 +41,4 @@ export const setCorsHeaders = (req, res, next) => {
 };
 
 // Export the cors middleware with options
-export default cors(corsOptions);
+export default cors(setCorsHeaders);

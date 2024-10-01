@@ -37,12 +37,6 @@ router.get('/', async (req, res) => {
  const userAgent = req.headers['user-agent'];
  logger.info(`User-agent: ${userAgent}`);
 
- // Log if CSRF token exists (you may be using a different middleware for CSRF, adjust accordingly)
- if (req.headers['x-csrf-token']) {
-   logger.info(`CSRF token: ${req.headers['x-csrf-token']}`);
- } else {
-   logger.warn('CSRF token is missing');
- }
 
    // Check if any required cookie is missing
    if (!authorisation_server_id || !code_verifier || !state || !nonce) {
