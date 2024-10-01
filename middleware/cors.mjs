@@ -32,23 +32,23 @@ export const corsOptions = {
 };
 
 
-// Middleware to set custom CORS headers
-export const setCorsHeaders = (req, res, next) => {
-  const origin = req.headers.origin;
+// // Middleware to set custom CORS headers
+// export const setCorsHeaders = (req, res, next) => {
+//   const origin = req.headers.origin;
 
-  // Check if the origin is in the allowed list
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
+//   // Check if the origin is in the allowed list
+//   if (allowedOrigins.includes(origin)) {
+//     res.setHeader('Access-Control-Allow-Origin', origin);
+//   }
 
-  // Set headers for CORS support
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-XSRF-TOKEN');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+//   // Set headers for CORS support
+//   res.setHeader('Access-Control-Allow-Credentials', 'true');
+//   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-XSRF-TOKEN');
+//   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
 
-  // Call the next middleware
-  next();
-};
+//   // Call the next middleware
+//   next();
+// };
 
 // Export the cors middleware with options
 export default cors(corsOptions);
