@@ -90,9 +90,9 @@ router.get('/', async (req, res) => {
 
     logger.info('Returned token details:', JSON.stringify(token, null, 2));
 
-    // Clear cookies AFTER ensuring the tokens have been retrieved and no further actions need cookies
-    clearCookies(res);
-    logger.info('Cookies cleared successfully');
+    // // Clear cookies AFTER ensuring the tokens have been retrieved and no further actions need cookies
+    // clearCookies(res);
+    // logger.info('Cookies cleared successfully');
 
     // Return the claims and token info as a response
     logger.info('Returning token and claims info in the response');

@@ -53,13 +53,13 @@ router.post('/', async (req, res) => {
     // logger.info(`- xFapiInteractionId: ${xFapiInteractionId}`);
 
   // Relaxed cookie options for testing
-  const cookieOptions = {
-    path: '/',
-    sameSite: 'Lax',  // Temporarily use 'Lax' for more relaxed cross-site behavior
-    secure: false,    // Remove secure temporarily (works over HTTP as well)
-    httpOnly: false,  // Allow JavaScript access for testing purposes
-    maxAge: 10 * 60 * 1000  // 10 minutes
-  };
+ const cookieOptions = {
+  path: '/',  // Ensure this is root
+  sameSite: 'None',
+  secure: true,
+  httpOnly: true,
+  maxAge: 10 * 60 * 1000
+};
 
 
     // Log the cookies before setting
