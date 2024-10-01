@@ -20,19 +20,19 @@ router.get('/', async (req, res) => {
   try {
     // Retrieve the cookies set during the /select-bank request
     const authorisationServerId = req.cookies.authorisation_server_id;
-    const code_verifier = req.cookies.code_verifier;
+    const codeVerifier = req.cookies.code_verifier;
     const state = req.cookies.state;
     const nonce = req.cookies.nonce;
 
     // Log the cookies that were retrieved
     logger.info('--- Retrieving tokens with cookies ---');
     logger.info(`- authorisation_server_id: ${authorisationServerId}`);
-    logger.info(`- code_verifier: ${code_verifier}`);
+    logger.info(`- code_verifier: ${codeVerifier}`);
     logger.info(`- state: ${state}`);
     logger.info(`- nonce: ${nonce}`);
 
     // Ensure all the necessary cookies are present
-    if (!authorisationServerId || !code_verifier || !state || !nonce) {
+    if (!authorisationServerId || !codeVerifier || !state || !nonce) {
       return res.status(400).json({ error: 'Missing required cookies for token retrieval' });
     }
 
@@ -40,7 +40,7 @@ router.get('/', async (req, res) => {
     const tokenSet = await rpClient.retrieveTokens(
       authorisationServerId,
       req.query,  // This includes the authorization code and state
-      code_verifier,
+      codeVerifier,
       state,
       nonce
     );
@@ -48,7 +48,7 @@ router.get('/', async (req, res) => {
     logger.info('--- Setting cookies ---');
     logger.info(`- Setting state: ${state}`);
     logger.info(`- Setting nonce: ${nonce}`);
-    logger.info(`- Setting code_verifier: ${code_verifier}`);
+    logger.info(`- Setting code_verifier: ${codeVerifier}`);
     logger.info(`- Setting authorisation_server_id: ${authServerId}`);
 
 
