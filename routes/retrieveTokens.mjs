@@ -1,102 +1,111 @@
 import express from 'express';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from '../config.js';
+import { clearCookies } from '../utils/cookieUtils.mjs';
+import { jwtDecode } from 'jwt-decode';
 import { getLogger } from '../utils/logger.mjs'; // Import the logger
-
 const logger = getLogger('info');  // Create a logger instance with the desired log level
 
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
-router.post('/', async (req, res) => {
-  const essentialClaims = req.body.essentialClaims || [];
-  const voluntaryClaims = req.body.voluntaryClaims || [];
-  const purpose = req.body.purpose || config.data.purpose;
-  const authServerId = req.body.authorisationServerId;
+router.get('/', async (req, res) => {
+  logger.info('--- /retrieve-tokens endpoint hit ---');
 
-  // Log incoming request payload and headers
-  logger.info('--- Received request with payload ---');
-  logger.info('Payload:', JSON.stringify(req.body, null, 2));  // Log the incoming request payload
-  logger.info('Request headers:', JSON.stringify(req.headers, null, 2));  // Log request headers for debugging
+  // Log headers for debugging
+  logger.info('Request headers:', JSON.stringify(req.headers, null, 2));
 
-  // Check if the `authorisationServerId` is missing
-  if (!authServerId) {
-    const error = 'authorisationServerId parameter is required';
-    logger.error('Error:', error);
-    return res.status(400).json({ error });
+  // Log all cookies received in the request
+  logger.info('All cookies received:', JSON.stringify(req.cookies, null, 2));
+
+  // Extract the authorization code from query params
+  const { code } = req.query;
+  if (!code) {
+    logger.error('Code parameter is missing');
+    return res.status(400).json({ error: 'Code parameter is required' });
   }
 
-  const cartId = req.body.cartId;
-  if (!cartId) {
-    const error = 'cartId parameter is required';
-    logger.error('Error:', error);
-    return res.status(400).json({ error });
+  // Retrieve necessary cookies for token retrieval
+  const { authorisation_server_id, code_verifier, state, nonce } = req.cookies;
+
+  logger.info('Cookies needed for token retrieval:');
+  logger.info(`authorisation_server_id: ${authorisation_server_id || 'None'}`);
+  logger.info(`code_verifier: ${code_verifier || 'None'}`);
+  logger.info(`state: ${state || 'None'}`);
+  logger.info(`nonce: ${nonce || 'None'}`);
+
+  // Log user-agent for mobile vs desktop issues
+  const userAgent = req.headers['user-agent'];
+  logger.info(`User-agent: ${userAgent}`);
+
+  // Additional debugging information for mobile users
+  if (/mobile/i.test(userAgent)) {
+    logger.warn('Request is coming from a mobile browser');
+  }
+
+  // Check if any required cookie is missing
+  if (!authorisation_server_id || !code_verifier || !state || !nonce) {
+    logger.error('Missing required cookies for token retrieval');
+
+    // Log detailed cookie status
+    const missingCookies = {
+      authorisation_server_id: authorisation_server_id ? 'Present' : 'Missing',
+      code_verifier: code_verifier ? 'Present' : 'Missing',
+      state: state ? 'Present' : 'Missing',
+      nonce: nonce ? 'Present' : 'Missing',
+    };
+    logger.error('Detailed missing cookies:', JSON.stringify(missingCookies));
+
+    return res.status(400).json({
+      error: 'Missing required cookies for token retrieval',
+      missingCookies,
+    });
   }
 
   try {
-    logger.info('--- Sending PAR request to auth server ---');
-    logger.info(`- Authorisation Server ID: ${authServerId}`);
-    logger.info(`- Essential Claims: ${JSON.stringify(essentialClaims)}`);
-    logger.info(`- Voluntary Claims: ${JSON.stringify(voluntaryClaims)}`);
-    logger.info(`- Purpose: ${purpose}`);
+    logger.info('Attempting to retrieve tokens with the following details:');
+    logger.info(`authorisation_server_id: ${authorisation_server_id}`);
+    logger.info(`code_verifier: ${code_verifier}`);
+    logger.info(`state: ${state}`);
+    logger.info(`nonce: ${nonce}`);
 
-    // Send the pushed authorization request
-    const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
-      authServerId,
-      essentialClaims,
-      voluntaryClaims,
-      purpose
+    // Call the rpClient's retrieveTokens method to exchange the code for tokens
+    const tokenSet = await rpClient.retrieveTokens(
+      authorisation_server_id, // Authorization server ID
+      req.query,                // Contains the authorization code (i.e., code)
+      code_verifier,           // Code verifier used in the PKCE flow
+      state,                   // State to match the original request
+      nonce                    // Nonce to match the original request
     );
 
-    logger.info('--- PAR request sent successfully ---');
-    logger.info(`- Auth URL: ${authUrl}`);
-    logger.info(`- Code Verifier: ${code_verifier}`);
-    logger.info(`- State: ${state}`);
-    logger.info(`- Nonce: ${nonce}`);
-    logger.info(`- xFapiInteractionId: ${xFapiInteractionId}`);
+    logger.info('Tokens successfully retrieved');
+    logger.info('Full Token Set:', JSON.stringify(tokenSet, null, 2));
 
-    // Relaxed cookie options for testing
-    const cookieOptions = {
-      path: '/',  // Ensure this is root
-      sameSite: 'None',
-      secure: true,
-      httpOnly: true,
-      maxAge: 10 * 60 * 1000  // 10 minutes
+    // Extract the claims and tokens
+    const claims = tokenSet.claims();
+    const token = {
+      decoded: JSON.stringify(jwtDecode(tokenSet.id_token), null, 2),
+      raw: tokenSet.id_token,
     };
 
-    // Log the cookies before setting them
-    logger.info('--- Setting cookies ---');
-    logger.info(`- Setting state: ${state}`);
-    logger.info(`- Setting nonce: ${nonce}`);
-    logger.info(`- Setting code_verifier: ${code_verifier}`);
-    logger.info(`- Setting authorisation_server_id: ${authServerId}`);
-
-    // Set cookies to maintain state
-    res.cookie('state', state, cookieOptions);
-    res.cookie('nonce', nonce, cookieOptions);
-    res.cookie('code_verifier', code_verifier, cookieOptions);
-    res.cookie('authorisation_server_id', authServerId, cookieOptions);
-
-    // Log after setting cookies to verify they were correctly set
-    logger.info('--- Cookies have been set ---');
-    logger.info('Cookies set for the response:', res.getHeaders()['set-cookie']);  // Output the cookies being set
-
-    // Log before clearing cookies
-    logger.info('--- Clearing cookies ---');
+    logger.info('Returned token details:', JSON.stringify(token, null, 2));
 
     // Clear cookies AFTER ensuring the tokens have been retrieved and no further actions need cookies
-    clearCookies(res);  // Assuming clearCookies is a function you've defined elsewhere
-
-    // Log after clearing cookies
+    clearCookies(res);
     logger.info('Cookies cleared successfully');
 
-    // Return the auth URL to the client
-    return res.json({ authUrl });
+    // Return the claims and token info as a response
+    logger.info('Returning token and claims info in the response');
+    return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId });
   } catch (error) {
-    // Log the error message and stack trace for debugging
-    logger.error('Error during PAR request:', error.message);
-    logger.error('Error stack:', error.stack);
-    return res.status(500).json({ error: 'Failed to send PAR request', details: error.message });
+    logger.error('Error retrieving tokenset:', error);
+
+    // Return structured error response
+    return res.status(500).json({
+      error: 'Token Retrieval Failed',
+      errorMessage: error.message || 'An unknown error occurred',
+      errorCode: error.code || '500',
+    });
   }
 });
 
