@@ -18,10 +18,11 @@ export const setCorsHeaders = (req, res, next) => {
   }
 
   // Set headers for CORS support
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-XSRF-TOKEN');
+  res.setHeader('Access-Control-Allow-Origin', `https://${process.env.STORE_DOMAIN}`);
+  res.setHeader('Access-Control-Allow-Credentials', 'true');  // Required to allow credentials (cookies) to be sent
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-XSRF-TOKEN');
+  
   // Call the next middleware
   next();
 };
