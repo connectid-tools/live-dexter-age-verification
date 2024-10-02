@@ -3,7 +3,6 @@ dotenv.config(); // Load environment variables at the very start
 
 import cors from 'cors';
 import express from 'express';
-import path from 'path';
 import logger from 'morgan';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.mjs';
 import indexRouter from './routes/index.mjs';
