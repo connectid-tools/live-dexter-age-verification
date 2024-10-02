@@ -1,10 +1,10 @@
 import dotenv from 'dotenv';
-dotenv.config();
+dotenv.config(); // Load environment variables at the very start
 
+import cors from 'cors';
 import express from 'express';
 import path from 'path';
 import logger from 'morgan';
-import { corsOptions } from './middleware/cors.mjs'; // Import CORS middleware
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.mjs';
 import indexRouter from './routes/index.mjs';
 import validateCartRouter from './routes/restrictItems.mjs';
@@ -16,6 +16,34 @@ import cookieParser from 'cookie-parser';
 
 const app = express();
 const port = 3001;
+
+// Define allowed origins, including environment variables for dynamic domains
+const allowedOrigins = [
+  `https://${process.env.STORE_DOMAIN}`, // e.g., connectid-demo-k3.mybigcommerce.com
+  `https://${process.env.ENDPOINT_DOMAIN}.ondigitalocean.app`, // e.g., sh-checkout-validator-qud6t.ondigitalocean.app
+  `https://api.bigcommerce.com` // BigCommerce API
+];
+
+console.log('Allowed origins:', allowedOrigins.join(', '));  // Log allowed origins
+
+// CORS Options for Express
+const corsOptions = {
+  origin: function (origin, callback) {
+    console.log('Incoming request from origin:', origin);
+    console.log('Allowed origins:', allowedOrigins.join(', '));  // Log allowed origins on every request
+    
+    if (!origin || allowedOrigins.includes(origin)) {
+      console.log('CORS allowed for origin:', origin);  // Log allowed origins
+      callback(null, true); // Allow the request
+    } else {
+      console.error('CORS denied for origin:', origin);  // Log denied origins
+      callback(new Error('Not allowed by CORS')); // Block the request
+    }
+  },
+  methods: ['GET', 'POST', 'OPTIONS'], // Define allowed HTTP methods
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN'], // Add any custom headers if necessary
+  credentials: true // Allow credentials (cookies, etc.)
+};
 
 // Middleware setup
 app.use(logger('dev'));
