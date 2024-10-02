@@ -80,10 +80,10 @@ router.post('/', async (req, res) => {
     // };
 
     // Set cookies to maintain state
-    res.cookie('state', state, { path: 'https://connectid-demo-k3.mybigcommerce.com/checkout', sameSite: 'None', secure: true });
-    res.cookie('nonce', nonce, { path: 'https://connectid-demo-k3.mybigcommerce.com/checkout', sameSite: 'None', secure: true });
-    res.cookie('code_verifier', code_verifier, { path: 'https://connectid-demo-k3.mybigcommerce.com/checkout', sameSite: 'None', secure: true });
-    res.cookie('authorisation_server_id', authServerId, { path: 'https://connectid-demo-k3.mybigcommerce.com/checkout', sameSite: 'None', secure: true });
+    res.cookie('state', state, { path: '/checkout', sameSite: 'None', secure: true });
+    res.cookie('nonce', nonce, { path: '/checkout', sameSite: 'None', secure: true });
+    res.cookie('code_verifier', code_verifier, { path: '/checkout', sameSite: 'None', secure: true });
+    res.cookie('authorisation_server_id', authServerId, { path: '/checkout', sameSite: 'None', secure: true });
     
 
     // logger.info(
