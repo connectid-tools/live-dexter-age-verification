@@ -1,4 +1,3 @@
-import cors from 'cors';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -14,17 +13,9 @@ import selectBankRouter from './routes/selectBank.mjs';
 import retrieveTokensRouter from './routes/retrieveTokens.mjs';
 import logOrderRouter from './routes/logTokenAndOrderId.mjs';
 import cookieParser from 'cookie-parser';
-import { clearCookies } from './utils/cookieUtils.mjs';
-import corsOptions from './middleware/cors.mjs';  // Import corsOptions as the default export
 
 const app = express();
 const port = 3001;
-
-// clear cookies on home page
-app.get('/', (_, res) => {
-  clearCookies(res);
-  res.sendFile(__dirname + '/index.html');
-});
 
 // Middleware setup
 app.use(logger('dev'));
@@ -32,10 +23,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(path.resolve(), 'public')));
 
-// Use CORS middleware with options
-app.use(cors(corsOptions));  // Correct usage of CORS middleware
-
-app.use(setCorsHeaders);  // Use custom CORS headers middleware
+// Apply CORS middleware with options before routes
+app.use(setCorsHeaders); // Use custom CORS headers
 app.use(cookieParser());  // Parse cookies for session handling
 
 // Routes
