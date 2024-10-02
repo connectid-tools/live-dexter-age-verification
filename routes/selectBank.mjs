@@ -91,8 +91,6 @@ router.post('/', async (req, res) => {
 
     // Log after setting cookies
     logger.info('--- Cookies have been set ---');
-    logger.info('Cookies set for the response:', res.getHeaders()['set-cookie']); // Output the cookies being set
-
     // Return the auth URL to the client
     return res.json({ authUrl });
   } catch (error) {
