@@ -40,8 +40,8 @@ export const corsOptions = {
     }
   },
   credentials: true,  // Allow credentials (cookies, etc.)
-  methods: ['GET', 'POST', 'OPTIONS'],  // Allow specific HTTP methods
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN'],  // Specify the allowed headers
+  // methods: ['GET', 'POST', 'OPTIONS'],  // Allow specific HTTP methods
+  // allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN'],  // Specify the allowed headers
 };
 
 app.use(cors(corsOptions)); // Use custom CORS headers
