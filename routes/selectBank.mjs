@@ -79,12 +79,12 @@ router.post('/', async (req, res) => {
     //   maxAge: 10 * 60 * 1000  // Optional: Expire cookies after 10 minutes
     // };
 
-    const path = ''
     // Set cookies to maintain state
-    res.cookie('state', state, { path, sameSite: 'none', secure: true })
-    res.cookie('nonce', nonce, { path, sameSite: 'none', secure: true })
-    res.cookie('code_verifier', code_verifier, { path, sameSite: 'none', secure: true })
-    res.cookie('authorisation_server_id', authServerId, { path, sameSite: 'none', secure: true })
+    res.cookie('state', state, { path: '/', sameSite: 'None', secure: true });
+    res.cookie('nonce', nonce, { path: '/', sameSite: 'None', secure: true });
+    res.cookie('code_verifier', code_verifier, { path: '/', sameSite: 'None', secure: true });
+    res.cookie('authorisation_server_id', authServerId, { path: '/', sameSite: 'None', secure: true });
+    
 
     // logger.info(
     //   `PAR sent to authorisationServerId='${authServerId}', returning url='${authUrl}', x-fapi-interaction-id='${xFapiInteractionId}'`
