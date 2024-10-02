@@ -2,9 +2,7 @@ import cors from 'cors';
 
 // Define allowed origins, including environment variables for dynamic domains
 const allowedOrigins = [
-  `https://${process.env.STORE_DOMAIN}`,
   `https://${process.env.ENDPOINT_DOMAIN}.ondigitalocean.app`,
-  `https://api.bigcommerce.com`
 ];
 
 // Log the allowed origins at server start for debugging purposes
