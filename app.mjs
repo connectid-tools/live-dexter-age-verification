@@ -4,7 +4,7 @@ dotenv.config();
 import express from 'express';
 import path from 'path';
 import logger from 'morgan';
-import { setCorsHeaders } from './middleware/cors.mjs'; // Import CORS middleware
+import { corsOptions, setCorsHeaders } from './middleware/cors.mjs'; // Import CORS middleware
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.mjs';
 import indexRouter from './routes/index.mjs';
 import validateCartRouter from './routes/restrictItems.mjs';
@@ -34,7 +34,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(path.resolve(), 'public')));
 
-// Apply CORS middleware with options before routes
+app.use(cors(corsOptions));
 app.use(setCorsHeaders); // Use custom CORS headers
 app.use(cookieParser());  // Parse cookies for session handling
 
