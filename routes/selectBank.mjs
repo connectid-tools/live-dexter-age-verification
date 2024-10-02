@@ -80,7 +80,7 @@ router.post('/', async (req, res) => {
     // };
 
     // Set cookies to maintain state
-    path = '';
+    path = '/';
     res.cookie('state', state, { path, sameSite: 'none', secure: true });
     res.cookie('nonce', nonce, { path, sameSite: 'none', secure: true });
     res.cookie('code_verifier', code_verifier, { path, sameSite: 'none', secure: true });
