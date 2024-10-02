@@ -19,8 +19,7 @@ const port = 3001;
 // Define allowed origins, including environment variables for dynamic domains
 const allowedOrigins = [
   `https://${process.env.STORE_DOMAIN}`, // e.g., connectid-demo-k3.mybigcommerce.com
-  `https://${process.env.ENDPOINT_DOMAIN}.ondigitalocean.app`, // e.g., sh-checkout-validator-qud6t.ondigitalocean.app
-  `https://api.bigcommerce.com` // BigCommerce API
+  // `https://${process.env.ENDPOINT_DOMAIN}.ondigitalocean.app`, // e.g., sh-checkout-validator-qud6t.ondigitalocean.app
 ];
 
 console.log('Allowed origins:', allowedOrigins.join(', '));  // Log allowed origins
