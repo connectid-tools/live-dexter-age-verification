@@ -9,7 +9,7 @@ const logger = getLogger('info');  // Create a logger instance with the desired 
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
-router.get('/', async (req, res) => {
+router.post('/', async (req, res) => {
   // Check if the authorization code is present in the query
   if (!req.query.code) {
     // Clear cookies if no authorization code is present
