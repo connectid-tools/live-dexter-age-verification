@@ -7,19 +7,24 @@ const allowedOrigins = [
   `https://api.bigcommerce.com`
 ];
 
-// CORS Options for Express
+// CORS Options for Express with Logging
 export const corsOptions = {
   origin: function (origin, callback) {
+    // Log the incoming origin for debugging purposes
+    console.log('Incoming request from origin:', origin);
+
     // Allow requests with no origin (e.g., server-to-server, Postman) or match the allowed origins
     if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true); // Allow the request
+      console.log('CORS allowed for origin:', origin);  // Log allowed origins
+      callback(null, true);  // Allow the request
     } else {
-      callback(new Error('Not allowed by CORS')); // Block the request
+      console.error('CORS denied for origin:', origin);  // Log denied origins
+      callback(new Error('Not allowed by CORS'));  // Block the request
     }
   },
-  methods: ['GET', 'POST', 'OPTIONS'], // Define allowed HTTP methods
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN'], // Add any custom headers if necessary
-  credentials: true // Allow credentials (cookies, etc.)
+  methods: ['GET', 'POST', 'OPTIONS'],  // Define allowed HTTP methods
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN'],  // Add any custom headers if necessary
+  credentials: true  // Allow credentials (cookies, etc.)
 };
 
 // Middleware to set custom CORS headers
@@ -29,6 +34,9 @@ export const setCorsHeaders = (req, res, next) => {
   // Check if the origin is in the allowed list
   if (allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
+    console.log(`Setting CORS headers for allowed origin: ${origin}`);
+  } else {
+    console.warn(`No CORS headers set for origin: ${origin}`);
   }
 
   // Set headers for CORS support
