@@ -28,11 +28,11 @@ console.log('Allowed origins:', allowedOrigins.join(', '));  // Log allowed orig
 export const corsOptions = {
   origin: function (origin, callback) {
     // Log the incoming origin for debugging purposes
-    console.log('Incoming request from origin:', origin);
+    // console.log('Incoming request from origin:', origin);
 
     // Allow requests with no origin (e.g., server-to-server, Postman) or match the allowed origins
     if (!origin || allowedOrigins.includes(origin)) {
-      console.log('CORS allowed for origin:', origin);  // Log the incoming origin that is allowed
+      // console.log('CORS allowed for origin:', origin);  // Log the incoming origin that is allowed
       callback(null, true);  // Allow the request
     } else {
       console.error('CORS denied for origin:', origin);  // Log denied origins
