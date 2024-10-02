@@ -14,12 +14,12 @@ import retrieveTokensRouter from './routes/retrieveTokens.mjs';
 import logOrderRouter from './routes/logTokenAndOrderId.mjs';
 import cookieParser from 'cookie-parser';
 import { clearCookies } from './utils/cookieUtils.mjs';
-import cors from 'cors'
+// import cors from 'cors'
 
 
 
 const app = express();
-app.use(cors())
+// app.use(cors())
 const port = 3001;
 
 // clear cookies on home page
