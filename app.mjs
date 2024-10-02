@@ -51,7 +51,7 @@ app.use(cors(corsOptions)); // Use custom CORS headers
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(express.static(path.join(path.resolve(), 'public')));
+// app.use(express.static(path.join(path.resolve(), 'public')));
 
 // Apply CORS middleware with options before routes
 app.use(cookieParser());  // Parse cookies for session handling
