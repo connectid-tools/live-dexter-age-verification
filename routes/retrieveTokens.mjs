@@ -59,10 +59,10 @@ router.get('/', async (req, res) => {
       raw: tokenSet.id_token,
     };
 
-    logger.info(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
-    logger.info(`Returned raw id_token: ${token.raw}`);
-    logger.info(`Returned decoded id_token: ${token.decoded}`);
-    logger.info(`Returned xFapiInteractionId: ${tokenSet.xFapiInteractionId}`);
+    // logger.info(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
+    // logger.info(`Returned raw id_token: ${token.raw}`);
+    // logger.info(`Returned decoded id_token: ${token.decoded}`);
+    // logger.info(`Returned xFapiInteractionId: ${tokenSet.xFapiInteractionId}`);
 
     // Return the tokens and claims to the client
     return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId });
