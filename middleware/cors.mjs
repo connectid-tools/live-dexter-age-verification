@@ -7,11 +7,15 @@ const allowedOrigins = [
   `https://api.bigcommerce.com`
 ];
 
+// Log the allowed origins at server start for debugging purposes
+console.log('Allowed origins:', allowedOrigins.join(', '));  // Log allowed origins
+
 // CORS Options for Express with Logging
 export const corsOptions = {
   origin: function (origin, callback) {
     // Log the incoming origin for debugging purposes
     console.log('Incoming request from origin:', origin);
+    console.log('Allowed origins:', allowedOrigins.join(', '));  // Log allowed origins on every request
 
     // Allow requests with no origin (e.g., server-to-server, Postman) or match the allowed origins
     if (!origin || allowedOrigins.includes(origin)) {
