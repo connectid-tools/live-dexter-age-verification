@@ -45,10 +45,7 @@ export const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN'],  // Specify the allowed headers
 };
 
-// Use the CORS middleware in your app
-import cors from 'cors';
-app.use(cors(corsOptions));
-
+app.use(cors(corsOptions)); // Use custom CORS headers
 
 
 // Middleware setup
@@ -58,7 +55,6 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(path.resolve(), 'public')));
 
 // Apply CORS middleware with options before routes
-app.use(cors(corsOptions)); // Use custom CORS headers
 app.use(cookieParser());  // Parse cookies for session handling
 
 // Routes
