@@ -71,23 +71,24 @@ router.post('/', async (req, res) => {
     logger.info(`- Setting authorisation_server_id: ${authServerId}`);
 
 
-    const cookieOptions = {
-      path: '/',  // Ensure the cookie is sent for the entire domain
-      sameSite: 'None',
-      secure: true,
-      httpOnly: true,
-      maxAge: 10 * 60 * 1000  // Optional: Expire cookies after 10 minutes
-    };
+    // const cookieOptions = {
+    //   path: '/',  // Ensure the cookie is sent for the entire domain
+    //   sameSite: 'None',
+    //   // secure: true,
+    //   httpOnly: true,
+    //   maxAge: 10 * 60 * 1000  // Optional: Expire cookies after 10 minutes
+    // };
 
+    const path = ''
     // Set cookies to maintain state
-    res.cookie('state', state, cookieOptions);
-    res.cookie('nonce', nonce, cookieOptions);
-    res.cookie('code_verifier', code_verifier, cookieOptions);
-    res.cookie('authorisation_server_id', authServerId, cookieOptions);
+    res.cookie('state', state, { path, sameSite: 'none', secure: true })
+    res.cookie('nonce', nonce, { path, sameSite: 'none', secure: true })
+    res.cookie('code_verifier', code_verifier, { path, sameSite: 'none', secure: true })
+    res.cookie('authorisation_server_id', authServerId, { path, sameSite: 'none', secure: true })
 
-    logger.info(
-      `PAR sent to authorisationServerId='${authServerId}', returning url='${authUrl}', x-fapi-interaction-id='${xFapiInteractionId}'`
-    )
+    // logger.info(
+    //   `PAR sent to authorisationServerId='${authServerId}', returning url='${authUrl}', x-fapi-interaction-id='${xFapiInteractionId}'`
+    // )
 
     // Log after setting cookies
     logger.info('--- Cookies have been set ---');
