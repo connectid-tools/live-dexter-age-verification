@@ -27,23 +27,26 @@ const allowedOrigins = [
 console.log('Allowed origins:', allowedOrigins.join(', '));  // Log allowed origins
 
 // CORS Options for Express
-const corsOptions = {
+export const corsOptions = {
   origin: function (origin, callback) {
-    console.log('Incoming request from origin:', origin);
+    // Log all allowed origins
     console.log('Allowed origins:', allowedOrigins.join(', '));  // Log allowed origins on every request
-    
+
+    // Log the incoming origin for debugging purposes
+    console.log('Incoming request from origin:', origin);
+
+    // Allow requests with no origin (e.g., server-to-server, Postman) or match the allowed origins
     if (!origin || allowedOrigins.includes(origin)) {
-      console.log('CORS allowed for origin:', origin);  // Log allowed origins
-      callback(null, true); // Allow the request
+      console.log('CORS allowed for origin:', origin);  // Log the incoming origin that is allowed
+      callback(null, true);  // Allow the request
     } else {
       console.error('CORS denied for origin:', origin);  // Log denied origins
-      callback(new Error('Not allowed by CORS')); // Block the request
+      callback(new Error('Not allowed by CORS'));  // Block the request
     }
   },
-  methods: ['GET', 'POST', 'OPTIONS'], // Define allowed HTTP methods
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN'], // Add any custom headers if necessary
-  credentials: true // Allow credentials (cookies, etc.)
+  credentials: true,  // Allow credentials (cookies, etc.)
 };
+
 
 // Middleware setup
 app.use(logger('dev'));
