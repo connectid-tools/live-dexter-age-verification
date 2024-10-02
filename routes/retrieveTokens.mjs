@@ -3,7 +3,6 @@ import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { jwtDecode } from 'jwt-decode'; // Assuming you use this for token decoding
 import { config } from '../config.js';
 import { getLogger } from '../utils/logger.mjs'; // Import the logger
-import { clearCookies } from '../utils/cookieUtils.mjs'; // Import the clearCookies function
 
 const logger = getLogger('info');  // Create a logger instance with the desired log level
 const router = express.Router();
