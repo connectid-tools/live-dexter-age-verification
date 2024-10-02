@@ -12,8 +12,7 @@ const rpClient = new RelyingPartyClientSdk(config);
 router.get('/', async (req, res) => {
   // Check if the authorization code is present in the query
   if (!req.query.code) {
-    // Clear cookies if no authorization code is present
-    clearCookies(res);
+    logger.error('Authorization code missing from query string');
     return res.status(400).json({ error: 'No code parameter in query string' });
   }
 
