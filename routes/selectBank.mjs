@@ -1,12 +1,13 @@
 import express from 'express';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
-import path from 'path'
+// import path from 'path'
 import { config } from '../config.js';
 import { getLogger } from '../utils/logger.mjs'; // Import the logger
 const logger = getLogger('info');  // Create a logger instance with the desired log level
 
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
+// const __dirname = path.dirname(__filename)
 
 
 router.post('/', async (req, res) => {
