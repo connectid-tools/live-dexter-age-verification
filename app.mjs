@@ -32,7 +32,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(path.resolve(), 'public')));
 
-app.use(cors(corsOptions));
+app.use(corsOptions);
 app.use(setCorsHeaders); // Use custom CORS headers
 app.use(cookieParser());  // Parse cookies for session handling
 
