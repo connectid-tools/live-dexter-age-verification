@@ -35,10 +35,10 @@ router.get('/', async (req, res) => {
       logger.info('Cookies missing, checking sessionStorage values from request body');
 
       // Fallback to sessionStorage values sent by the client (assumes client sends these values in the body)
-      // authorisationServerId = req.body.authorisationServerId || null;
-      // codeVerifier = req.body.codeVerifier || null;
-      // state = req.body.state || null;
-      // nonce = req.body.nonce || null;
+      authorisationServerId = req.body.authorisationServerId || null;
+      codeVerifier = req.body.codeVerifier || null;
+      state = req.body.state || null;
+      nonce = req.body.nonce || null;
 
       // Log the fallback values
       logger.info(`- Fallback authorisation_server_id: ${authorisationServerId}`);
