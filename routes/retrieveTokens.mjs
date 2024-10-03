@@ -16,22 +16,39 @@ router.get('/', async (req, res) => {
   }
 
   try {
-    // Retrieve the cookies set during the /select-bank request
-    const authorisationServerId = req.cookies.authorisation_server_id;
-    const codeVerifier = req.cookies.code_verifier;
-    const state = req.cookies.state;
-    const nonce = req.cookies.nonce;
+    // First, attempt to retrieve values from cookies
+    let authorisationServerId = req.cookies.authorisation_server_id;
+    let codeVerifier = req.cookies.code_verifier;
+    let state = req.cookies.state;
+    let nonce = req.cookies.nonce;
 
-    // Log the cookies that were retrieved
+    // Log the cookies that were retrieved (if present)
     logger.info('--- Retrieving tokens with cookies ---');
     logger.info(`- authorisation_server_id: ${authorisationServerId}`);
     logger.info(`- code_verifier: ${codeVerifier}`);
     logger.info(`- state: ${state}`);
     logger.info(`- nonce: ${nonce}`);
 
-    // Ensure all the necessary cookies are present
+    // If cookies are missing, fall back to session values from the request body (sent by the client-side)
     if (!authorisationServerId || !codeVerifier || !state || !nonce) {
-      return res.status(400).json({ error: 'Missing required cookies for token retrieval' });
+      logger.info('Cookies missing, checking sessionStorage values from request body');
+
+      // Fallback to sessionStorage values sent by the client (assumes client sends these values in the body)
+      authorisationServerId = req.body.authorisationServerId || null;
+      codeVerifier = req.body.codeVerifier || null;
+      state = req.body.state || null;
+      nonce = req.body.nonce || null;
+
+      // Log the fallback values
+      logger.info(`- Fallback authorisation_server_id: ${authorisationServerId}`);
+      logger.info(`- Fallback code_verifier: ${codeVerifier}`);
+      logger.info(`- Fallback state: ${state}`);
+      logger.info(`- Fallback nonce: ${nonce}`);
+    }
+
+    // Ensure all the necessary values are present
+    if (!authorisationServerId || !codeVerifier || !state || !nonce) {
+      return res.status(400).json({ error: 'Missing required values for token retrieval (cookies or session)' });
     }
 
     // Use the rpClient to retrieve tokens from the authorization server
@@ -43,24 +60,15 @@ router.get('/', async (req, res) => {
       nonce
     );
 
-    logger.info('--- Retrieved Cookies ---');
-    logger.info(`- Setting state: ${state}`);
-    logger.info(`- Setting nonce: ${nonce}`);
-    logger.info(`- Setting code_verifier: ${codeVerifier}`);
-    logger.info(`- Setting authorisation_server_id: ${authorisationServerId}`);
-
-
-    // Extract and log the returned claims and tokens
+    // Log the retrieved tokens and claims
     const claims = tokenSet.claims();
     const token = {
       decoded: JSON.stringify(jwtDecode(tokenSet.id_token), null, 2),
       raw: tokenSet.id_token,
     };
 
-    // logger.info(`Returned claims: ${JSON.stringify(claims, null, 2)}`);
-    // logger.info(`Returned raw id_token: ${token.raw}`);
-    // logger.info(`Returned decoded id_token: ${token.decoded}`);
-    // logger.info(`Returned xFapiInteractionId: ${tokenSet.xFapiInteractionId}`);
+    logger.info('Tokens and claims successfully retrieved');
+    logger.info(`Decoded ID token: ${token.decoded}`);
 
     // Return the tokens and claims to the client
     return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId });
