@@ -81,10 +81,10 @@ router.post('/', async (req, res) => {
 
     // Set cookies to maintain state
 // Set cookies with a 5-minute expiration (300,000 milliseconds)
-res.cookie('state', state, { path: '/', sameSite: 'none', secure: true, maxAge: 5 * 60 * 1000,     partitioned: true });  // 5 minutes
-res.cookie('nonce', nonce, { path: '/', sameSite: 'none', secure: true, maxAge: 5 * 60 * 1000,     partitioned: true });
-res.cookie('code_verifier', code_verifier, { path: '/', sameSite: 'none', secure: true, maxAge: 5 * 60 * 1000,     partitioned: true });
-res.cookie('authorisation_server_id', authServerId, { path: '/', sameSite: 'none', secure: true, maxAge: 5 * 60 * 1000,     partitioned: true });
+    res.cookie('state', state, { path: '/', sameSite: 'none', secure: true, maxAge: 5 * 60 * 1000,     partitioned: true });  // 5 minutes
+    res.cookie('nonce', nonce, { path: '/', sameSite: 'none', secure: true, maxAge: 5 * 60 * 1000,     partitioned: true });
+    res.cookie('code_verifier', code_verifier, { path: '/', sameSite: 'none', secure: true, maxAge: 5 * 60 * 1000,     partitioned: true });
+    res.cookie('authorisation_server_id', authServerId, { path: '/', sameSite: 'none', secure: true, maxAge: 5 * 60 * 1000,     partitioned: true });
 
     
 
@@ -95,7 +95,7 @@ res.cookie('authorisation_server_id', authServerId, { path: '/', sameSite: 'none
     // Log after setting cookies
     logger.info('--- Cookies have been set ---');
     // Return the auth URL to the client
-    return res.json({ authUrl });
+    return res.json({ authUrl, state, nonce, code_verifier, authorisationServerId: authServerId });
   } catch (error) {
     logger.error('Error during PAR request:', error);
     return res.status(500).json({ error: 'Failed to send PAR request', details: error.message });
