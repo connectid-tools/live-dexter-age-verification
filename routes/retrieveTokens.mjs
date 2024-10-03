@@ -9,7 +9,6 @@ const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
 router.get('/', async (req, res) => {
-  const { code, state, nonce, codeVerifier, authorisationServerId } = req.body;
   // Check if the authorization code is present in the query
   if (!req.query.code) {
     logger.error('Authorization code missing from query string');
