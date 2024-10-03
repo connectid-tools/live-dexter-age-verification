@@ -80,10 +80,12 @@ router.post('/', async (req, res) => {
     // };
 
     // Set cookies to maintain state
-    res.cookie('state', state, { path: '/', sameSite: 'none', secure: true });
-    res.cookie('nonce', nonce, { path: '/', sameSite: 'none', secure: true });
-    res.cookie('code_verifier', code_verifier, { path: '/', sameSite: 'none', secure: true });
-    res.cookie('authorisation_server_id', authServerId, { path: '/', sameSite: 'none', secure: true });
+// Set cookies with a 5-minute expiration (300,000 milliseconds)
+res.cookie('state', state, { path: '/', sameSite: 'none', secure: true, maxAge: 5 * 60 * 1000 });  // 5 minutes
+res.cookie('nonce', nonce, { path: '/', sameSite: 'none', secure: true, maxAge: 5 * 60 * 1000 });
+res.cookie('code_verifier', code_verifier, { path: '/', sameSite: 'none', secure: true, maxAge: 5 * 60 * 1000 });
+res.cookie('authorisation_server_id', authServerId, { path: '/', sameSite: 'none', secure: true, maxAge: 5 * 60 * 1000 });
+
     
 
     // logger.info(
