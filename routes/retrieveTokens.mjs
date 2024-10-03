@@ -9,6 +9,7 @@ const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
 router.get('/', async (req, res) => {
+  const { code, state, nonce, codeVerifier, authorisationServerId } = req.body;
   // Check if the authorization code is present in the query
   if (!req.query.code) {
     logger.error('Authorization code missing from query string');
@@ -34,10 +35,10 @@ router.get('/', async (req, res) => {
       logger.info('Cookies missing, checking sessionStorage values from request body');
 
       // Fallback to sessionStorage values sent by the client (assumes client sends these values in the body)
-      authorisationServerId = req.body.authorisationServerId || null;
-      codeVerifier = req.body.codeVerifier || null;
-      state = req.body.state || null;
-      nonce = req.body.nonce || null;
+      // authorisationServerId = req.body.authorisationServerId || null;
+      // codeVerifier = req.body.codeVerifier || null;
+      // state = req.body.state || null;
+      // nonce = req.body.nonce || null;
 
       // Log the fallback values
       logger.info(`- Fallback authorisation_server_id: ${authorisationServerId}`);
