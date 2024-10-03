@@ -43,7 +43,7 @@ router.get('/', async (req, res) => {
       nonce
     );
 
-    logger.info('--- Setting cookies ---');
+    logger.info('--- Retrieved Cookies ---');
     logger.info(`- Setting state: ${state}`);
     logger.info(`- Setting nonce: ${nonce}`);
     logger.info(`- Setting code_verifier: ${codeVerifier}`);
