@@ -33,6 +33,7 @@ router.get('/', async (req, res) => {
     if (!authorisationServerId || !codeVerifier || !state || !nonce) {
       logger.info('Cookies missing, checking sessionStorage values from request body');
 
+      // Fallback to sessionStorage values sent by the client (assumes client sends these values in the body)
       authorisationServerId = req.body.authorisationServerId || null;
       codeVerifier = req.body.codeVerifier || null;
       state = req.body.state || null;
