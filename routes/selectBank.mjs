@@ -88,8 +88,8 @@ router.post('/', async (req, res) => {
 
 
     logger.info(
-    //   `PAR sent to authorisationServerId='${authServerId}', returning url='${authUrl}', x-fapi-interaction-id='${xFapiInteractionId}'`
-    // )
+      `PAR sent to authorisationServerId='${authServerId}', returning url='${authUrl}', x-fapi-interaction-id='${xFapiInteractionId}'`
+    )
 
     // Log after setting cookies
     logger.info('--- Cookies have been set ---');
