@@ -34,7 +34,7 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    // logger.info(
+     logger.info(
       `Processing request to send PAR with authorisationServerId='${authServerId}' essentialClaims='${essentialClaims.join(
         ','
       )}' voluntaryClaims='${voluntaryClaims.join(',')}', purpose='${purpose}'`
