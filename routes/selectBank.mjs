@@ -16,8 +16,8 @@ router.post('/', async (req, res) => {
   const purpose = req.body.purpose || config.data.purpose;
   const authServerId = req.body.authorisationServerId;
 
-  logger.info('--- Received request with payload ---');
-  logger.info('Payload:', JSON.stringify(req.body, null, 2)); // Log the incoming request payload
+  // logger.info('--- Received request with payload ---');
+  // logger.info('Payload:', JSON.stringify(req.body, null, 2)); // Log the incoming request payload
 
   // Check if the `authorisationServerId` is missing
   if (!authServerId) {
@@ -34,16 +34,16 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    logger.info(
+    // logger.info(
       `Processing request to send PAR with authorisationServerId='${authServerId}' essentialClaims='${essentialClaims.join(
         ','
       )}' voluntaryClaims='${voluntaryClaims.join(',')}', purpose='${purpose}'`
     )
-    logger.info('--- Sending PAR request to auth server ---');
-    logger.info(`- Authorisation Server ID: ${authServerId}`);
-    logger.info(`- Essential Claims: ${JSON.stringify(essentialClaims)}`);
-    logger.info(`- Voluntary Claims: ${JSON.stringify(voluntaryClaims)}`);
-    logger.info(`- Purpose: ${purpose}`);
+    // logger.info('--- Sending PAR request to auth server ---');
+    // logger.info(`- Authorisation Server ID: ${authServerId}`);
+    // logger.info(`- Essential Claims: ${JSON.stringify(essentialClaims)}`);
+    // logger.info(`- Voluntary Claims: ${JSON.stringify(voluntaryClaims)}`);
+    // logger.info(`- Purpose: ${purpose}`);
 
     // Send the pushed authorization request
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
@@ -64,11 +64,11 @@ router.post('/', async (req, res) => {
 
 
     // Log the cookies before setting
-    logger.info('--- Setting cookies ---');
-    logger.info(`- Setting state: ${state}`);
-    logger.info(`- Setting nonce: ${nonce}`);
-    logger.info(`- Setting code_verifier: ${code_verifier}`);
-    logger.info(`- Setting authorisation_server_id: ${authServerId}`);
+    // logger.info('--- Setting cookies ---');
+    // logger.info(`- Setting state: ${state}`);
+    // logger.info(`- Setting nonce: ${nonce}`);
+    // logger.info(`- Setting code_verifier: ${code_verifier}`);
+    // logger.info(`- Setting authorisation_server_id: ${authServerId}`);
 
 
     // const cookieOptions = {
@@ -87,12 +87,12 @@ router.post('/', async (req, res) => {
     res.cookie('authorisation_server_id', authServerId, { path: '/', sameSite: 'none', secure: true, maxAge: 5 * 60 * 1000});
 
 
-    logger.info(
+    // logger.info(
       `PAR sent to authorisationServerId='${authServerId}', returning url='${authUrl}', x-fapi-interaction-id='${xFapiInteractionId}'`
     )
 
     // Log after setting cookies
-    logger.info('--- Cookies have been set ---');
+    // logger.info('--- Cookies have been set ---');
     // Return the auth URL to the client
     return res.json({ authUrl, state, nonce, code_verifier, authorisationServerId: authServerId });
   } catch (error) {

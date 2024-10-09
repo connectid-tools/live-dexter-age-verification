@@ -95,13 +95,13 @@ async function uploadLogToSpace(logData) {
             Body: updatedLog,
         };
         await s3.putObject(uploadParams).promise();
-        logger.info('Log appended and uploaded successfully to DigitalOcean Spaces.');
+        // logger.info('Log appended and uploaded successfully to DigitalOcean Spaces.');
         return true;
     } catch (error) {
         if (error.code === 'NoSuchKey') {
             // If the file doesn't exist, create a new one
             await s3.putObject(params).promise();
-            logger.info('Log file created and uploaded successfully to DigitalOcean Spaces.');
+            // logger.info('Log file created and uploaded successfully to DigitalOcean Spaces.');
             return true;
         } else {
             logger.error('Error uploading log to DigitalOcean Spaces:', error);
@@ -130,7 +130,7 @@ router.post('/', async (req, res) => {
         const isDuplicate = await checkForDuplicateLog(orderId, txn);
 
         if (isDuplicate) {
-            logger.info('Duplicate log entry found. Skipping logging.');
+            // logger.info('Duplicate log entry found. Skipping logging.');
             return res.status(200).json({ message: 'Duplicate log entry. No action taken.' });
         }
 
@@ -141,7 +141,7 @@ router.post('/', async (req, res) => {
         const uploadSuccess = await uploadLogToSpace(logEntry);
 
         if (uploadSuccess) {
-            logger.info('Log entry uploaded successfully.');
+            // logger.info('Log entry uploaded successfully.');
             res.status(200).json({ message: 'Order ID, txn, and timestamp logged successfully to DigitalOcean Spaces' });
         } else {
             logger.error('Failed to upload log entry.');
