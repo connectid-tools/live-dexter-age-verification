@@ -34,11 +34,7 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    //  logger.info(
-    //   `Processing request to send PAR with authorisationServerId='${authServerId}' essentialClaims='${essentialClaims.join(
-    //     ','
-    //   )}' voluntaryClaims='${voluntaryClaims.join(',')}', purpose='${purpose}'`
-    // )
+     logger.info( `Processing request to send PAR with authorisationServerId='${authServerId}' essentialClaims='${essentialClaims.join( ',' )}' voluntaryClaims='${voluntaryClaims.join(',')}', purpose='${purpose}'` )
     // logger.info('--- Sending PAR request to auth server ---');
     // logger.info(`- Authorisation Server ID: ${authServerId}`);
     // logger.info(`- Essential Claims: ${JSON.stringify(essentialClaims)}`);
@@ -87,9 +83,7 @@ router.post('/', async (req, res) => {
     res.cookie('authorisation_server_id', authServerId, { path: '/', sameSite: 'none', secure: true, maxAge: 5 * 60 * 1000});
 
 
-    // logger.info(
-      `PAR sent to authorisationServerId='${authServerId}', returning url='${authUrl}', x-fapi-interaction-id='${xFapiInteractionId}'`
-    )
+    logger.info( `PAR sent to authorisationServerId='${authServerId}', returning url='${authUrl}', x-fapi-interaction-id='${xFapiInteractionId}'`)
 
     // Log after setting cookies
     // logger.info('--- Cookies have been set ---');
