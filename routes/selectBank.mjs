@@ -77,10 +77,10 @@ router.post('/', async (req, res) => {
 
     // Set cookies to maintain state
 // Set cookies with a 5-minute expiration (300,000 milliseconds)
-    res.cookie('state', state, { path: '/', sameSite: 'lax', secure: true, maxAge: 5 * 60 * 1000});  // 5 minutes
-    res.cookie('nonce', nonce, { path: '/', sameSite: 'lax', secure: true, maxAge: 5 * 60 * 1000});
-    res.cookie('code_verifier', code_verifier, { path: '/', sameSite: 'lax', secure: true, maxAge: 5 * 60 * 1000});
-    res.cookie('authorisation_server_id', authServerId, { path: '/', sameSite: 'lax', secure: true, maxAge: 5 * 60 * 1000});
+    res.cookie('state', state, { path: '/', sameSite: 'lax', secure: true, httpOnly: true, maxAge: 5 * 60 * 1000});  // 5 minutes
+    res.cookie('nonce', nonce, { path: '/', sameSite: 'lax', secure: true, httpOnly: true, maxAge: 5 * 60 * 1000});
+    res.cookie('code_verifier', code_verifier, { path: '/', sameSite: 'lax', httpOnly: true, secure: true, maxAge: 5 * 60 * 1000});
+    res.cookie('authorisation_server_id', authServerId, { path: '/', sameSite: 'lax', secure: true, httpOnly: true, maxAge: 5 * 60 * 1000});
 
 
     logger.info( `PAR sent to authorisationServerId='${authServerId}', returning url='${authUrl}', x-fapi-interaction-id='${xFapiInteractionId}'`)
