@@ -20,7 +20,7 @@ router.post('/', async (req, res) => {
     // Retrieve tokens using cookies or body data
     const tokenSet = await rpClient.retrieveTokens(
       authorisationServerId,
-      { code, state },
+      { code, state, iss },  // Include `iss` in the parameters if required
       codeVerifier,
       state,
       nonce
