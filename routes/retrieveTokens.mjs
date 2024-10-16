@@ -9,20 +9,28 @@ const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
 router.post('/', async (req, res) => {
-  const { code, state, iss, authorisationServerId, codeVerifier, nonce } = req.body;
+  const { code, state, iss, authorisationServerId, codeVerifier, nonce, isStateValid } = req.body;
 
   if (!code) {
     logger.error('Authorization code missing in request');
     return res.status(400).json({ error: 'Authorization code is required' });
+  }
+ 
+    if (!isStateValid) {
+      console.error('Invalid state detected in authorization response.');
+      // Log the error
+      console.log(`State mismatch detected: Received state ${state}`);
+      
+      // Respond with a 500 error indicating that the state was invalid
+      return res.status(500).json({ error: 'Invalid state in authorization response. Token request rejected.' });
   }
 
   try {
     // Retrieve tokens using cookies or body data
     const tokenSet = await rpClient.retrieveTokens(
       authorisationServerId,
-      { code, state, iss },  // Include `iss` in the parameters if required
+      { code, iss },  // Include `iss` in the parameters if required
       codeVerifier,
-      state,
       nonce
     );
 
