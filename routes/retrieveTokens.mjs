@@ -35,11 +35,15 @@ router.post('/', async (req, res) => {
       nonce
     );
 
+
     const claims = tokenSet.claims();
     const token = {
       decoded: JSON.stringify(jwtDecode(tokenSet.id_token), null, 2),
       raw: tokenSet.id_token,
     };
+
+    // Log the entire token object (both raw and decoded)
+    logger.info('Token information:', JSON.stringify(token, null, 2));
 
     // Return the decoded token and claims to the frontend
     return res.json({ claims, token, xFapiInteractionId: tokenSet.xFapiInteractionId });
