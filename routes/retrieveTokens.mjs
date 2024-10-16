@@ -35,9 +35,6 @@ router.post('/', async (req, res) => {
       nonce
     );
 
-    const decodedToken = jwtDecode(tokenSet.id_token);
-    logger.info('Decoded id_token:', JSON.stringify(decodedToken, null, 2));
-
     const claims = tokenSet.claims();
     const token = {
       decoded: JSON.stringify(jwtDecode(tokenSet.id_token), null, 2),
