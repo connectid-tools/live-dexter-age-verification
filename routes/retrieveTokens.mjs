@@ -31,6 +31,7 @@ router.post('/', async (req, res) => {
       authorisationServerId,
       { code, iss },  // Include `iss` in the parameters if required
       codeVerifier,
+      state,
       nonce
     );
 
