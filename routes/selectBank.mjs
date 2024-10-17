@@ -41,7 +41,7 @@ router.post('/', async (req, res) => {
     // logger.info(`- Voluntary Claims: ${JSON.stringify(voluntaryClaims)}`);
     // logger.info(`- Purpose: ${purpose}`);
 
-    await rpClient.getFallbackProviderParticipants();
+  
 
     // Send the pushed authorization request
     const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
