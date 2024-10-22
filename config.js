@@ -17,7 +17,7 @@ export const config = {
     // The location of the root certificate for the trust authority
     ca_pem_content: process.env.CA_PEM,
 
-    // Application callback URL
+    // Application callback URL 
     application_redirect_uri: `https://${process.env.STORE_DOMAIN}/checkout`,
 
     // Server details
