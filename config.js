@@ -32,7 +32,7 @@ export const config = {
     purpose: 'verifying you are over 18',
 
     client: {
-      client_id: `https://${process.env.CLIENT_ID}`,
+      client_id: `${process.env.CLIENT_ID}`,
       organisation_id: process.env.ORGANISATION_ID,
       jwks_uri: process.env.JWKS_URI,
       redirect_uris: [`https://${process.env.STORE_DOMAIN}/checkout`],
