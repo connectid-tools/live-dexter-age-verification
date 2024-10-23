@@ -33,7 +33,7 @@ export const config = {
     purpose: 'Your details will be shared for the purpose of verifying you are over 18 to prevent sale of knives to minors this information is shared with Sheldon and Hammond',
 
     client: {
-      client_id: `${process.env.CLIENT_ID}`,
+      client_id: process.env.CLIENT_ID,
       organisation_id: process.env.ORGANISATION_ID,
       jwks_uri: process.env.JWKS_URI,
       redirect_uris: [`https://${process.env.STORE_DOMAIN}/checkout`],
