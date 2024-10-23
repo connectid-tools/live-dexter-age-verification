@@ -24,7 +24,7 @@ export const config = {
     server_port: '443',
     listen_address: '0.0.0.0',
     log_level: 'info',
-    enable_auto_compliance_verification: true,
+    enable_auto_compliance_verification: false,
 
     // registry_participants_uri: 'https://api.sandbox.connectid.com.au/oidf-conformance/participants?alias=a/sheldonandhammond',
     registry_participants_uri: 'https://data.directory.sandbox.connectid.com.au/participants',
@@ -37,7 +37,7 @@ export const config = {
       organisation_id: process.env.ORGANISATION_ID,
       jwks_uri: process.env.JWKS_URI,
       redirect_uris: [`https://${process.env.STORE_DOMAIN}/checkout`],
-      organisation_name: 'Dexter',
+      organisation_name: 'Sheldon and Hammond',
       software_description: 'verifying you are over 18 to prevent sale of knives to minors',
       
       application_type: 'web',
