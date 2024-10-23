@@ -36,7 +36,7 @@ export const config = {
       organisation_id: process.env.ORGANISATION_ID,
       jwks_uri: process.env.JWKS_URI,
       redirect_uris: [`https://${process.env.STORE_DOMAIN}/checkout`],
-      organisation_name: `${process.env.ORGANISATION_NAME}`,
+      organisation_name: process.env.ORGANISATION_NAME,
       software_description: 'verifying you are over 18 to prevent sale of knives to minors',
       application_type: 'web',
       grant_types: ['client_credentials', 'authorization_code', 'implicit'],
