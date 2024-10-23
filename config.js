@@ -60,6 +60,3 @@ export const config = {
     },
   },
 };
-
-console.log("Config Data:");
-console.log(JSON.stringify(config, null, 2));
