@@ -28,7 +28,7 @@ export const config = {
     //registry_participants_uri: 'https://api.sandbox.connectid.com.au/oidf-conformance/participants?alias=a/sheldonandhammond',
     registry_participants_uri: 'https://data.directory.sandbox.connectid.com.au/participants',
     include_uncertified_participants: false,
-
+ 
     purpose: 'verifying you are over 18',
 
     client: {
