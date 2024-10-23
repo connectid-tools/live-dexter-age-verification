@@ -23,8 +23,8 @@ export const config = {
     // Server details
     server_port: '443',
     listen_address: '0.0.0.0',
-    log_level: 'info',
-    enable_auto_compliance_verification: false,
+    log_level: 'debug',
+    enable_auto_compliance_verification: true,
     //registry_participants_uri: 'https://api.sandbox.connectid.com.au/oidf-conformance/participants?alias=a/sheldonandhammond',
     registry_participants_uri: 'https://data.directory.sandbox.connectid.com.au/participants',
     include_uncertified_participants: false,
@@ -60,6 +60,3 @@ export const config = {
     },
   },
 };
-
-console.log("Config Data:");
-console.log(JSON.stringify(config, null, 2));
