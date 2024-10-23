@@ -19,7 +19,7 @@ export const config = {
     application_redirect_uri: `https://${process.env.STORE_DOMAIN}/checkout`,
     registry_participants_uri: 'https://data.directory.sandbox.connectid.com.au/participants',
 
-    purpose: 'Your details will be shared for the purpose of verifying you are over 18 to prevent sale of knives to minors this information is shared with Sheldon and Hammond',
+    purpose: 'verifying you are over 18',
     include_uncertified_participants: false,
     enable_auto_compliance_verification: false,
 
