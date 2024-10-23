@@ -17,14 +17,14 @@ export const config = {
     // The location of the root certificate for the trust authority
     ca_pem_content: process.env.CA_PEM,
 
-    // Application callback URL 
+    // Application callback URL
     application_redirect_uri: `https://${process.env.STORE_DOMAIN}/checkout`,
 
     // Server details
     server_port: '443',
     listen_address: '0.0.0.0',
     log_level: 'debug',
-    enable_auto_compliance_verification: true,
+    enable_auto_compliance_verification: false,
     //registry_participants_uri: 'https://api.sandbox.connectid.com.au/oidf-conformance/participants?alias=a/sheldonandhammond',
     registry_participants_uri: 'https://data.directory.sandbox.connectid.com.au/participants',
     include_uncertified_participants: false,
@@ -32,11 +32,11 @@ export const config = {
     purpose: 'verifying you are over 18',
 
     client: {
-      client_id: process.env.CLIENT_ID,
+      client_id: `https://${process.env.CLIENT_ID}`,
       organisation_id: process.env.ORGANISATION_ID,
       jwks_uri: process.env.JWKS_URI,
       redirect_uris: [`https://${process.env.STORE_DOMAIN}/checkout`],
-      organisation_name: `${process.env.ORGANISATION_NAME}`,
+      organisation_name: 'Sheldon and Hammond',
       software_description: 'verifying you are over 18 to prevent sale of knives to minors',
       application_type: 'web',
       grant_types: ['client_credentials', 'authorization_code', 'implicit'],
