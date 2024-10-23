@@ -23,21 +23,22 @@ export const config = {
     // Server details
     server_port: '443',
     listen_address: '0.0.0.0',
-    log_level: 'debug',
+    log_level: 'info',
     enable_auto_compliance_verification: false,
     //registry_participants_uri: 'https://api.sandbox.connectid.com.au/oidf-conformance/participants?alias=a/sheldonandhammond',
     registry_participants_uri: 'https://data.directory.sandbox.connectid.com.au/participants',
     include_uncertified_participants: false,
- 
-    purpose: 'verifying you are over 18',
+
+    purpose: 'Your details will be shared for the purpose of verifying you are over 18 to prevent sale of knives to minors this information is shared with Sheldon and Hammond',
 
     client: {
-      client_id: `https://${process.env.CLIENT_ID}`,
+      client_id: `${process.env.CLIENT_ID}`,
       organisation_id: process.env.ORGANISATION_ID,
       jwks_uri: process.env.JWKS_URI,
       redirect_uris: [`https://${process.env.STORE_DOMAIN}/checkout`],
       organisation_name: `${process.env.ORGANISATION_NAME}`,
       software_description: 'verifying you are over 18 to prevent sale of knives to minors',
+      
       application_type: 'web',
       grant_types: ['client_credentials', 'authorization_code', 'implicit'],
       id_token_signed_response_alg: 'PS256',
