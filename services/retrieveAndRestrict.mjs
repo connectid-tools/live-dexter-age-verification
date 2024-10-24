@@ -25,7 +25,7 @@ async function initializeRestrictedSKUs() {
     }
   });
 
-  logger.info('Restricted SKUs initialized:', Array.from(restrictedSKUs));
+  // logger.info('Restricted SKUs initialized:', Array.from(restrictedSKUs));
 }
 
 async function fetchProductsByCategory(categoryId) {
@@ -79,7 +79,7 @@ async function fetchProductsByCategory(categoryId) {
       });
 
       const responseBody = await response.text();
-      logger.info('Full response for category fetch:', responseBody);
+      // logger.info('Full response for category fetch:', responseBody);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status} Response: ${responseBody}`);

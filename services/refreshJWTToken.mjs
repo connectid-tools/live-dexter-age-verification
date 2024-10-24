@@ -49,7 +49,7 @@ export async function refreshJWTToken() {
         }
 
         const data = await response.json();
-        logger.info('Response Data:', data);
+        // logger.info('Response Data:', data);
 
         if (data && data.data && data.data.token) {
             jwtToken = data.data.token;
