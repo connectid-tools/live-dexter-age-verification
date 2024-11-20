@@ -22,7 +22,6 @@ console.log('Allowed origins:', allowedOrigins.join(', '));
 
 // Single Allowed IP
 const allowedIps = (process.env.ALLOWED_IPS || '').split(',').map(ip => ip.trim()).map(normalizeIp);
-console.log('Allowed IP:', normalizedAllowedIp);
 
 // CORS Config
 export const corsOptions = {
