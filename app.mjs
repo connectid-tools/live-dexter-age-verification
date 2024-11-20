@@ -22,7 +22,8 @@ console.log('Allowed origins:', allowedOrigins.join(', '));
 
 // Single Allowed IP
 const allowedIp = process.env.ALLOWED_IPS || ''; // Load single allowed IP
-console.log('Allowed IP:', allowedIp);
+const normalizedAllowedIp = normalizeIp(allowedIp.trim());
+console.log('Allowed IP:', normalizedAllowedIp);
 
 // CORS Config
 export const corsOptions = {
@@ -41,29 +42,42 @@ app.use(cors(corsOptions));
 
 // Normalize IPs for IPv4/IPv6 compatibility
 function normalizeIp(ip) {
-  if (!ip) return '';
-  return ip.startsWith('::ffff:') ? ip.slice(7) : ip;
+    if (!ip) return '';
+    return ip.startsWith('::ffff:') ? ip.slice(7) : ip;
 }
-
-// Normalize the allowed IP
-const normalizedAllowedIp = normalizeIp((process.env.ALLOWED_IPS || '').trim());
 
 // Middleware for IP Whitelisting
 function ipWhitelist(req, res, next) {
-  const clientIp = normalizeIp(req.headers['x-forwarded-for']?.split(',')[0] || req.connection.remoteAddress);
+    const clientIp =
+        req.headers['cf-connecting-ip'] || // Cloudflare
+        req.headers['x-forwarded-for']?.split(',')[0] || // Standard proxy header
+        req.connection.remoteAddress; // Fallback to direct connection IP
 
-  // Log for debugging
-  console.log(`Allowed IP: "${normalizedAllowedIp}"`);
-  console.log(`Client IP: "${clientIp}"`);
+    const normalizedClientIp = normalizeIp(clientIp);
 
-  if (clientIp !== normalizedAllowedIp) {
-      console.warn(`[${new Date().toISOString()}] Unauthorized IP: ${clientIp}`);
-      return res.status(403).json({ error: 'Unauthorized IP address' });
-  }
+    // Debugging log
+    console.log(`Normalized Client IP: "${normalizedClientIp}"`);
+    console.log(`Allowed IP: "${normalizedAllowedIp}"`);
 
-  next(); // Allow the request if the IP matches
+    // Compare the client IP against the allowed IP
+    if (normalizedClientIp !== normalizedAllowedIp) {
+        console.warn(`[${new Date().toISOString()}] Unauthorized IP: ${normalizedClientIp}`);
+        return res.status(403).json({ error: 'Unauthorized IP address' });
+    }
+
+    next(); // Allow the request if the IP matches
 }
 
+// Debugging Middleware (Remove in production)
+app.use((req, res, next) => {
+    console.log('IP Debugging:');
+    console.log(`CF-Connecting-IP: ${req.headers['cf-connecting-ip']}`);
+    console.log(`X-Forwarded-For: ${req.headers['x-forwarded-for']}`);
+    console.log(`Remote Address: ${req.connection.remoteAddress}`);
+    next();
+});
+
+// Apply IP Whitelisting Globally
 app.use(ipWhitelist);
 
 // Middleware setup
