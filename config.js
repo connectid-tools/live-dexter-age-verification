@@ -15,10 +15,8 @@ export const config = {
     server_port: '443',
     listen_address: '0.0.0.0',
     log_level: 'debug',
-    
     application_redirect_uri: `https://${process.env.STORE_DOMAIN}/checkout`,
-    registry_participants_uri: 'https://data.directory.sandbox.connectid.com.au/participants',
-
+    registry_participants_uri: 'https://data.directory.sandbox.connectid.com.au/participants',  
     purpose: 'verifying you are over 18',
     include_uncertified_participants: false,
     enable_auto_compliance_verification: false,

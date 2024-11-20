@@ -15,35 +15,58 @@ import cookieParser from 'cookie-parser';
 
 const app = express();
 const port = 3001;
-// Define allowed origins, including environment variables for dynamic domains
+
+// Allowed Origins
+
 const allowedOrigins = [
   `https://${process.env.STORE_DOMAIN}`, // e.g., connectid-demo-k3.mybigcommerce.com
   // `https://${process.env.ENDPOINT_DOMAIN}.ondigitalocean.app`, // e.g., sh-checkout-validator-qud6t.ondigitalocean.app
 ];
 
-console.log('Allowed origins:', allowedOrigins.join(', '));  // Log allowed origins
+// Allowed IPs
+const allowedIps = (process.env.ALLOWED_IPS);
 
-// CORS Options for Express
+
+
+console.log('Allowed origins:', allowedOrigins.join(', '));
+console.log('Allowed IPs:', allowedIps.join(', '));
+
+
+// CORS config
 export const corsOptions = {
   origin: function (origin, callback) {
-    // Log the incoming origin for debugging purposes
-    // console.log('Incoming request from origin:', origin);
-
-    // Allow requests with no origin (e.g., server-to-server, Postman) or match the allowed origins
-    if (!origin || allowedOrigins.includes(origin)) {
-      // console.log('CORS allowed for origin:', origin);  // Log the incoming origin that is allowed
-      callback(null, true);  // Allow the request
-    } else {
-      console.error('CORS denied for origin:', origin);  // Log denied origins
-      callback(new Error('Not allowed by CORS'));  // Block the request
-    }
+      if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true); // Allow the request
+      } else {
+          console.error('CORS denied for origin:', origin);
+          callback(new Error('Not allowed by CORS')); // Block the request
+      }
   },
-  credentials: true,  // Allow credentials (cookies, etc.)
-  // methods: ['GET', 'POST', 'OPTIONS'],  // Allow specific HTTP methods
-  // allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN'],  // Specify the allowed headers
+  credentials: true,
 };
 
-app.use(cors(corsOptions)); // Use custom CORS headers
+app.use(cors(corsOptions));
+
+
+
+// Normalize IPs for IPv4/IPv6 compatibility
+function normalizeIp(ip) {
+  return ip.startsWith('::ffff:') ? ip.slice(7) : ip;
+}
+
+
+// Middleware for IP Whitelisting
+function ipWhitelist(req, res, next) {
+  const clientIp = normalizeIp(req.headers['x-forwarded-for']?.split(',')[0] || req.connection.remoteAddress);
+  if (!allowedIps.includes(clientIp)) {
+      console.warn(`[${new Date().toISOString()}] Unauthorized IP: ${clientIp}`);
+      return res.status(403).json({ error: 'Unauthorized IP address' });
+  }
+  next();
+}
+
+app.use(ipWhitelist); // Apply IP whitelisting
+
 
 
 // Middleware setup
