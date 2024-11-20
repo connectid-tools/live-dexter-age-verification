@@ -21,8 +21,8 @@ const allowedOrigins = [`https://${process.env.STORE_DOMAIN}`];
 console.log('Allowed origins:', allowedOrigins.join(', '));
 
 // Single Allowed IP
-const allowedIp = process.env.ALLOWED_IPS || ''; // Load single allowed IP
-const normalizedAllowedIp = normalizeIp(allowedIp.trim());
+const allowedIps = (process.env.ALLOWED_IPS || '').split(',').map(ip => ip.trim()).map(normalizeIp);
+const normalizedAllowedIp = normalizeIp(allowedIps.trim());
 console.log('Allowed IP:', normalizedAllowedIp);
 
 // CORS Config
@@ -48,25 +48,26 @@ function normalizeIp(ip) {
 
 // Middleware for IP Whitelisting
 function ipWhitelist(req, res, next) {
-    const clientIp =
-        req.headers['cf-connecting-ip'] || // Cloudflare
-        req.headers['x-forwarded-for']?.split(',')[0] || // Standard proxy header
-        req.connection.remoteAddress; // Fallback to direct connection IP
+  const clientIp =
+      req.headers['cf-connecting-ip'] || // Cloudflare
+      req.headers['x-forwarded-for']?.split(',')[0] || // Standard proxy header
+      req.connection.remoteAddress; // Fallback to direct connection IP
 
-    const normalizedClientIp = normalizeIp(clientIp);
+  const normalizedClientIp = normalizeIp(clientIp);
 
-    // Debugging log
-    console.log(`Normalized Client IP: "${normalizedClientIp}"`);
-    console.log(`Allowed IP: "${normalizedAllowedIp}"`);
+  // Debugging log
+  console.log(`Normalized Client IP: "${normalizedClientIp}"`);
+  console.log(`Allowed IPs: ${allowedIps.join(', ')}`);
 
-    // Compare the client IP against the allowed IP
-    if (normalizedClientIp !== normalizedAllowedIp) {
-        console.warn(`[${new Date().toISOString()}] Unauthorized IP: ${normalizedClientIp}`);
-        return res.status(403).json({ error: 'Unauthorized IP address' });
-    }
+  // Check if the client IP is in the list of allowed IPs
+  if (!allowedIps.includes(normalizedClientIp)) {
+      console.warn(`[${new Date().toISOString()}] Unauthorized IP: ${normalizedClientIp}`);
+      return res.status(403).json({ error: 'Unauthorized IP address' });
+  }
 
-    next(); // Allow the request if the IP matches
+  next(); // Allow the request if the IP matches
 }
+
 
 // Debugging Middleware (Remove in production)
 app.use((req, res, next) => {
