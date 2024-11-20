@@ -39,25 +39,31 @@ export const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Normalize IP for IPv4/IPv6 compatibility
+// Normalize IPs for IPv4/IPv6 compatibility
 function normalizeIp(ip) {
-    if (!ip) return '';
-    return ip.startsWith('::ffff:') ? ip.slice(7) : ip;
+  if (!ip) return '';
+  return ip.startsWith('::ffff:') ? ip.slice(7) : ip;
 }
+
+// Normalize the allowed IP
+const normalizedAllowedIp = normalizeIp((process.env.ALLOWED_IPS || '').trim());
 
 // Middleware for IP Whitelisting
 function ipWhitelist(req, res, next) {
-    const clientIp = normalizeIp(req.headers['x-forwarded-for']?.split(',')[0] || req.connection.remoteAddress);
+  const clientIp = normalizeIp(req.headers['x-forwarded-for']?.split(',')[0] || req.connection.remoteAddress);
 
-    if (clientIp !== allowedIp) {
-        console.warn(`[${new Date().toISOString()}] Unauthorized IP: ${clientIp}`);
-        return res.status(403).json({ error: 'Unauthorized IP address' });
-    }
+  // Log for debugging
+  console.log(`Allowed IP: "${normalizedAllowedIp}"`);
+  console.log(`Client IP: "${clientIp}"`);
 
-    next(); // Allow the request if the IP matches
+  if (clientIp !== normalizedAllowedIp) {
+      console.warn(`[${new Date().toISOString()}] Unauthorized IP: ${clientIp}`);
+      return res.status(403).json({ error: 'Unauthorized IP address' });
+  }
+
+  next(); // Allow the request if the IP matches
 }
 
-// Apply IP Whitelisting Globally
 app.use(ipWhitelist);
 
 // Middleware setup
