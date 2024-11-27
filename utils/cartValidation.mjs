@@ -5,7 +5,7 @@ const logger = getLogger('info');
 
 // Helper function to validate cart ID with BigCommerce API
 export async function validateCartWithBigCommerce(cartId) {
-    const url = `https://${process.env.STORE_DOMAIN}/api/storefront/carts/${cartId}`;
+    const url = `https://store-pmsgmprrgp.mybigcommerce.com/api/storefront/carts/${cartId}`;
     try {
         const response = await fetch(url, {
             method: 'GET',
