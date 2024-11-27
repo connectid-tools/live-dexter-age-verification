@@ -10,37 +10,42 @@ const rpClient = new RelyingPartyClientSdk(config);
 // const __dirname = path.dirname(__filename)
 
 
-// Helper function to verify the cartId
 async function verifyCartId(cartId) {
   try {
-      const response = await fetch(`https://${process.env.STORE_DOMAIN}/api/storefront/carts/${cartId}`, {
-          method: 'GET',
-          headers: {
-              'X-Auth-Token': process.env.ACCESS_TOKEN, // BigCommerce API token
-              'Content-Type': 'application/json',
-          },
-      });
+    const response = await fetch(`https://${process.env.STORE_DOMAIN}/api/storefront/carts/${cartId}`, {
+      method: 'GET',
+      headers: {
+        'X-Auth-Token': process.env.ACCESS_TOKEN, // BigCommerce API token
+        'Content-Type': 'application/json',
+      },
+    });
 
-      if (response.status === 404) {
-          throw new Error(`Cart ID ${cartId} does not exist`);
-      }
+    if (response.status === 404) {
+      throw new Error(`Cart ID ${cartId} does not exist`);
+    }
 
-      if (!response.ok) {
-          throw new Error(`Failed to verify Cart ID ${cartId}. Status: ${response.status}`);
-      }
+    if (!response.ok) {
+      throw new Error(`Failed to verify Cart ID ${cartId}. Status: ${response.status}`);
+    }
 
-      const cartData = await response.json();
+    const cartData = await response.json();
 
-      // Optional: Add further checks for cart validity
-      if (!cartData || !cartData.lineItems || cartData.lineItems.length === 0) {
-          throw new Error(`Cart ID ${cartId} is invalid or the cart is empty`);
-      }
+    // Ensure the cartId from the API matches the one provided
+    if (cartData.id !== cartId) {
+      throw new Error(`Cart ID mismatch: Provided cartId (${cartId}) does not match API response (${cartData.id})`);
+    }
 
-      return cartData; // Return the cart data if valid
+    // Additional validation: check if the cart has items
+    if (!cartData.lineItems || cartData.lineItems.physicalItems.length === 0) {
+      throw new Error(`Cart ID ${cartId} is invalid or empty`);
+    }
+
+    return cartData; // Return validated cart data
   } catch (error) {
-      throw new Error(`Error verifying cartId: ${error.message}`);
+    throw new Error(`Error verifying cartId: ${error.message}`);
   }
 }
+
 
 
 router.post('/', async (req, res) => {
