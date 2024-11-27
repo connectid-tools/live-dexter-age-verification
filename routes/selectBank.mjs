@@ -94,11 +94,12 @@ router.post('/select-bank', async (req, res) => {
 
   // Proceed with the pushed authorization request
   try {
-    const { authUrl, code_verifier, state, nonce } = await rpClient.sendPushedAuthorisationRequest(
-      authorisationServerId,
-      essentialClaims || [],
-      [],
-      config.data.purpose
+    // Send the pushed authorization request
+    const { authUrl, code_verifier, state, nonce, xFapiInteractionId } = await rpClient.sendPushedAuthorisationRequest(
+      authServerId,
+      essentialClaims,
+      voluntaryClaims,
+      purpose
     );
 
     // Set cookies and respond with the authorization URL
