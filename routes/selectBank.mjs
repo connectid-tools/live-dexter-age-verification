@@ -10,30 +10,6 @@ const rpClient = new RelyingPartyClientSdk(config);
 // const __dirname = path.dirname(__filename)
 
 // Helper function to fetch the current cart from BigCommerce
-async function fetchCartFromBigCommerce(cartId) {
-  const url = `https://${process.env.STORE_DOMAIN}/api/storefront/carts/${cartId}`;
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'X-Auth-Token': process.env.ACCESS_TOKEN, // BigCommerce API token
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch cart. Status: ${response.status}, Cart ID: ${cartId}`);
-    }
-
-    const cartData = await response.json();
-    return cartData;
-  } catch (error) {
-    logger.error(`Error fetching cart from BigCommerce: ${error.message}`);
-    throw new Error(`Error fetching cart: ${error.message}`);
-  }
-}
-
-
 
 router.post('/', async (req, res) => {
   const essentialClaims = req.body.essentialClaims || [];
@@ -68,11 +44,9 @@ router.post('/', async (req, res) => {
     logger.info(`- Voluntary Claims: ${JSON.stringify(voluntaryClaims)}`);
     logger.info(`- Purpose: ${purpose}`);
 
-    const cartData = await fetchCartFromBigCommerce(cartId);
-
-    // Compare the provided cartId with the cartId in the API response
-    if (cartData.id !== cartId) {
-      const error = `Cart ID mismatch: Provided cartId (${cartId}) does not match API cartId (${cartData.id})`;
+    // Validate that cartId is present
+    if (!cartId) {
+      const error = 'cartId parameter is required';
       logger.error(error);
       return res.status(400).json({ error });
     }
