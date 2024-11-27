@@ -43,8 +43,6 @@ async function verifyCartId(cartId) {
 }
 
 
-
-
 router.post('/', async (req, res) => {
   const essentialClaims = req.body.essentialClaims || [];
   const voluntaryClaims = req.body.voluntaryClaims || [];
@@ -52,7 +50,6 @@ router.post('/', async (req, res) => {
   const authServerId = req.body.authorisationServerId;
   const cartId = req.body.cartId;
 
-  const { cartId, authServerId, essentialClaims = [], voluntaryClaims = [], purpose = config.data.purpose } = req.body;
 
   logger.info('--- Received request with payload ---');
   logger.info('Payload:', JSON.stringify(req.body, null, 2)); // Log the incoming request payload
