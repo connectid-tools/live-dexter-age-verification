@@ -71,7 +71,15 @@ app.use(cors(corsOptions));
 // Apply IP Whitelisting Globally
 // app.use(ipWhitelist);
 
-
+// Apply session middleware globally
+app.use(
+    session({
+        secret: 'your-secret-key', // Replace with a secure secret
+        resave: false,
+        saveUninitialized: true,
+        cookie: { secure: false }, // Set to `true` in production with HTTPS
+    })
+);
 
 // Middleware setup
 app.use(logger('dev'));
