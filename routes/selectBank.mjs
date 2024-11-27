@@ -60,6 +60,8 @@ router.post('/', async (req, res) => {
   }
 
   try {
+    logger.info('Received payload:', req.body);
+
      logger.info( `Processing request to send PAR with authorisationServerId='${authServerId}' essentialClaims='${essentialClaims.join( ',' )}' voluntaryClaims='${voluntaryClaims.join(',')}', purpose='${purpose}'` )
     logger.info('--- Sending PAR request to auth server ---');
     logger.info(`- Authorisation Server ID: ${authServerId}`);
