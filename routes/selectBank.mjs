@@ -9,13 +9,6 @@ const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 // const __dirname = path.dirname(__filename)
 
-
-const cartId = await window.getCartId();
-console.log('Cart ID retrieved on client-side:', cartId);
-
-if (!cartId) {
-    console.error('Cart ID not found on client-side');}
-
 // Helper function to fetch the current cart from BigCommerce
 async function fetchCartFromBigCommerce(cartId) {
   const url = `https://${process.env.STORE_DOMAIN}/api/storefront/carts/${cartId}`;
