@@ -13,7 +13,7 @@ const rpClient = new RelyingPartyClientSdk(config);
 // Helper function to verify the cartId
 async function verifyCartId(cartId) {
   try {
-      const response = await fetch(`${process.env.STORE_DOMAIN}/api/storefront/carts/${cartId}`, {
+      const response = await fetch(`https://${process.env.STORE_DOMAIN}/api/storefront/carts/${cartId}`, {
           method: 'GET',
           headers: {
               'X-Auth-Token': process.env.ACCESS_TOKEN, // BigCommerce API token
