@@ -11,7 +11,9 @@ import getRestrictedItemsRouter from './routes/getRestrictedItems.mjs';
 import selectBankRouter from './routes/selectBank.mjs';
 import retrieveTokensRouter from './routes/retrieveTokens.mjs';
 import logOrderRouter from './routes/logTokenAndOrderId.mjs';
+import setCartId from './routes/setCartId.mjs';
 import cookieParser from 'cookie-parser';
+import session from 'express-session';
 
 const app = express();
 const port = 3001;
@@ -69,6 +71,16 @@ app.use(cors(corsOptions));
 // Apply IP Whitelisting Globally
 // app.use(ipWhitelist);
 
+// Apply session middleware globally
+app.use(
+    session({
+        secret: 'your-secret-key', // Replace with a secure secret
+        resave: false,
+        saveUninitialized: true,
+        cookie: { secure: false }, // Set to `true` in production with HTTPS
+    })
+);
+
 // Middleware setup
 app.use(logger('dev'));
 app.use(express.json());
@@ -82,6 +94,8 @@ app.use('/restricted-items', getRestrictedItemsRouter);
 app.use('/select-bank', selectBankRouter);
 app.use('/retrieve-tokens', retrieveTokensRouter);
 app.use('/log-order', logOrderRouter);
+app.use('/set-cart-id', setCartId);
+
 
 // Error Handling
 app.use(notFoundHandler);
