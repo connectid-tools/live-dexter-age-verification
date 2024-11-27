@@ -10,23 +10,60 @@ const rpClient = new RelyingPartyClientSdk(config);
 // const __dirname = path.dirname(__filename)
 
 
+// Helper function to verify the cartId
+async function verifyCartId(cartId) {
+  try {
+      const response = await fetch(`https://your-bigcommerce-domain.com/api/storefront/carts/${cartId}`, {
+          method: 'GET',
+          headers: {
+              'X-Auth-Token': process.env.BIGCOMMERCE_ACCESS_TOKEN, // BigCommerce API token
+              'Content-Type': 'application/json',
+          },
+      });
+
+      if (response.status === 404) {
+          throw new Error(`Cart ID ${cartId} does not exist`);
+      }
+
+      if (!response.ok) {
+          throw new Error(`Failed to verify Cart ID ${cartId}. Status: ${response.status}`);
+      }
+
+      const cartData = await response.json();
+
+      // Optional: Add further checks for cart validity
+      if (!cartData || !cartData.lineItems || cartData.lineItems.length === 0) {
+          throw new Error(`Cart ID ${cartId} is invalid or the cart is empty`);
+      }
+
+      return cartData; // Return the cart data if valid
+  } catch (error) {
+      throw new Error(`Error verifying cartId: ${error.message}`);
+  }
+}
+
+
+
+
 router.post('/', async (req, res) => {
   const essentialClaims = req.body.essentialClaims || [];
   const voluntaryClaims = req.body.voluntaryClaims || [];
   const purpose = req.body.purpose || config.data.purpose;
   const authServerId = req.body.authorisationServerId;
+  const cartId = req.body.cartId;
+
+  const { cartId, authServerId, essentialClaims = [], voluntaryClaims = [], purpose = config.data.purpose } = req.body;
 
   logger.info('--- Received request with payload ---');
   logger.info('Payload:', JSON.stringify(req.body, null, 2)); // Log the incoming request payload
 
-  // Check if the `authorisationServerId` is missing
+  
   if (!authServerId) {
     const error = 'authorisationServerId parameter is required';
     logger.error('Error:', error);
     return res.status(400).json({ error });
   }
-
-  const cartId = req.body.cartId;
+  
   if (!cartId) {
     const error = 'cartId parameter is required';
     logger.error('Error:', error);
@@ -34,6 +71,10 @@ router.post('/', async (req, res) => {
   }
 
   try {
+
+    const cartData = await verifyCartId(cartId);
+    logger.info(`Cart ID ${cartId} verified successfully`, cartData);
+
      logger.info( `Processing request to send PAR with authorisationServerId='${authServerId}' essentialClaims='${essentialClaims.join( ',' )}' voluntaryClaims='${voluntaryClaims.join(',')}', purpose='${purpose}'` )
     logger.info('--- Sending PAR request to auth server ---');
     logger.info(`- Authorisation Server ID: ${authServerId}`);
