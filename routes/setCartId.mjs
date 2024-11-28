@@ -8,7 +8,7 @@ const router = express.Router();
 const BIGCOMMERCE_API_URL = 'https://api.bigcommerce.com/stores/pmsgmprrgp/v3';
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN; // BigCommerce API token
 
-router.post('/set-cart-id', async (req, res) => {
+router.post('/', async (req, res) => {
     const { cartId } = req.body;
 
     // Ensure cartId is provided
