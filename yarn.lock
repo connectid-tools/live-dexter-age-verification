@@ -561,6 +561,11 @@ connect-history-api-fallback@^1:
   resolved "https://registry.npmjs.org/connect-history-api-fallback/-/connect-history-api-fallback-1.6.0.tgz"
   integrity sha512-e54B99q/OUoH64zYYRf3HBP5z24G38h5D3qXu23JGRoigpX5Ss4r9ZnDk3g0Z8uQC2x2lPaJ+UlWBc1ZWBWdLg==
 
+connect-redis@^8.0.1:
+  version "8.0.1"
+  resolved "https://registry.npmjs.org/connect-redis/-/connect-redis-8.0.1.tgz"
+  integrity sha512-7iOI214/r15ahvu0rqKCHhsgpMdOgyLwqlw/icSTnnAR75xFvMyfxAE+je4M87rZLjDlKzKcTc48XxQXYFsMgA==
+
 connect@3.6.6:
   version "3.6.6"
   resolved "https://registry.npmjs.org/connect/-/connect-3.6.6.tgz"
@@ -871,7 +876,7 @@ events@1.1.1:
   resolved "https://registry.npmjs.org/events/-/events-1.1.1.tgz"
   integrity sha512-kEcvvCBByWXGnZy6JUlgAp2gBIUjfCAV6P6TgT1/aaQKcmuAEC4OZTV1I4EWQLz2gxZw76atuVyvHhTxvi0Flw==
 
-express-session@^1.18.1:
+express-session@^1.18.1, express-session@>=1:
   version "1.18.1"
   resolved "https://registry.npmjs.org/express-session/-/express-session-1.18.1.tgz"
   integrity sha512-a5mtTqEaZvBCL9A9aqkrtfz+3SMDhOVUnjafjo+s7A9Txkq+SVX2DLvSp1Zrv4uCXa3lMSK3viWnh9Gg07PBUA==
