@@ -29,14 +29,14 @@ console.log('Allowed origins:', allowedOrigins.join(', '));
 // CORS Config
 export const corsOptions = {
     origin: function (origin, callback) {
+        const allowedOrigins = [`https://${process.env.STORE_DOMAIN}`];
         if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true); // Allow the request
+            callback(null, true);
         } else {
-            console.error('CORS denied for origin:', origin);
-            callback(new Error('Not allowed by CORS')); // Block the request
+            callback(new Error('Not allowed by CORS'));
         }
     },
-    credentials: true,
+    credentials: true, // Required for cookies to be sent
 };
 
 app.use(cors(corsOptions));
@@ -73,23 +73,26 @@ app.use(cors(corsOptions));
 
 // Apply session middleware globally
 
-app.use((req, res, next) => {
-    console.log('Session ID:', req.sessionID);
-    console.log('Session Data:', req.session);
-    next();
-});
+
 app.use(
     session({
         secret: process.env.SESSION_SECRET || 'default-secret',
         resave: false,
         saveUninitialized: true,
         cookie: {
-            secure: process.env.NODE_ENV === 'production', // Only secure in production
-            httpOnly: true, // Prevent client-side access
+            secure: process.env.NODE_ENV === 'production', // True in production (HTTPS)
+            sameSite: 'None', // Required for cross-origin requests
+            httpOnly: true,
             maxAge: 3600 * 1000, // 1 hour
         },
     })
 );
+
+app.use((req, res, next) => {
+    console.log('Session ID:', req.sessionID);
+    console.log('Session Data:', req.session);
+    next();
+});
 
 // Middleware setup
 app.use(logger('dev'));
