@@ -67,11 +67,12 @@
             const cartData = await response.json();
 
 
-            if (!req.session.cartIds) req.session.cartIds = [];
-
-            if (!req.session.cartIds.includes(cartId)) {
-                req.session.cartIds.push(cartId);
-            }
+            // Store cartId in session if valid
+        if (!req.session.cartIds) req.session.cartIds = [];
+        if (!req.session.cartIds.includes(cartId)) {
+            req.session.cartIds.push(cartId);
+            logger.info(`Cart ID ${cartId} added to session.`);
+        }
                 // // Add cartId with timestamp to session array if not already present
                 // if (!req.session.cartIds.includes(cartId)) {
                 //     req.session.cartIds.push(cartId);
@@ -86,11 +87,10 @@
             //     cart: cartData,
             //     cartIds: req.session.cartIds.map(cart => cart.cartId), // Return only cartId values
             // });
-            return res.status(200).json({
-                message: 'Cart ID stored successfully',
-                cart: cartData,
-                sessionCartIds: req.session.cartIds,
-            });
+             res.status(200).json({
+            message: 'Cart ID validated and stored successfully',
+            sessionCartIds: req.session.cartIds,
+        });
         } catch (error) {
             logger.error(`Error validating cartId: ${error.message}`);
             return res.status(500).json({ error: 'Internal server error' });

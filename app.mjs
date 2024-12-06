@@ -14,6 +14,8 @@ import logOrderRouter from './routes/logTokenAndOrderId.mjs';
 import setCartId from './routes/setCartId.mjs';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
+import Redis from 'ioredis';
+import connectRedis from 'connect-redis';
 
 const app = express();
 const port = 3001;
@@ -22,22 +24,17 @@ const port = 3001;
 const allowedOrigins = [`https://${process.env.STORE_DOMAIN}`];
 console.log('Allowed origins:', allowedOrigins.join(', '));
 
+const RedisStore = connectRedis(session);
+const redisClient = new Redis({
+    host: process.env.REDIS_HOST || '127.0.0.1',
+    port: process.env.REDIS_PORT || 6379,
+});
+
 // Single Allowed IP
 // const allowedIps = (process.env.ALLOWED_IPS || '').split(',').map(ip => ip.trim()).map(normalizeIp);
 // console.log('Allowed IPs:', allowedIps.join(', '));
 
-// CORS Config
-export const corsOptions = {
-    origin: function (origin, callback) {
-        const allowedOrigins = [`https://${process.env.STORE_DOMAIN}`];
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true, // Required for cookies to be sent
-};
+
 
 app.use(cors(corsOptions));
 
@@ -73,26 +70,41 @@ app.use(cors(corsOptions));
 
 // Apply session middleware globally
 
-
 app.use(
     session({
+        store: new RedisStore({ client: redisClient }),
         secret: process.env.SESSION_SECRET || 'default-secret',
         resave: false,
-        saveUninitialized: true,
+        saveUninitialized: false, // Avoid creating unnecessary sessions
         cookie: {
             secure: process.env.NODE_ENV === 'production', // Use HTTPS in production
-            httpOnly: true, // Prevent client-side access to the cookie
-            sameSite: 'None', // Required for cross-origin cookies
+            httpOnly: true, // Prevent client-side access to cookies
+            sameSite: 'None', // Allow cross-origin cookies
             maxAge: 3600 * 1000, // 1 hour
         },
     })
 );
+
+
 
 app.use((req, res, next) => {
     console.log('Session ID:', req.sessionID);
     console.log('Session Data:', req.session);
     next();
 });
+
+// CORS Config
+export const corsOptions = {
+    origin: function (origin, callback) {
+        const allowedOrigins = [`https://${process.env.STORE_DOMAIN}`];
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true, // Required for cookies to be sent
+};
 
 // Middleware setup
 app.use(logger('dev'));
