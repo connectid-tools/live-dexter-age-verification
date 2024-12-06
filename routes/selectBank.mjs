@@ -61,14 +61,12 @@ router.post('/', async (req, res) => {
    // Log the state of the session
    logger.info(`Session cartIds before validation: ${JSON.stringify(req.session.cartIds)}`);
 
-
-  if (!req.session.cartIds.some(cart => cart.cartId === cartId)) {
-        logger.error(
-            `Cart ID mismatch: received '${cartId}' is not in the session cartIds [${req.session.cartIds.map(cart => cart.cartId).join(', ')}]`
-        );
-        return res.status(400).json({ error: 'Invalid cartId for the current session' });
-    }
-
+   if (!req.session.cartIds || !req.session.cartIds.includes(cartId)) {
+    logger.error(
+        `Cart ID mismatch: received '${cartId}' is not in the session cartIds [${req.session.cartIds ? req.session.cartIds.join(', ') : 'empty'}]`
+    );
+    return res.status(400).json({ error: 'Invalid cartId for the current session' });
+}
 
 
   try {

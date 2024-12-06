@@ -84,6 +84,7 @@ app.use(
             sameSite: 'None', // Required for cross-origin requests
             httpOnly: true,
             maxAge: 3600 * 1000, // 1 hour
+            secure: true
         },
     })
 );

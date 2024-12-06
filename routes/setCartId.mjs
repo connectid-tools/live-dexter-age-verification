@@ -67,12 +67,12 @@
             const cartData = await response.json();
 
                 // Add cartId with timestamp to session array if not already present
-            if (!req.session.cartIds.some(cart => cart.cartId === cartId)) {
-                req.session.cartIds.push({ cartId, timestamp: Date.now() });
-                logger.info(`Cart ID ${cartId} added to session.`);
-            } else {
-                logger.info(`Cart ID ${cartId} is already in session.`);
-            }
+                if (!req.session.cartIds.includes(cartId)) {
+                    req.session.cartIds.push(cartId);
+                    logger.info(`Cart ID ${cartId} added to session.`);
+                } else {
+                    logger.info(`Cart ID ${cartId} is already in session.`);
+                }
 
                 // Respond with success and return the list of cartIds
             return res.status(200).json({
