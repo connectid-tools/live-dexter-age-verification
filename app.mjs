@@ -72,12 +72,22 @@ app.use(cors(corsOptions));
 // app.use(ipWhitelist);
 
 // Apply session middleware globally
+
+app.use((req, res, next) => {
+    console.log('Session ID:', req.sessionID);
+    console.log('Session Data:', req.session);
+    next();
+});
 app.use(
     session({
-        secret: 'your-secret-key', // Replace with a secure secret
+        secret: process.env.SESSION_SECRET || 'default-secret',
         resave: false,
         saveUninitialized: true,
-        cookie: { secure: true }, // Set to `true` in production with HTTPS
+        cookie: {
+            secure: process.env.NODE_ENV === 'production', // Only secure in production
+            httpOnly: true, // Prevent client-side access
+            maxAge: 3600 * 1000, // 1 hour
+        },
     })
 );
 

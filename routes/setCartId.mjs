@@ -38,6 +38,7 @@
             logger.error('cartId parameter is required');
             return res.status(400).json({ error: 'cartId parameter is required' });
         }
+        logger.info('Session after adding cart ID:', req.session);
 
         try {
 
