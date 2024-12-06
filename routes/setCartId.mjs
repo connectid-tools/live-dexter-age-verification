@@ -66,19 +66,30 @@
             // Parse valid cart data
             const cartData = await response.json();
 
-                // Add cartId with timestamp to session array if not already present
-                if (!req.session.cartIds.includes(cartId)) {
-                    req.session.cartIds.push(cartId);
-                    logger.info(`Cart ID ${cartId} added to session.`);
-                } else {
-                    logger.info(`Cart ID ${cartId} is already in session.`);
-                }
+
+            if (!req.session.cartIds) req.session.cartIds = [];
+
+            if (!req.session.cartIds.includes(cartId)) {
+                req.session.cartIds.push(cartId);
+            }
+                // // Add cartId with timestamp to session array if not already present
+                // if (!req.session.cartIds.includes(cartId)) {
+                //     req.session.cartIds.push(cartId);
+                //     logger.info(`Cart ID ${cartId} added to session.`);
+                // } else {
+                //     logger.info(`Cart ID ${cartId} is already in session.`);
+                // }
 
                 // Respond with success and return the list of cartIds
+            // return res.status(200).json({
+            //     message: 'Cart ID validated and stored successfully',
+            //     cart: cartData,
+            //     cartIds: req.session.cartIds.map(cart => cart.cartId), // Return only cartId values
+            // });
             return res.status(200).json({
-                message: 'Cart ID validated and stored successfully',
+                message: 'Cart ID stored successfully',
                 cart: cartData,
-                cartIds: req.session.cartIds.map(cart => cart.cartId), // Return only cartId values
+                sessionCartIds: req.session.cartIds,
             });
         } catch (error) {
             logger.error(`Error validating cartId: ${error.message}`);

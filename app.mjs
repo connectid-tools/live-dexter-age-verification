@@ -80,11 +80,10 @@ app.use(
         resave: false,
         saveUninitialized: true,
         cookie: {
-            secure: process.env.NODE_ENV === 'production', // True in production (HTTPS)
-            sameSite: 'None', // Required for cross-origin requests
-            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production', // Use HTTPS in production
+            httpOnly: true, // Prevent client-side access to the cookie
+            sameSite: 'None', // Required for cross-origin cookies
             maxAge: 3600 * 1000, // 1 hour
-            secure: true
         },
     })
 );
