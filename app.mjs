@@ -74,10 +74,10 @@ app.use(cors(corsOptions));
 // Apply session middleware globally
 app.use(
     session({
-        secret: process.env.SESSION_SECRET, // Replace with a secure secret
+        secret: 'your-secret-key', // Replace with a secure secret
         resave: false,
         saveUninitialized: true,
-        cookie: { secure: false }, // Set to `true` in production with HTTPS
+        cookie: { secure: true }, // Set to `true` in production with HTTPS
     })
 );
 
