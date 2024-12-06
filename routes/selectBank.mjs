@@ -34,13 +34,13 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error });
   }
 
-     // Validate the provided cartId against the session cartId
-     if (req.session.cartId !== cartId) {
-      logger.error(
-          `Cart ID mismatch: received '${cartId}' does not match session cartId '${req.session.cartId}'`
-      );
-      return res.status(400).json({ error: 'Invalid cartId for the current session' });
-  }
+  if (!req.session.cartIds.some(cart => cart.cartId === cartId)) {
+    logger.error(
+        `Cart ID mismatch: received '${cartId}' is not in the session cartIds [${req.session.cartIds.map(cart => cart.cartId).join(', ')}]`
+    );
+    return res.status(400).json({ error: 'Invalid cartId for the current session' });
+}
+
 
   try {
      logger.info( `Processing request to send PAR with authorisationServerId='${authServerId}' essentialClaims='${essentialClaims.join( ',' )}' voluntaryClaims='${voluntaryClaims.join(',')}', purpose='${purpose}'` )
