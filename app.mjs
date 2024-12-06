@@ -16,6 +16,7 @@ import cookieParser from 'cookie-parser';
 import session from 'express-session';
 import Redis from 'ioredis';
 import connectRedis from 'connect-redis';
+import * as connectRedis from 'connect-redis';
 
 const app = express();
 const port = 3001;
@@ -24,11 +25,14 @@ const port = 3001;
 const allowedOrigins = [`https://${process.env.STORE_DOMAIN}`];
 console.log('Allowed origins:', allowedOrigins.join(', '));
 
-const RedisStore = connectRedis(session);
+// Redis configuration
 const redisClient = new Redis({
     host: process.env.REDIS_HOST || '127.0.0.1',
     port: process.env.REDIS_PORT || 6379,
 });
+
+// Use connect-redis with express-session
+const RedisStore = connectRedis.default(session);
 
 // Single Allowed IP
 // const allowedIps = (process.env.ALLOWED_IPS || '').split(',').map(ip => ip.trim()).map(normalizeIp);
