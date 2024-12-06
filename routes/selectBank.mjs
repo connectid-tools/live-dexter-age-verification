@@ -30,7 +30,6 @@ function cleanupExpiredCartIds(session) {
       return !isExpired;
   });
 }
-logger.info('Session after adding cart ID:', req.session);
 
 router.post('/', async (req, res) => {
   const essentialClaims = req.body.essentialClaims || [];
