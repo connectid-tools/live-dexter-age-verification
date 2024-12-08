@@ -45,6 +45,10 @@ router.post('/', async (req, res) => {
 
         // Store cartId in the session (or other desired location)
         req.session.cartId = cartId;
+
+        logger.info(`Session ID: ${req.sessionID}, Current Session CartID: ${req.session.cartId}`);
+
+        
         logger.info(`Cart ID ${cartId} validated and stored in session.`);
 
         // Respond with success

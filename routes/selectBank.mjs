@@ -24,7 +24,7 @@ router.post('/', async (req, res) => {
     logger.error('Error:', error);
     return res.status(400).json({ error });
   }
-
+  logger.info(`Session ID: ${req.sessionID}, Current Session CartID: ${req.session.cartId}`);
   logger.info(`Incoming Cookies: ${JSON.stringify(req.cookies)}`);
 
   const cartId = req.body.cartId;
