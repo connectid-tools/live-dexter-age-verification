@@ -42,6 +42,12 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Invalid cartId for the current session' });
   }
 
+  
+    // Log success when cartId matches
+    logger.info(
+      `Cart ID validation successful: received '${cartId}' matches session cartId '${req.session.cartId}'`
+    );
+
   try {
      logger.info( `Processing request to send PAR with authorisationServerId='${authServerId}' essentialClaims='${essentialClaims.join( ',' )}' voluntaryClaims='${voluntaryClaims.join(',')}', purpose='${purpose}'` )
     logger.info('--- Sending PAR request to auth server ---');
