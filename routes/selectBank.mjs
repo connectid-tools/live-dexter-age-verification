@@ -10,26 +10,6 @@ const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 // const __dirname = path.dirname(__filename)
 
-const EXPIRATION_TIME = 3600 * 1000; // 1 hour in milliseconds
-
-// Middleware to initialize session cartIds array
-router.use((req, res, next) => {
-    if (!req.session.cartIds) {
-        req.session.cartIds = []; // Initialize array if not present
-    }
-    next();
-});
-
-// Helper function to clean up expired cartIds
-function cleanupExpiredCartIds(session) {
-  session.cartIds = session.cartIds.filter(cart => {
-      const isExpired = Date.now() - cart.timestamp > EXPIRATION_TIME;
-      if (isExpired) {
-          logger.info(`Cart ID ${cart.cartId} expired and removed.`);
-      }
-      return !isExpired;
-  });
-}
 
 router.post('/', async (req, res) => {
   const essentialClaims = req.body.essentialClaims || [];
@@ -54,20 +34,13 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error });
   }
 
-  
-    // Clean up expired cart IDs
-    cleanupExpiredCartIds(req.session);
-
-   // Log the state of the session
-   logger.info(`Session cartIds before validation: ${JSON.stringify(req.session.cartIds)}`);
-
-   if (!req.session.cartIds || !req.session.cartIds.includes(cartId)) {
-    logger.error(
-        `Cart ID mismatch: received '${cartId}' is not in the session cartIds [${req.session.cartIds ? req.session.cartIds.join(', ') : 'empty'}]`
-    );
-    return res.status(400).json({ error: 'Invalid cartId for the current session' });
-}
-
+     // Validate the provided cartId against the session cartId
+     if (req.session.cartId !== cartId) {
+      logger.error(
+          `Cart ID mismatch: received '${cartId}' does not match session cartId '${req.session.cartId}'`
+      );
+      return res.status(400).json({ error: 'Invalid cartId for the current session' });
+  }
 
   try {
      logger.info( `Processing request to send PAR with authorisationServerId='${authServerId}' essentialClaims='${essentialClaims.join( ',' )}' voluntaryClaims='${voluntaryClaims.join(',')}', purpose='${purpose}'` )
