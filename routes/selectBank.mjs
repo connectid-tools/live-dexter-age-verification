@@ -17,8 +17,6 @@ router.post('/', async (req, res) => {
   const purpose = req.body.purpose || config.data.purpose;
   const authServerId = req.body.authorisationServerId;
 
-  logger.info('--- Received request with payload ---');
-  logger.info('Payload:', JSON.stringify(req.body, null, 2)); // Log the incoming request payload
 
   // Check if the `authorisationServerId` is missing
   if (!authServerId) {
@@ -26,6 +24,8 @@ router.post('/', async (req, res) => {
     logger.error('Error:', error);
     return res.status(400).json({ error });
   }
+
+  logger.info(`Incoming Cookies: ${JSON.stringify(req.cookies)}`);
 
   const cartId = req.body.cartId;
   if (!cartId) {
@@ -42,7 +42,6 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Invalid cartId for the current session' });
   }
 
-  
     // Log success when cartId matches
     logger.info(
       `Cart ID validation successful: received '${cartId}' matches session cartId '${req.session.cartId}'`

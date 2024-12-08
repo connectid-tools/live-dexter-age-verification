@@ -11,6 +11,8 @@ const ACCESS_TOKEN = process.env.ACCESS_TOKEN; // BigCommerce API token
 router.post('/', async (req, res) => {
     const { cartId } = req.body;
 
+    logger.info(`Incoming Cookies: ${JSON.stringify(req.cookies)}`);
+
     // Ensure cartId is provided
     if (!cartId) {
         logger.error('cartId parameter is required');
