@@ -74,12 +74,13 @@ app.use(cors(corsOptions));
 // Apply session middleware globally
 app.use(
     session({
-        secret: 'your-secret-key', // Replace with a secure secret
+        secret: 'your-secret-key',
         resave: false,
-        saveUninitialized: false,
-        cookie: { secure: true }, // Set to `true` in production with HTTPS
+        saveUninitialized: false, // Prevent creating sessions until data is added
+        cookie: { secure: true, sameSite: 'None' }, // Adjust for production
     })
 );
+
 
 // Middleware setup
 app.use(logger('dev'));
