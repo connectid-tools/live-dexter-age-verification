@@ -86,6 +86,12 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use((req, res, next) => {
+    console.log(`Session ID: ${req.sessionID}`);
+    console.log(`Session Data: ${JSON.stringify(req.session)}`);
+    next();
+});
+
 
 // Routes
 app.use('/', indexRouter);
