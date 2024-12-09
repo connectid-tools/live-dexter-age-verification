@@ -19,49 +19,43 @@ router.post('/', async (req, res) => {
   const purpose = req.body.purpose || config.data.purpose;
   const authServerId = req.body.authorisationServerId;
 
+  const requestId = Date.now(); // Unique request identifier
+  logger.info(`[Request ${requestId}] Incoming Headers: ${JSON.stringify(req.headers)}`);
+  logger.info(`[Request ${requestId}] Incoming Cookies: ${JSON.stringify(req.cookies)}`);
+  logger.info(`[Request ${requestId}] Incoming Session Before: ${JSON.stringify(req.session)}`);
+
 
   // Check if the `authorisationServerId` is missing
   if (!authServerId) {
-    const error = 'authorisationServerId parameter is required';
-    logger.error('Error:', error);
-    return res.status(400).json({ error });
+    logger.error(`[Request ${requestId}] Error: authorisationServerId parameter is required`);
+      return res.status(400).json({ error: 'authorisationServerId parameter is required' });
   }
 
     // Validate session cartId existence
     if (!req.session.cartId) {
-      logger.error('No cartId found in session');
+      logger.error(`[Request ${requestId}] Error: No cartId found in session`);
       return res.status(400).json({ error: 'No cartId associated with this session' });
   }
 
-  logger.info(`Session ID: ${req.sessionID}, Current Session CartID: ${req.session.cartId}`);
-  logger.info(`Incoming Cookies: ${JSON.stringify(req.cookies)}`);
-  logger.info(`Incoming Cookies: ${JSON.stringify(req.sessionID)}`);
-  logger.info(`Incoming Cookies: ${JSON.stringify(req.session)}`);
-
-
-
-
   const cartId = req.body.cartId;
   if (!cartId) {
-    const error = 'cartId parameter is required';
-    logger.error('Error:', error);
-    return res.status(400).json({ error });
-  }
+    logger.error(`[Request ${requestId}] Error: cartId parameter is required`);
+    return res.status(400).json({ error: 'cartId parameter is required' });
+}
 
-     // Validate the provided cartId against the session cartId
-     if (req.session.cartId !== cartId) {
-      logger.error(
-          `Cart ID mismatch: received '${cartId}' does not match session cartId '${req.session.cartId}'`
-      );
-      return res.status(400).json({ error: 'Invalid cartId for the current session' });
-  }
+if (req.session.cartId !== cartId) {
+  logger.error(`[Request ${requestId}] Error: Cart ID mismatch. Received '${cartId}' does not match session cartId '${req.session.cartId}'`);
+  return res.status(400).json({ error: 'Invalid cartId for the current session' });
+}
 
     // Log success when cartId matches
     logger.info(
-      `Cart ID validation successful: received '${cartId}' matches session cartId '${req.session.cartId}'`
+      `[Request ${requestId}] Session Validation Successful received '${cartId}' matches session cartId '${req.session.cartId}'`
     );
 
+
   try {
+    logger.info(`[Request ${requestId}] Processing PAR request for authorisationServerId='${authorisationServerId}'`);
      logger.info( `Processing request to send PAR with authorisationServerId='${authServerId}' essentialClaims='${essentialClaims.join( ',' )}' voluntaryClaims='${voluntaryClaims.join(',')}', purpose='${purpose}'` )
     logger.info('--- Sending PAR request to auth server ---');
     logger.info(`- Authorisation Server ID: ${authServerId}`);
@@ -114,13 +108,14 @@ router.post('/', async (req, res) => {
 
 
     logger.info( `PAR sent to authorisationServerId='${authServerId}', returning url='${authUrl}', x-fapi-interaction-id='${xFapiInteractionId}'`)
-
+    logger.info(`[Request ${requestId}] PAR Request Successful. Redirecting to: ${authUrl}`);
     // Log after setting cookies
     logger.info('--- Cookies have been set ---');
     // Return the auth URL to the client
     return res.json({ authUrl, state, nonce, code_verifier, authorisationServerId: authServerId });
   } catch (error) {
     logger.error('Error during PAR request:', error);
+    logger.error(`[Request ${requestId}] Error during PAR request: ${error.stack || error.message}`);
     return res.status(500).json({ error: 'Failed to send PAR request', details: error.message });
   }
 });
