@@ -15,7 +15,8 @@ import setCartId from './routes/setCartId.mjs';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
 import Redis from 'ioredis';
-import connectRedis from 'connect-redis';
+import * as connectRedis from 'connect-redis';
+
 
 export const redisClient = new Redis({
     host: process.env.REDIS_HOST,
