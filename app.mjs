@@ -14,6 +14,7 @@ import logOrderRouter from './routes/logTokenAndOrderId.mjs';
 import setCartId from './routes/setCartId.mjs';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
+import cookieParser from 'cookie-parser';
 
 const app = express();
 const port = 3001;
@@ -72,7 +73,6 @@ app.use(cors(corsOptions));
 // app.use(ipWhitelist);
 
 // Apply session middleware globally
-app.use(cookieParser());
 app.use(
     session({
         secret: 'your-secret-key',
@@ -88,7 +88,7 @@ app.use('/', indexRouter);
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+app.use(cookieParser(process.env.COOKIE_SECRET)); // Replace with your actual secret
 app.use((req, res, next) => {
     console.log(`Current Session CartID: ${req.session.cartId}`);
     console.log(`Session ID: ${req.sessionID}`);

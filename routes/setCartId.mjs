@@ -47,6 +47,8 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: 'Invalid cartId or cart does not exist' });
         }
 
+
+
         if (!response.ok) {
             const error = `BigCommerce API error: ${response.statusText}`;
             logger.error(`[Request ${requestId}] Error: ${error}`);
@@ -57,26 +59,36 @@ router.post('/', async (req, res) => {
         logger.info(`[Request ${requestId}] Cart data retrieved successfully from BigCommerce API: ${JSON.stringify(cartData)}`);
 
         logger.info(`[Request ${requestId}] Storing cartId: ${cartId} in session.`);
-        req.session.cartId = cartId;
+        // req.session.cartId = cartId;
 
-        req.session.save((err) => {
-            if (err) {
-                const error = `Session save failed: ${err.message}`;
-                logger.error(`[Request ${requestId}] Error: ${error}`);
-                return res.status(500).json({ error: 'Error saving session data' });
-            }
+        // req.session.save((err) => {
+        //     if (err) {
+        //         const error = `Session save failed: ${err.message}`;
+        //         logger.error(`[Request ${requestId}] Error: ${error}`);
+        //         return res.status(500).json({ error: 'Error saving session data' });
+        //     }
 
-            logger.info(`[Request ${requestId}] Session After Mutation: ${JSON.stringify(req.session)}`);
-            logger.info(`[Request ${requestId}] Cart ID ${cartId} validated and stored in session.`);
+        //     logger.info(`[Request ${requestId}] Session After Mutation: ${JSON.stringify(req.session)}`);
+        //     logger.info(`[Request ${requestId}] Cart ID ${cartId} validated and stored in session.`);
 
-            // Add a listener to log cookies when the response is finalized
-            res.on('finish', () => {
-                const cookies = res.getHeaders()['set-cookie'];
-                logger.info(`[Request ${requestId}] Outgoing Cookies: ${JSON.stringify(cookies)}`);
-            });
+        //     // Add a listener to log cookies when the response is finalized
+        //     res.on('finish', () => {
+        //         const cookies = res.getHeaders()['set-cookie'];
+        //         logger.info(`[Request ${requestId}] Outgoing Cookies: ${JSON.stringify(cookies)}`);
+        //     });
 
-            res.status(200).json({ message: 'Cart ID validated and stored successfully', cart: cartData });
-        });
+        //     res.status(200).json({ message: 'Cart ID validated and stored successfully', cart: cartData });
+        // });
+                // Store cartId in a signed cookie
+                res.cookie('cartId', cartId, {
+                    signed: true,
+                    httpOnly: true,
+                    secure: true,
+                    sameSite: 'None',
+                    maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
+                });
+                logger.info('Cart ID validated and stored in cookie');
+                res.status(200).json({ message: 'Cart ID stored successfully' });
     } catch (error) {
         logger.error(`[Request ${requestId}] Error in /set-cart-id: ${error.stack || error.message}`);
         res.status(500).json({ error: error.message });
