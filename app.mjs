@@ -14,30 +14,37 @@ import logOrderRouter from './routes/logTokenAndOrderId.mjs';
 import setCartId from './routes/setCartId.mjs';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
-import Redis from 'ioredis';
-import * as connectRedis from 'connect-redis';
+import { createClient } from 'redis';
+import RedisStore from 'connect-redis';
 
 
-export const redisClient = new Redis({
-    host: process.env.REDIS_HOST,
-    port: process.env.REDIS_PORT,
+export const redisClient = createClient({
+    socket: {
+        host: process.env.REDIS_HOST,
+        port: process.env.REDIS_PORT,
+        tls: process.env.REDIS_TLS === 'true',
+    },
     password: process.env.REDIS_PASSWORD,
-    tls: process.env.REDIS_TLS === 'true' ? {} : undefined, // Use TLS if required
 });
 
-// Log Redis connection events
-redisClient.on('connect', () => console.log('Connected to Redis successfully.'));
-redisClient.on('error', (err) => console.error('Redis connection error:', err));
+redisClient.on('error', (err) => console.error('Redis Client Error', err));
+
+try {
+    await redisClient.connect();
+    console.log('Redis connected successfully.');
+} catch (error) {
+    console.error('Failed to connect to Redis:', error);
+    process.exit(1); // Exit the process if Redis is critical to the app
+}
 
 const app = express();
 const port = 3001;
 
-
-const RedisStore = connectRedis(session);   
+const store = new RedisStore({ client: redisClient });
 
 app.use(
     session({
-        store: new RedisStore({ client: redisClient }),
+        store: store,
         secret: process.env.SESSION_SECRET || 'default-secret',
         resave: false,
         saveUninitialized: false,
