@@ -14,7 +14,6 @@ import logOrderRouter from './routes/logTokenAndOrderId.mjs';
 import setCartId from './routes/setCartId.mjs';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
-import cookieParser from 'cookie-parser';
 
 const app = express();
 const port = 3001;
