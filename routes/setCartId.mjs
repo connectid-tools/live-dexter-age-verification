@@ -61,11 +61,15 @@ router.post('/', async (req, res) => {
                 return res.status(500).json({ error: 'Error saving session data' });
             }
         
-            // Log outgoing cookies after session is saved successfully
-            logger.info(`Outgoing Cookies: ${JSON.stringify(res.getHeaders()['set-cookie'])}`);
+            // Add a listener to log cookies when the response is finalized
+            res.on('finish', () => {
+                const cookies = res.getHeaders()['set-cookie'];
+                logger.info(`Outgoing Cookies: ${JSON.stringify(cookies)}`);
+            });
+        
             logger.info(`Session saved with cartId: ${req.session.cartId}`);
             res.status(200).json({ message: 'Cart ID validated and stored successfully' });
-        });        
+        });    
     } catch (error) {
         logger.error(`Error in /set-cart-id: ${error.message}`);
         res.status(500).json({ error: error.message });
