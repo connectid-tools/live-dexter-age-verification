@@ -1,6 +1,5 @@
 import express from 'express';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
-import session from 'express-session';
 // import path from 'path'
 import { config } from '../config.js';
 import { getLogger } from '../utils/logger.mjs'; // Import the logger
