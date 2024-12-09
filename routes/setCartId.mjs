@@ -11,17 +11,25 @@ const ACCESS_TOKEN = process.env.ACCESS_TOKEN; // BigCommerce API token
 router.post('/', async (req, res) => {
     const { cartId } = req.body;
 
-    logger.info(`Incoming Cookies: ${JSON.stringify(req.cookies)}`);
-    logger.info(`Incoming Cookies: ${JSON.stringify(req.sessionID)}`);
-    logger.info(`Incoming Cookies: ${JSON.stringify(req.session)}`);
+    // logger.info(`Incoming Cookies: ${JSON.stringify(req.cookies)}`);
+    // logger.info(`Incoming Cookies: ${JSON.stringify(req.sessionID)}`);
+    // logger.info(`Incoming Cookies: ${JSON.stringify(req.session)}`);
 
-    // Ensure cartId is provided
-    if (!cartId) {
-        logger.error('cartId parameter is required');
-        return res.status(400).json({ error: 'cartId parameter is required' });
-    }
+    // // Ensure cartId is provided
+    // if (!cartId) {
+    //     logger.error('cartId parameter is required');
+    //     return res.status(400).json({ error: 'cartId parameter is required' });
+    // }
+    
 
     try {
+        
+        logger.info(`Incoming Cookies: ${JSON.stringify(req.cookies)}`);
+        logger.info(`Incoming Session: ${JSON.stringify(req.session)}`);
+
+        if (!cartId) {
+            throw new Error('cartId parameter is required');
+        }
         // Call BigCommerce API to validate the cartId
         const response = await fetch(`${BIGCOMMERCE_API_URL}/carts/${cartId}`, {
             method: 'GET',
@@ -48,20 +56,13 @@ router.post('/', async (req, res) => {
         // Store cartId in the session (or other desired location)
         req.session.cartId = cartId;
         req.session.save((err) => {
-            if (err) {
-                logger.error(`Error saving session: ${err.message}`);
-                return res.status(500).json({ error: 'Error saving session data' });
-            }
-
-            logger.info(`Session Data After Update: ${JSON.stringify(req.session)}`);
+            if (err) throw new Error(`Session save failed: ${err.message}`);
             logger.info(`Cart ID ${cartId} validated and stored in session.`);
-
-            // Respond with success
-            return res.status(200).json({ message: 'Cart ID validated and stored successfully', cart: cartData });
+            res.status(200).json({ message: 'Cart ID validated', cart: cartData });
         });
     } catch (error) {
-        logger.error(`Error validating cartId: ${error.message}`);
-        return res.status(500).json({ error: 'Internal server error' });
+        logger.error(`Error in /set-cart-id: ${error.message}`);
+        res.status(500).json({ error: error.message });
     }
 });
 

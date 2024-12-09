@@ -76,10 +76,11 @@ app.use(
     session({
         secret: 'your-secret-key',
         resave: false,
-        saveUninitialized: false, // Prevent creating sessions until data is added
-        cookie: { secure: true, sameSite: 'None' }, // Adjust for production
+        saveUninitialized: false,
+        cookie: { secure: true, sameSite: 'None' },
     })
 );
+app.use('/', indexRouter);
 
 
 // Middleware setup
@@ -93,6 +94,11 @@ app.use((req, res, next) => {
     logger.info(`Session Data: ${JSON.stringify(req.session)}`);
     next();
 });
+app.use((err, req, res, next) => {
+    console.error('Unhandled error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+});
+
 
 
 // Routes
