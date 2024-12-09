@@ -56,10 +56,16 @@ router.post('/', async (req, res) => {
         // Store cartId in the session (or other desired location)
         req.session.cartId = cartId;
         req.session.save((err) => {
-            if (err) throw new Error(`Session save failed: ${err.message}`);
-            logger.info(`Cart ID ${cartId} validated and stored in session.`);
-            res.status(200).json({ message: 'Cart ID validated', cart: cartData });
-        });
+            if (err) {
+                logger.error(`Error saving session: ${err.message}`);
+                return res.status(500).json({ error: 'Error saving session data' });
+            }
+        
+            // Log outgoing cookies after session is saved successfully
+            logger.info(`Outgoing Cookies: ${JSON.stringify(res.getHeaders()['set-cookie'])}`);
+            logger.info(`Session saved with cartId: ${req.session.cartId}`);
+            res.status(200).json({ message: 'Cart ID validated and stored successfully' });
+        });        
     } catch (error) {
         logger.error(`Error in /set-cart-id: ${error.message}`);
         res.status(500).json({ error: error.message });

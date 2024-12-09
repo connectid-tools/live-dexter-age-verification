@@ -72,6 +72,7 @@ app.use(cors(corsOptions));
 // app.use(ipWhitelist);
 
 // Apply session middleware globally
+app.use(cookieParser());
 app.use(
     session({
         secret: 'your-secret-key',
