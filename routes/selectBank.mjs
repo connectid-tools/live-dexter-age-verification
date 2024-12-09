@@ -12,6 +12,9 @@ const rpClient = new RelyingPartyClientSdk(config);
 
 
 router.post('/', async (req, res) => {
+
+  logger.info(`Incoming Headers: ${JSON.stringify(req.headers)}`);
+
   const essentialClaims = req.body.essentialClaims || [];
   const voluntaryClaims = req.body.voluntaryClaims || [];
   const purpose = req.body.purpose || config.data.purpose;
