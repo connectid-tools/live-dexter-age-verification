@@ -24,10 +24,20 @@ router.post('/', async (req, res) => {
     logger.error('Error:', error);
     return res.status(400).json({ error });
   }
+
+    // Validate session cartId existence
+    if (!req.session.cartId) {
+      logger.error('No cartId found in session');
+      return res.status(400).json({ error: 'No cartId associated with this session' });
+  }
+
   logger.info(`Session ID: ${req.sessionID}, Current Session CartID: ${req.session.cartId}`);
   logger.info(`Incoming Cookies: ${JSON.stringify(req.cookies)}`);
   logger.info(`Incoming Cookies: ${JSON.stringify(req.sessionID)}`);
   logger.info(`Incoming Cookies: ${JSON.stringify(req.session)}`);
+
+
+
 
   const cartId = req.body.cartId;
   if (!cartId) {
