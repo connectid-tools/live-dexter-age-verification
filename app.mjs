@@ -17,75 +17,37 @@ import session from 'express-session';
 import Redis from 'ioredis';
 import connectRedis from 'connect-redis';
 
+const redisClient = new Redis({
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+    password: process.env.REDIS_PASSWORD,
+    tls: process.env.REDIS_TLS === 'true' ? {} : undefined, // Use TLS if required
+});
+
+// Log Redis connection events
+redisClient.on('connect', () => console.log('Connected to Redis successfully.'));
+redisClient.on('error', (err) => console.error('Redis connection error:', err));
+
 const app = express();
 const port = 3001;
 
-// Allowed Origin
-const allowedOrigins = [`https://${process.env.STORE_DOMAIN}`];
-console.log('Allowed origins:', allowedOrigins.join(', '));
 
-const RedisStore = connectRedis(session);
-const redisClient = new Redis({
-    host: process.env.REDIS_HOST || '127.0.0.1',
-    port: process.env.REDIS_PORT || 6379,
-});
-
-// Single Allowed IP
-// const allowedIps = (process.env.ALLOWED_IPS || '').split(',').map(ip => ip.trim()).map(normalizeIp);
-// console.log('Allowed IPs:', allowedIps.join(', '));
-
-
-
-app.use(cors(corsOptions));
-
-// // Normalize IPs for IPv4/IPv6 compatibility
-// function normalizeIp(ip) {
-//     if (!ip) return '';
-//     return ip.startsWith('::ffff:') ? ip.slice(7) : ip;
-// }
-
-// // Middleware for IP Whitelisting
-// function ipWhitelist(req, res, next) {
-//   const clientIp =
-//       req.headers['cf-connecting-ip'] || // Cloudflare
-//       req.headers['x-forwarded-for']?.split(',')[0] || // Standard proxy header
-//       req.connection.remoteAddress; // Fallback to direct connection IP
-
-//   const normalizedClientIp = normalizeIp(clientIp);
-
-//   // Debugging log
-//   console.log(`Normalized Client IP: "${normalizedClientIp}"`);
-//   console.log(`Allowed IPs: ${allowedIps.join(', ')}`);
-
-//   // Check if the client IP is in the list of allowed IPs
-//   if (!allowedIps.includes(normalizedClientIp)) {
-//       console.warn(`[${new Date().toISOString()}] Unauthorized IP: ${normalizedClientIp}`);
-//       return res.status(403).json({ error: 'Unauthorized IP address' });
-//   }
-
-//   next(); // Allow the request if the IP matches
-// } 
-// Apply IP Whitelisting Globally
-// app.use(ipWhitelist);
-
-// Apply session middleware globally
+const RedisStore = connectRedis(session);   
 
 app.use(
     session({
         store: new RedisStore({ client: redisClient }),
         secret: process.env.SESSION_SECRET || 'default-secret',
         resave: false,
-        saveUninitialized: false, // Avoid creating unnecessary sessions
+        saveUninitialized: false,
         cookie: {
-            secure: process.env.NODE_ENV === 'production', // Use HTTPS in production
-            httpOnly: true, // Prevent client-side access to cookies
-            sameSite: 'None', // Allow cross-origin cookies
+            secure: process.env.NODE_ENV === 'production', // Set true for HTTPS
+            httpOnly: true, // Protect from client-side access
+            sameSite: 'None', // Adjust for cross-origin cookies
             maxAge: 3600 * 1000, // 1 hour
         },
     })
 );
-
-
 
 app.use((req, res, next) => {
     console.log('Session ID:', req.sessionID);
@@ -106,11 +68,14 @@ export const corsOptions = {
     credentials: true, // Required for cookies to be sent
 };
 
+app.use(cors(corsOptions));
+
 // Middleware setup
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+
 
 // Routes
 app.use('/', indexRouter);
@@ -127,8 +92,24 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 // Start Server
-app.listen(port, () => {
-    console.log(`Server listening on port ${port}`);
-});
+(async () => {
+    try {
+        // Ensure Redis is connected before starting the server
+        await redisClient.ping();
+        console.log('Redis connection validated.');
+
+        // Start the Express server
+        app.listen(port, () => {
+            console.log(`Server listening on port ${port}`);
+        });
+    } catch (error) {
+        console.error('Failed to start the server:', error);
+    }
+})();
+
+// // Start Server
+// app.listen(port, () => {
+//     console.log(`Server listening on port ${port}`);
+// });
 
 export default app;

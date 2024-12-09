@@ -1,100 +1,83 @@
-    import express from 'express';
-    import fetch from 'node-fetch';
-    import { getLogger } from '../utils/logger.mjs';
+import express from 'express';
+import { getLogger } from '../utils/logger.mjs';
+import { redisClient } from '../app.mjs'; // Import shared Redis client
 
-    const logger = getLogger('info');
-    const router = express.Router();
+const logger = getLogger('info');
+const router = express.Router();
 
-    const BIGCOMMERCE_API_URL = 'https://api.bigcommerce.com/stores/pmsgmprrgp/v3';
-    const ACCESS_TOKEN = process.env.ACCESS_TOKEN; // BigCommerce API token
+const BIGCOMMERCE_API_URL = 'https://api.bigcommerce.com/stores/pmsgmprrgp/v3';
+const ACCESS_TOKEN = process.env.ACCESS_TOKEN; // BigCommerce API token
+const EXPIRATION_TIME = 3600 * 1000;
 
-    // Expiration time for cartIds (1 hour in milliseconds)
-        const EXPIRATION_TIME = 3600 * 1000;
+// Helper function to validate and store a CartID
+async function validateAndStoreCartId(sessionId, cartId) {
+    const redisKey = `session:${sessionId}:cartIds`;
+    try {
+        // Cleanup expired CartIDs
+        const cartIds = JSON.parse(await redisClient.get(redisKey)) || [];
+        const filteredCartIds = cartIds.filter(cart => Date.now() - cart.timestamp <= EXPIRATION_TIME);
 
-        // Middleware to initialize session cartIds array
-        router.use((req, res, next) => {
-            if (!req.session.cartIds) {
-                req.session.cartIds = []; // Initialize array if not present
-            }
-            next();
+        // Validate new CartID
+        const response = await fetch(`${BIGCOMMERCE_API_URL}/carts/${cartId}`, {
+            method: 'GET',
+            headers: {
+                'X-Auth-Token': ACCESS_TOKEN,
+                'Content-Type': 'application/json',
+            },
         });
 
-                // Helper function to clean up expired cartIds
-        function cleanupExpiredCartIds(session) {
-            session.cartIds = session.cartIds.filter(cart => {
-                const isExpired = Date.now() - cart.timestamp > EXPIRATION_TIME;
-                if (isExpired) {
-                    logger.info(`Cart ID ${cart.cartId} expired and removed.`);
-                }
-                return !isExpired;
-            });
-        }
+        if (!response.ok) throw new Error(`BigCommerce API error: ${response.statusText}`);
 
-    router.post('/', async (req, res) => {
-        const { cartId } = req.body;
+        // Add the validated CartID
+        filteredCartIds.push({ cartId, timestamp: Date.now() });
+        await redisClient.set(redisKey, JSON.stringify(filteredCartIds));
+        await redisClient.expire(redisKey, EXPIRATION_TIME / 1000); // Set expiration in seconds
+        return filteredCartIds;
+    } catch (error) {
+        throw new Error(`Failed to validate and store CartID: ${error.message}`);
+    }
+}
 
-        // Ensure cartId is provided
-        if (!cartId) {
-            logger.error('cartId parameter is required');
-            return res.status(400).json({ error: 'cartId parameter is required' });
-        }
+// Middleware to initialize Redis storage for CartIDs
+router.use(async (req, res, next) => {
+    if (!req.sessionID) {
+        logger.error('Session ID is missing.');
+        return res.status(400).json({ error: 'Session ID is required.' });
+    }
 
-        try {
+    try {
+        const redisKey = `session:${req.sessionID}:cartIds`;
+        req.session.cartIds = JSON.parse(await redisClient.get(redisKey)) || [];
+    } catch (error) {
+        logger.error(`Failed to load CartIDs from Redis: ${error.message}`);
+        req.session.cartIds = []; // Fallback to an empty array
+    }
+    next();
+});
 
-            cleanupExpiredCartIds(req.session);
-            
-            // Call BigCommerce API to validate the cartId
-            const response = await fetch(`${BIGCOMMERCE_API_URL}/carts/${cartId}`, {
-                method: 'GET',
-                headers: {
-                    'X-Auth-Token': ACCESS_TOKEN,
-                    'Content-Type': 'application/json',
-                },
-            });
+// POST /set-cart-id route
+router.post('/', async (req, res) => {
+    const { cartId } = req.body;
 
-            // Handle invalid cartId (404)
-            if (response.status === 404) {
-                logger.error(`Invalid cartId: ${cartId}`);
-                return res.status(400).json({ error: 'Invalid cartId or cart does not exist' });
-            }
+    // Ensure cartId is provided
+    if (!cartId) {
+        logger.error('cartId parameter is required');
+        return res.status(400).json({ error: 'cartId parameter is required' });
+    }
 
-            // Handle unexpected errors
-            if (!response.ok) {
-                throw new Error(`BigCommerce API error: ${response.statusText}`);
-            }
+    try {
+        // Validate and store the CartID
+        const sessionCartIds = await validateAndStoreCartId(req.sessionID, cartId);
 
-            // Parse valid cart data
-            const cartData = await response.json();
-
-
-            // Store cartId in session if valid
-        if (!req.session.cartIds) req.session.cartIds = [];
-        if (!req.session.cartIds.includes(cartId)) {
-            req.session.cartIds.push(cartId);
-            logger.info(`Cart ID ${cartId} added to session.`);
-        }
-                // // Add cartId with timestamp to session array if not already present
-                // if (!req.session.cartIds.includes(cartId)) {
-                //     req.session.cartIds.push(cartId);
-                //     logger.info(`Cart ID ${cartId} added to session.`);
-                // } else {
-                //     logger.info(`Cart ID ${cartId} is already in session.`);
-                // }
-
-                // Respond with success and return the list of cartIds
-            // return res.status(200).json({
-            //     message: 'Cart ID validated and stored successfully',
-            //     cart: cartData,
-            //     cartIds: req.session.cartIds.map(cart => cart.cartId), // Return only cartId values
-            // });
-             res.status(200).json({
+        // Return success response
+        res.status(200).json({
             message: 'Cart ID validated and stored successfully',
-            sessionCartIds: req.session.cartIds,
+            sessionCartIds,
         });
-        } catch (error) {
-            logger.error(`Error validating cartId: ${error.message}`);
-            return res.status(500).json({ error: 'Internal server error' });
-        }
-    });
+    } catch (error) {
+        logger.error(`Error validating cartId: ${error.message}`);
+        return res.status(500).json({ error: 'Internal server error', details: error.message });
+    }
+});
 
-    export default router;
+export default router;
