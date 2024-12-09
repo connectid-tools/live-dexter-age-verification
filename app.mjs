@@ -89,9 +89,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use((req, res, next) => {
-    logger.info(`Current Session CartID: ${req.session.cartId}`);
-    logger.info(`Session ID: ${req.sessionID}`);
-    logger.info(`Session Data: ${JSON.stringify(req.session)}`);
+    console.log(`Current Session CartID: ${req.session.cartId}`);
+    console.log(`Session ID: ${req.sessionID}`);
+    console.log(`Session Data: ${JSON.stringify(req.session)}`);
     next();
 });
 app.use((err, req, res, next) => {
