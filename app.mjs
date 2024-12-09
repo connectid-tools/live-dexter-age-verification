@@ -76,8 +76,8 @@ app.use(
     session({
         secret: 'your-secret-key', // Replace with a secure secret
         resave: false,
-        saveUninitialized: true,
-        cookie: { secure: false }, // Set to `true` in production with HTTPS
+        saveUninitialized: false,
+        cookie: { secure: true }, // Set to `true` in production with HTTPS
     })
 );
 

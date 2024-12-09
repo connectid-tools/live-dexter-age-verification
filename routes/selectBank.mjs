@@ -26,6 +26,8 @@ router.post('/', async (req, res) => {
   }
   logger.info(`Session ID: ${req.sessionID}, Current Session CartID: ${req.session.cartId}`);
   logger.info(`Incoming Cookies: ${JSON.stringify(req.cookies)}`);
+  logger.info(`Incoming Cookies: ${JSON.stringify(req.sessionID)}`);
+  logger.info(`Incoming Cookies: ${JSON.stringify(req.session)}`);
 
   const cartId = req.body.cartId;
   if (!cartId) {

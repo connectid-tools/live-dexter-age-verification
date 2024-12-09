@@ -12,6 +12,8 @@ router.post('/', async (req, res) => {
     const { cartId } = req.body;
 
     logger.info(`Incoming Cookies: ${JSON.stringify(req.cookies)}`);
+    logger.info(`Incoming Cookies: ${JSON.stringify(req.sessionID)}`);
+    logger.info(`Incoming Cookies: ${JSON.stringify(req.session)}`);
 
     // Ensure cartId is provided
     if (!cartId) {
@@ -48,7 +50,7 @@ router.post('/', async (req, res) => {
 
         logger.info(`Session ID: ${req.sessionID}, Current Session CartID: ${req.session.cartId}`);
 
-        
+
         logger.info(`Cart ID ${cartId} validated and stored in session.`);
 
         // Respond with success
