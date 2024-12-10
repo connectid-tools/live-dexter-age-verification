@@ -50,7 +50,7 @@ async function validateAndStoreCartId(cartId) {
 
 // POST /set-cart-id Route
 // POST /set-cart-id Route
-router.post('/set-cart-id', async (req, res) => {
+router.post('/', async (req, res) => {
     logger.info(`[POST /set-cart-id] Start - Received request with body: ${JSON.stringify(req.body)}`);
 
     const { cartId } = req.body;

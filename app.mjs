@@ -84,11 +84,28 @@ app.use((req, res, next) => {
     console.log('--- Incoming Request ---');
     console.log('Path:', req.path);
     console.log('Session ID:', req.sessionID);
+    console.log('Cart ID:', req.body?.cartId || req.cookies?.cartId || 'Cart ID not provided'); // Log cartId if available
     console.log('Cookies:', req.cookies);
     console.log('Session Data:', req.session);
-    console.log('Cart ID:', req.body?.cartId || req.cookies?.cartId || 'Cart ID not provided'); // Log cartId if available
     next();
 });
+
+
+
+// Middleware
+app.use(logger('dev'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+
+// Routes
+app.use('/', indexRouter);
+app.use('/validate-cart', validateCartRouter);
+app.use('/restricted-items', getRestrictedItemsRouter);
+app.use('/select-bank', selectBankRouter);
+app.use('/retrieve-tokens', retrieveTokensRouter);
+app.use('/log-order', logOrderRouter);
+app.use('/set-cart-id', setCartId);
 
 app.use(async (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
@@ -124,21 +141,6 @@ app.use(async (req, res, next) => {
         return res.status(401).json({ error: 'Invalid or expired token.' });
     }
 });
-
-// Middleware
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-
-// Routes
-app.use('/', indexRouter);
-app.use('/validate-cart', validateCartRouter);
-app.use('/restricted-items', getRestrictedItemsRouter);
-app.use('/select-bank', selectBankRouter);
-app.use('/retrieve-tokens', retrieveTokensRouter);
-app.use('/log-order', logOrderRouter);
-app.use('/set-cart-id', setCartId);
 
 // Error Handling
 app.use(notFoundHandler);
