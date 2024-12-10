@@ -15,10 +15,11 @@ const EXPIRATION_TIME = 3600 * 1000; // 1 hour in milliseconds
 
 // Helper function to validate and store a CartID
 async function validateAndStoreCartId(cartId) {
-    logger.info(`[validateAndStoreCartId] Cart ID: ${cartId}`);
+    logger.info(`[validateAndStoreCartId] Start - Cart ID: ${cartId}`);
 
     try {
         // Validate new CartID using BigCommerce API
+        logger.info(`[validateAndStoreCartId] Sending API request to validate Cart ID: ${cartId}`);
         const response = await fetch(`${BIGCOMMERCE_API_URL}/carts/${cartId}`, {
             method: 'GET',
             headers: {
@@ -27,11 +28,15 @@ async function validateAndStoreCartId(cartId) {
             },
         });
 
+        logger.info(`[validateAndStoreCartId] BigCommerce API response status: ${response.status}`);
         if (!response.ok) {
             const errorText = `BigCommerce API error: ${response.statusText}`;
             logger.error(`[validateAndStoreCartId] ${errorText}`);
             throw new Error(errorText);
         }
+
+        const data = await response.json();
+        logger.info(`[validateAndStoreCartId] API response data: ${JSON.stringify(data)}`);
 
         logger.info(`[validateAndStoreCartId] BigCommerce validation successful for Cart ID: ${cartId}`);
         return { cartId, timestamp: Date.now() }; // Return validated cartId with timestamp
@@ -44,6 +49,7 @@ async function validateAndStoreCartId(cartId) {
 // Middleware to validate JWT and attach session data
 router.use((req, res, next) => {
     const excludedRoutes = ['/set-cart-id']; // List of routes to bypass JWT validation
+    logger.info(`[Middleware] Received request for path: ${req.path}`);
     if (excludedRoutes.includes(req.path)) {
         logger.info(`[Middleware] Bypassing JWT validation for route: ${req.path}`);
         return next(); // Skip JWT validation for excluded routes
@@ -61,14 +67,14 @@ router.use((req, res, next) => {
         logger.info(`[Middleware] Decoded JWT: ${JSON.stringify(decoded)}`);
         next();
     } catch (error) {
-        logger.error('[Middleware] Invalid or expired token.');
+        logger.error(`[Middleware] Invalid or expired token. Error: ${error.message}`);
         return res.status(401).json({ error: 'Invalid or expired token.' });
     }
 });
 
 // POST /set-cart-id Route
 router.post('/set-cart-id', async (req, res) => {
-    logger.info(`[POST /set-cart-id] Received request with body: ${JSON.stringify(req.body)}`);
+    logger.info(`[POST /set-cart-id] Start - Received request with body: ${JSON.stringify(req.body)}`);
 
     const { cartId } = req.body;
 
@@ -79,10 +85,12 @@ router.post('/set-cart-id', async (req, res) => {
 
     try {
         // Validate and store the CartID
+        logger.info(`[POST /set-cart-id] Validating Cart ID: ${cartId}`);
         const validatedCart = await validateAndStoreCartId(cartId);
 
         // Store the validated cart ID in Redis
         const redisKey = `session:${cartId}:cartData`;
+        logger.info(`[POST /set-cart-id] Storing validated Cart ID in Redis with key: ${redisKey}`);
         await redisClient.set(redisKey, JSON.stringify(validatedCart), {
             EX: EXPIRATION_TIME / 1000, // Set expiration time in seconds
         });
@@ -90,7 +98,10 @@ router.post('/set-cart-id', async (req, res) => {
         logger.info(`[POST /set-cart-id] Stored validated Cart ID: ${cartId} in Redis.`);
 
         // Generate JWT token
+        logger.info(`[POST /set-cart-id] Generating JWT token for Cart ID: ${cartId}`);
         const sessionToken = jwt.sign({ cartId }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
+
+        logger.info(`[POST /set-cart-id] Successfully generated JWT token: ${sessionToken}`);
 
         res.status(200).json({
             message: 'Cart ID validated and stored successfully.',
