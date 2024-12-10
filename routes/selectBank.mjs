@@ -30,21 +30,22 @@ async function cleanupExpiredCartIds(sessionId) {
     }
 }
 
-// Middleware to load cart IDs from Redis
 router.use(async (req, res, next) => {
+    logger.info(`[Middleware] Session ID: ${req.sessionID}`);
+
     if (!req.sessionID) {
-        logger.error('Session ID is missing.');
+        logger.error('[Middleware] Session ID is missing.');
         return res.status(400).json({ error: 'Session ID is required.' });
     }
 
     try {
         const redisKey = `session:${req.sessionID}:cartIds`;
         const cartIds = JSON.parse(await redisClient.get(redisKey)) || [];
-        logger.info(`Loaded cart IDs from Redis: ${JSON.stringify(cartIds)}`);
-        req.session.cartIds = cartIds; // Attach cart IDs to session object
+        logger.info(`[Middleware] Loaded cart IDs from Redis: ${JSON.stringify(cartIds)}`);
+        req.session.cartIds = cartIds;
     } catch (error) {
-        logger.error(`Failed to load cart IDs from Redis: ${error.message}`);
-        req.session.cartIds = []; // Fallback to an empty array
+        logger.error(`[Middleware] Failed to load cart IDs from Redis: ${error.message}`);
+        req.session.cartIds = [];
     }
     next();
 });
