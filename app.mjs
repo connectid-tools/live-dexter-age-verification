@@ -39,7 +39,7 @@ try {
 }
 
 // Correctly initialize RedisStore
-const RedisStore = connectRedis.default(session); // Explicitly call `.default`
+const RedisStore = connectRedis(session); // Explicitly call `.default`
 
 const app = express();
 const port = 3001;
