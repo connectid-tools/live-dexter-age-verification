@@ -58,8 +58,9 @@ app.use(
         saveUninitialized: false,
         cookie: {
             secure: process.env.NODE_ENV === 'production', // Set true for HTTPS
-            httpOnly: true, // Protect from client-side access
-            sameSite: 'None', // Adjust for cross-origin cookies
+            httpOnly: true, // Prevent client-side access
+            sameSite: 'None', // Required for cross-origin requests
+            domain: 'sh-checkout-validator-qud6t.ondigitalocean.app', // Ensure this matches the backend domain
             maxAge: 3600 * 1000, // 1 hour
         },
     })
@@ -79,6 +80,15 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+app.use((req, res, next) => {
+    console.log('--- Incoming Request ---');
+    console.log('Path:', req.path);
+    console.log('Session ID:', req.sessionID);
+    console.log('Cookies:', req.cookies);
+    console.log('Session Data:', req.session);
+    next();
+});
 
 // Middleware
 app.use(logger('dev'));
