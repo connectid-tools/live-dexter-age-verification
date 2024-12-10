@@ -28,6 +28,11 @@ async function cleanupExpiredCartIds() {
 // Middleware to load cart IDs from Redis
 router.use(async (req, res, next) => {
     const redisKey = `session:${req.cookies.cartId}:cartData`;
+
+     // Log cookies
+     logger.info(`[Middleware] Cookies: ${JSON.stringify(req.cookies)}`);
+     logger.info(`[Middleware] Attempting to load Redis key: ${redisKey}`);
+     
     try {
         req.session.cartData = JSON.parse(await redisClient.get(redisKey)) || null;
         logger.info(`[Middleware] Loaded cart data for Cart ID ${req.cookies.cartId}: ${req.session.cartData}`);
@@ -37,10 +42,6 @@ router.use(async (req, res, next) => {
     next();
 });
 
-logger.info(`[Middleware] Cookies: ${JSON.stringify(req.cookies)}`);
-
-logger.info(`[Middleware] Redis Key: ${redisKey}`);
-logger.info(`[Middleware] Redis Data: ${cartData}`);
 
 
 // `/select-bank` route handler
