@@ -27,6 +27,8 @@ export const redisClient = createClient({
 });
 
 redisClient.on('error', (err) => console.error('Redis Client Error', err));
+redisClient.on('ready', () => console.log('Redis client is ready.'));
+redisClient.on('connect', () => console.log('Connected to Redis server.'));
 
 try {
     await redisClient.connect();
@@ -40,8 +42,7 @@ const app = express();
 const port = 3001;
 
 // Correctly initialize RedisStore
-const RedisStore = connectRedis.default(session); // Access the default export
-
+const RedisStore = connectRedis(session);
 app.use(
     session({
         store: new RedisStore({ client: redisClient }),
