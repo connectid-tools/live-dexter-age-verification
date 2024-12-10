@@ -14,11 +14,11 @@ const EXPIRATION_TIME = 3600 * 1000; // 1 hour in milliseconds
 async function validateAndStoreCartId(sessionId, cartId) {
     const redisKey = `session:${sessionId}:cartIds`;
     try {
-        // Fetch and filter expired cart IDs
+        // Fetch existing cart IDs and filter expired ones
         const cartIds = JSON.parse(await redisClient.get(redisKey)) || [];
         const filteredCartIds = cartIds.filter(cart => Date.now() - cart.timestamp <= EXPIRATION_TIME);
 
-        // Validate new CartID with BigCommerce API
+        // Validate new CartID using BigCommerce API
         const response = await fetch(`${BIGCOMMERCE_API_URL}/carts/${cartId}`, {
             method: 'GET',
             headers: {
@@ -29,10 +29,10 @@ async function validateAndStoreCartId(sessionId, cartId) {
 
         if (!response.ok) throw new Error(`BigCommerce API error: ${response.statusText}`);
 
-        // Add validated CartID to the filtered list
+        // Add validated CartID
         filteredCartIds.push({ cartId, timestamp: Date.now() });
 
-        // Update Redis atomically
+        // Atomically update Redis
         await redisClient
             .multi()
             .set(redisKey, JSON.stringify(filteredCartIds))
@@ -47,7 +47,7 @@ async function validateAndStoreCartId(sessionId, cartId) {
     }
 }
 
-// Middleware to initialize or refresh Redis data for CartIDs
+// Middleware to initialize Redis for CartIDs
 router.use(async (req, res, next) => {
     if (!req.sessionID) {
         logger.error('Session ID is missing.');
@@ -57,7 +57,7 @@ router.use(async (req, res, next) => {
     try {
         const redisKey = `session:${req.sessionID}:cartIds`;
         req.session.cartIds = JSON.parse(await redisClient.get(redisKey)) || [];
-        logger.info(`Redis initialized for Cart IDs: ${JSON.stringify(req.session.cartIds)}`);
+        logger.info(`Initialized Redis session for Cart IDs: ${JSON.stringify(req.session.cartIds)}`);
     } catch (error) {
         logger.error(`Failed to load Cart IDs from Redis: ${error.message}`);
         req.session.cartIds = []; // Fallback to an empty array
@@ -75,6 +75,7 @@ router.post('/', async (req, res) => {
     }
 
     try {
+        // Validate and store the CartID
         const sessionCartIds = await validateAndStoreCartId(req.sessionID, cartId);
 
         // Set cookie for the validated CartID

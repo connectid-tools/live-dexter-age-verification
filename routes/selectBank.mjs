@@ -2,63 +2,63 @@ import express from 'express';
 import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from '../config.js';
 import { getLogger } from '../utils/logger.mjs';
-import { redisClient } from '../app.mjs';
+import { redisClient } from '../app.mjs'; // Import Redis client
 
 const logger = getLogger('info');
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
 const EXPIRATION_TIME = 3600 * 1000; // 1 hour
-// Helper to clean up expired cart IDs
+
+// Helper function to clean up expired cart IDs in Redis
 async function cleanupExpiredCartIds(sessionId) {
-  const redisKey = `session:${sessionId}:cartIds`;
-  try {
-      const cartIds = JSON.parse(await redisClient.get(redisKey)) || [];
-      const filteredCartIds = cartIds.filter(cart => Date.now() - cart.timestamp <= EXPIRATION_TIME);
+    const redisKey = `session:${sessionId}:cartIds`;
+    try {
+        const cartIds = JSON.parse(await redisClient.get(redisKey)) || [];
+        const filteredCartIds = cartIds.filter(cart => Date.now() - cart.timestamp <= EXPIRATION_TIME);
 
-      // Use Redis multi for atomic operations
-      await redisClient
-          .multi()
-          .set(redisKey, JSON.stringify(filteredCartIds))
-          .expire(redisKey, EXPIRATION_TIME / 1000) // Set expiration in seconds
-          .exec();
+        // Update Redis with only valid cart IDs
+        await redisClient
+            .multi()
+            .set(redisKey, JSON.stringify(filteredCartIds))
+            .expire(redisKey, EXPIRATION_TIME / 1000)
+            .exec();
 
-      logger.info(`Cleaned up expired cart IDs: ${JSON.stringify(filteredCartIds)}`);
-  } catch (error) {
-      logger.error(`Failed to clean up expired cart IDs: ${error.message}`);
-  }
+        logger.info(`Cleaned up expired cart IDs for session ${sessionId}: ${JSON.stringify(filteredCartIds)}`);
+    } catch (error) {
+        logger.error(`Failed to clean up expired cart IDs: ${error.message}`);
+    }
 }
 
 // Middleware to load cart IDs from Redis
 router.use(async (req, res, next) => {
-  if (!req.sessionID) {
-      logger.error('Session ID is missing.');
-      return res.status(400).json({ error: 'Session ID is required.' });
-  }
+    if (!req.sessionID) {
+        logger.error('Session ID is missing.');
+        return res.status(400).json({ error: 'Session ID is required.' });
+    }
 
-  try {
-      const redisKey = `session:${req.sessionID}:cartIds`;
-      const cartIds = JSON.parse(await redisClient.get(redisKey)) || [];
-      logger.info(`Loaded cart IDs from Redis: ${JSON.stringify(cartIds)}`);
-      req.session.cartIds = cartIds; // Attach to session for further processing
-  } catch (error) {
-      logger.error(`Failed to load cart IDs from Redis: ${error.message}`);
-      req.session.cartIds = []; // Fallback to an empty array
-  }
-  next();
+    try {
+        const redisKey = `session:${req.sessionID}:cartIds`;
+        const cartIds = JSON.parse(await redisClient.get(redisKey)) || [];
+        logger.info(`Loaded cart IDs from Redis: ${JSON.stringify(cartIds)}`);
+        req.session.cartIds = cartIds; // Attach cart IDs to session object
+    } catch (error) {
+        logger.error(`Failed to load cart IDs from Redis: ${error.message}`);
+        req.session.cartIds = []; // Fallback to an empty array
+    }
+    next();
 });
-
 
 // `/select-bank` route handler
 router.post('/', async (req, res) => {
     const requestId = Date.now();
-
     const essentialClaims = req.body.essentialClaims || [];
     const voluntaryClaims = req.body.voluntaryClaims || [];
     const purpose = req.body.purpose || config.data.purpose;
     const authServerId = req.body.authorisationServerId;
+    const cartId = req.body.cartId;
 
-    // Validate input
+    // Validate required fields
     if (!authServerId) {
         logger.error(`[Request ${requestId}] Missing 'authorisationServerId'.`);
         return res.status(400).json({ error: 'authorisationServerId parameter is required' });
@@ -69,11 +69,23 @@ router.post('/', async (req, res) => {
     }
 
     try {
+        // Clean up expired cart IDs
+        await cleanupExpiredCartIds(req.sessionID);
 
+        // Verify the cart ID is valid in the current session
+        if (!req.session.cartIds.includes(cartId)) {
+            const redisKey = `session:${req.sessionID}:cartIds`;
+            req.session.cartIds = JSON.parse(await redisClient.get(redisKey)) || [];
+            logger.info(`Re-fetched cart IDs from Redis: ${JSON.stringify(req.session.cartIds)}`);
 
+            if (!req.session.cartIds.includes(cartId)) {
+                logger.error(`[Request ${requestId}] Cart ID mismatch: '${cartId}' not found in session.`);
+                return res.status(400).json({ error: 'Invalid cartId for the current session' });
+            }
+        }
 
-        // Process PAR request
-        const { authUrl, state, nonce, code_verifier } =
+        // Send the pushed authorization request
+        const { authUrl, code_verifier, state, nonce, xFapiInteractionId } =
             await rpClient.sendPushedAuthorisationRequest(
                 authServerId,
                 essentialClaims,
