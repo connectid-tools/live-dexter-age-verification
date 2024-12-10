@@ -37,6 +37,11 @@ router.use(async (req, res, next) => {
     next();
 });
 
+logger.info(`[Middleware] Cookies: ${JSON.stringify(req.cookies)}`);
+
+logger.info(`[Middleware] Redis Key: ${redisKey}`);
+logger.info(`[Middleware] Redis Data: ${cartData}`);
+
 
 // `/select-bank` route handler
 router.post('/', async (req, res) => {
@@ -76,7 +81,8 @@ router.post('/', async (req, res) => {
         await cleanupExpiredCartIds();
 
         // Validate that the cart ID exists in Redis
-        const redisKey = `cartId:${cartId}`;
+        const redisKey = `session:${cartId}:cartData`;
+
         logger.info(`[Request ${requestId}] Checking Redis for Cart ID: ${cartId}`);
         const cartData = await redisClient.get(redisKey);
         if (!cartData) {
