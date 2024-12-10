@@ -32,8 +32,11 @@ async function validateAndStoreCartId(sessionId, cartId) {
 
         // Add the validated CartID
         filteredCartIds.push({ cartId, timestamp: Date.now() });
-        await redisClient.set(redisKey, JSON.stringify(filteredCartIds));
-        await redisClient.expire(redisKey, EXPIRATION_TIME / 1000); // Set expiration in seconds
+        await redisClient.multi()
+            .set(redisKey, JSON.stringify(filteredCartIds))
+            .expire(redisKey, EXPIRATION_TIME / 1000)
+            .exec();
+        logger.info(`Stored cart ID: ${cartId}`);
         return filteredCartIds;
     } catch (error) {
         throw new Error(`Failed to validate and store CartID: ${error.message}`);
@@ -50,6 +53,7 @@ router.use(async (req, res, next) => {
     try {
         const redisKey = `session:${req.sessionID}:cartIds`;
         req.session.cartIds = JSON.parse(await redisClient.get(redisKey)) || [];
+        logger.info(`Initialized Redis session for cart IDs: ${JSON.stringify(req.session.cartIds)}`);
     } catch (error) {
         logger.error(`Failed to load CartIDs from Redis: ${error.message}`);
         req.session.cartIds = []; // Fallback to an empty array
@@ -71,6 +75,14 @@ router.post('/', async (req, res) => {
         // Validate and store the CartID
         const sessionCartIds = await validateAndStoreCartId(req.sessionID, cartId);
 
+        // Set cookie for the CartID
+        res.cookie('cartId', cartId, {
+            secure: true,
+            httpOnly: true,
+            sameSite: 'None',
+            maxAge: EXPIRATION_TIME,
+        });
+        
         // Return success response
         res.status(200).json({
             message: 'Cart ID validated and stored successfully',

@@ -12,33 +12,37 @@ const EXPIRATION_TIME = 3600 * 1000; // 1 hour
 
 // Helper to clean up expired cart IDs
 async function cleanupExpiredCartIds(sessionId) {
-    const redisKey = `session:${sessionId}:cartIds`;
-    try {
-        const cartIds = JSON.parse(await redisClient.get(redisKey)) || [];
-        const filteredCartIds = cartIds.filter(cart => Date.now() - cart.timestamp <= EXPIRATION_TIME);
-        await redisClient.set(redisKey, JSON.stringify(filteredCartIds));
-    } catch (error) {
-        logger.error(`Failed to clean up expired cart IDs: ${error.message}`);
-    }
+  const redisKey = `session:${sessionId}:cartIds`;
+  try {
+      const cartIds = JSON.parse(await redisClient.get(redisKey)) || [];
+      const filteredCartIds = cartIds.filter(cart => Date.now() - cart.timestamp <= EXPIRATION_TIME);
+      await redisClient.multi()
+          .set(redisKey, JSON.stringify(filteredCartIds))
+          .expire(redisKey, EXPIRATION_TIME / 1000)
+          .exec();
+      logger.info(`Cleaned up expired cart IDs: ${JSON.stringify(filteredCartIds)}`);
+  } catch (error) {
+      logger.error(`Failed to clean up expired cart IDs: ${error.message}`);
+  }
 }
 
 // Middleware to load cart IDs from Redis
 router.use(async (req, res, next) => {
-    if (!req.sessionID) {
-        logger.error('Session ID is missing.');
-        return res.status(400).json({ error: 'Session ID is required.' });
-    }
+  if (!req.sessionID) {
+      logger.error('Session ID is missing.');
+      return res.status(400).json({ error: 'Session ID is required.' });
+  }
 
-    try {
-        const redisKey = `session:${req.sessionID}:cartIds`;
-        const cartIds = JSON.parse(await redisClient.get(redisKey)) || [];
-        logger.info(`Loaded cart IDs from Redis: ${JSON.stringify(cartIds)}`);
-        req.session.cartIds = cartIds; // Attach to session for further processing
-    } catch (error) {
-        logger.error(`Failed to load cart IDs from Redis: ${error.message}`);
-        req.session.cartIds = []; // Fallback
-    }
-    next();
+  try {
+      const redisKey = `session:${req.sessionID}:cartIds`;
+      const cartIds = JSON.parse(await redisClient.get(redisKey)) || [];
+      logger.info(`Loaded cart IDs from Redis: ${JSON.stringify(cartIds)}`);
+      req.session.cartIds = cartIds; // Attach to session for further processing
+  } catch (error) {
+      logger.error(`Failed to load cart IDs from Redis: ${error.message}`);
+      req.session.cartIds = []; // Fallback
+  }
+  next();
 });
 
 // `/select-bank` route handler
@@ -65,10 +69,17 @@ router.post('/', async (req, res) => {
         await cleanupExpiredCartIds(req.sessionID);
         logger.info(`[Request ${requestId}] Cleaned up expired cart IDs.`);
 
-        if (!req.session.cartIds.includes(cartId)) {
-            logger.error(`[Request ${requestId}] Cart ID mismatch: '${cartId}' not found in session.`);
-            return res.status(400).json({ error: 'Invalid cartId for the current session' });
-        }
+        if (!req.session.cartIds || !req.session.cartIds.includes(cartId)) {
+          const redisKey = `session:${req.sessionID}:cartIds`;
+          req.session.cartIds = JSON.parse(await redisClient.get(redisKey)) || [];
+          logger.info(`Re-fetched cart IDs from Redis: ${JSON.stringify(req.session.cartIds)}`);
+      }
+
+      if (!req.session.cartIds.includes(cartId)) {
+        logger.error(`[Request ${requestId}] Cart ID mismatch: '${cartId}' not found in session.`);
+        return res.status(400).json({ error: 'Invalid cartId for the current session' });
+    }
+
 
         // Process PAR request
         const { authUrl, state, nonce, code_verifier } =
