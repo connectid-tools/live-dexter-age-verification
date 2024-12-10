@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-dotenv.config(); // Load environment variables at the very start
+dotenv.config();
 
 import cors from 'cors';
 import express from 'express';
@@ -13,42 +13,47 @@ import retrieveTokensRouter from './routes/retrieveTokens.mjs';
 import logOrderRouter from './routes/logTokenAndOrderId.mjs';
 import setCartId from './routes/setCartId.mjs';
 import cookieParser from 'cookie-parser';
-import * as connectRedis from 'connect-redis'; // Import the entire module
 import session from 'express-session';
+import { createClient } from 'redis';
 import RedisStore from 'connect-redis';
 
+// Ensure all environment variables are loaded
+const {
+    REDIS_HOST,
+    REDIS_PORT,
+    REDIS_PASSWORD,
+    REDIS_TLS,
+    SESSION_SECRET,
+    STORE_DOMAIN,
+} = process.env;
+
+// Initialize Redis client
 export const redisClient = createClient({
     socket: {
-        host: process.env.REDIS_HOST,
-        port: process.env.REDIS_PORT,
-        // tls: process.env.REDIS_TLS === 'true',
+        host: REDIS_HOST,
+        port: REDIS_PORT,
+        tls: REDIS_TLS === 'true',
     },
-    password: process.env.REDIS_PASSWORD,
+    password: REDIS_PASSWORD,
 });
 
-redisClient.on('error', (err) => console.error('Redis Client Error', err));
+redisClient.on('error', (err) => console.error('Redis Client Error:', err));
 redisClient.on('ready', () => console.log('Redis client is ready.'));
 redisClient.on('connect', () => console.log('Connected to Redis server.'));
 
-try {
-    await redisClient.connect();
-    console.log('Redis connected successfully.');
-} catch (error) {
-    console.error('Failed to connect to Redis:', error);
-    process.exit(1); // Exit the process if Redis is critical to the app
-}
-const store = new RedisStore({
-    client: redisClient,
-    prefix: 'myapp:', // Optional: Prefix for Redis keys
-});
+await redisClient.connect();
+console.log('Redis connected successfully.');
+
 const app = express();
 const port = 3001;
 
-// Correctly initialize RedisStore
+// Initialize RedisStore
+const store = new RedisStore({ client: redisClient });
+
 app.use(
     session({
-        store: new RedisStore({ client: redisClient }),
-        secret: process.env.SESSION_SECRET,
+        store,
+        secret: SESSION_SECRET || 'default-secret',
         resave: false,
         saveUninitialized: false,
         cookie: {
@@ -60,28 +65,22 @@ app.use(
     })
 );
 
-app.use((req, res, next) => {
-    console.log('Session ID:', req.sessionID);
-    console.log('Session Data:', req.session);
-    next();
-});
-
-// CORS Config
-export const corsOptions = {
+// CORS Configuration
+const corsOptions = {
     origin: function (origin, callback) {
-        const allowedOrigins = [`https://${process.env.STORE_DOMAIN}`];
+        const allowedOrigins = [`https://${STORE_DOMAIN}`];
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
             callback(new Error('Not allowed by CORS'));
         }
     },
-    credentials: true, // Required for cookies to be sent
+    credentials: true,
 };
 
 app.use(cors(corsOptions));
 
-// Middleware setup
+// Middleware
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -113,6 +112,7 @@ app.use(errorHandler);
         });
     } catch (error) {
         console.error('Failed to start the server:', error);
+        process.exit(1);
     }
 })();
 
