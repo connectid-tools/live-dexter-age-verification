@@ -561,10 +561,10 @@ connect-history-api-fallback@^1:
   resolved "https://registry.npmjs.org/connect-history-api-fallback/-/connect-history-api-fallback-1.6.0.tgz"
   integrity sha512-e54B99q/OUoH64zYYRf3HBP5z24G38h5D3qXu23JGRoigpX5Ss4r9ZnDk3g0Z8uQC2x2lPaJ+UlWBc1ZWBWdLg==
 
-connect-redis@^8.0.1:
-  version "8.0.1"
-  resolved "https://registry.npmjs.org/connect-redis/-/connect-redis-8.0.1.tgz"
-  integrity sha512-7iOI214/r15ahvu0rqKCHhsgpMdOgyLwqlw/icSTnnAR75xFvMyfxAE+je4M87rZLjDlKzKcTc48XxQXYFsMgA==
+connect-redis@^7.1.1:
+  version "7.1.1"
+  resolved "https://registry.npmjs.org/connect-redis/-/connect-redis-7.1.1.tgz"
+  integrity sha512-M+z7alnCJiuzKa8/1qAYdGUXHYfDnLolOGAUjOioB07pP39qxjG+X9ibsud7qUBc4jMV5Mcy3ugGv8eFcgamJQ==
 
 connect@3.6.6:
   version "3.6.6"

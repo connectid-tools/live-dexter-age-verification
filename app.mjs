@@ -15,7 +15,7 @@ import setCartId from './routes/setCartId.mjs';
 import cookieParser from 'cookie-parser';
 import * as connectRedis from 'connect-redis'; // Import the entire module
 import session from 'express-session';
-import { createClient } from 'redis';
+import RedisStore from 'connect-redis';
 
 export const redisClient = createClient({
     socket: {
@@ -37,10 +37,10 @@ try {
     console.error('Failed to connect to Redis:', error);
     process.exit(1); // Exit the process if Redis is critical to the app
 }
-
-// Correctly initialize RedisStore
-const RedisStore = connectRedis(session); // Explicitly call `.default`
-
+const store = new RedisStore({
+    client: redisClient,
+    prefix: 'myapp:', // Optional: Prefix for Redis keys
+});
 const app = express();
 const port = 3001;
 

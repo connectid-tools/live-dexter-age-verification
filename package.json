@@ -12,7 +12,7 @@
         "@connectid-tools/rp-nodejs-sdk": "^4.0.0",
         "aws-sdk": "^2.1691.0",
         "clean-css": "^4.1.11",
-        "connect-redis": "^8.0.1",
+        "connect-redis": "^7.1.1",
         "constantinople": "^3.1.1",
         "cookie-parser": "^1.4.6",
         "cors": "^2.8.5",
