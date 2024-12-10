@@ -32,7 +32,7 @@ export const redisClient = createClient({
     socket: {
         host: REDIS_HOST,
         port: REDIS_PORT,
-        tls: REDIS_TLS === 'true',
+        tls: REDIS_TLS === 'false',
     },
     password: REDIS_PASSWORD,
 });
