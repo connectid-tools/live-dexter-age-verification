@@ -14,8 +14,6 @@ import logOrderRouter from './routes/logTokenAndOrderId.mjs';
 import setCartId from './routes/setCartId.mjs';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
-import { createClient } from 'redis';
-import RedisStore from 'connect-redis';
 
 // Ensure all environment variables are loaded
 const {
@@ -48,26 +46,22 @@ const app = express();
 const port = 3001;
 
 // Initialize RedisStore
-// const store = new RedisStore({ client: redisClient });
+const store = new RedisStore({ client: redisClient });
 
-// app.use(
-//     session({
-//         store,
-//         secret: SESSION_SECRET || 'default-secret',
-//         resave: false,
-//         saveUninitialized: false,
-//         cookie: {
-//             secure: true, // HTTPS
-//             httpOnly: true, // Client-side protection
-//             sameSite: 'None', // Cross-origin support
-//             domain: 'sh-checkout-validator-qud6t.ondigitalocean.app', // Match your domain
-//             maxAge: 3600 * 1000, // 1 hour
-//         },
-//     })
-// );
-
-
-
+app.use(
+    session({
+        store,
+        secret: SESSION_SECRET || 'default-secret',
+        resave: false,
+        saveUninitialized: false,
+        cookie: {
+            secure: process.env.NODE_ENV === 'production', // Set true for HTTPS
+            httpOnly: true, // Protect from client-side access
+            sameSite: 'None', // Adjust for cross-origin cookies
+            maxAge: 3600 * 1000, // 1 hour
+        },
+    })
+);
 
 // CORS Configuration
 const corsOptions = {
@@ -83,21 +77,6 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-
-app.use((req, res, next) => {
-    console.log('--- Incoming Request ---');
-    console.log('Path:', req.path);
-    console.log('Session ID:', req.sessionID);
-    console.log('Cookies:', req.cookies);
-    console.log('Session Data:', req.session);
-    next();
-});
-
-// Middleware
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
 
 app.use(async (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
@@ -133,6 +112,12 @@ app.use(async (req, res, next) => {
         return res.status(401).json({ error: 'Invalid or expired token.' });
     }
 });
+
+// Middleware
+app.use(logger('dev'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
 
 // Routes
 app.use('/', indexRouter);
