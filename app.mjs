@@ -15,7 +15,7 @@ import setCartId from './routes/setCartId.mjs';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
 import { createClient } from 'redis';
-import { default as connectRedis } from 'connect-redis';
+import * as connectRedis from 'connect-redis'; /
 
 export const redisClient = createClient({
     socket: {
@@ -38,11 +38,15 @@ try {
     process.exit(1); // Exit the process if Redis is critical to the app
 }
 
+// Correctly initialize RedisStore
+const RedisStore = connectRedis.default
+    ? connectRedis.default(session) // Handle modern exports
+    : connectRedis(session);        // Handle older exports
+
 const app = express();
 const port = 3001;
 
 // Correctly initialize RedisStore
-const RedisStore = connectRedis(session);
 app.use(
     session({
         store: new RedisStore({ client: redisClient }),
