@@ -4,6 +4,7 @@ import { config } from '../config.js';
 import { getLogger } from '../utils/logger.mjs'; // Import the logger
 import { redisClient } from '../app.mjs'; // Import the shared Redis client
 
+const logger = getLogger('info');
 
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
