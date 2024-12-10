@@ -80,6 +80,15 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+app.use((req, res, next) => {
+    console.log('--- Incoming Request ---');
+    console.log('Path:', req.path);
+    console.log('Session ID:', req.sessionID);
+    console.log('Cookies:', req.cookies);
+    console.log('Session Data:', req.session);
+    next();
+});
+
 app.use(async (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
 
