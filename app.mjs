@@ -15,7 +15,7 @@ import setCartId from './routes/setCartId.mjs';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
 import { createClient } from 'redis';
-import RedisStore from 'connect-redis';
+import connectRedis from 'connect-redis';
 
 
 export const redisClient = createClient({
@@ -40,12 +40,12 @@ try {
 const app = express();
 const port = 3001;
 
-const store = new RedisStore({ client: redisClient });
+const RedisStore = connectRedis(session);
 
 app.use(
     session({
-        store: store,
-        secret: process.env.SESSION_SECRET || 'default-secret',
+        store: new RedisStore({ client: redisClient }),
+        secret: process.env.SESSION_SECRET,
         resave: false,
         saveUninitialized: false,
         cookie: {
