@@ -1,6 +1,6 @@
 import express from 'express';
+import fetch from 'node-fetch';
 import { getLogger } from '../utils/logger.mjs';
-import { redisClient } from '../app.mjs'; // Import shared Redis client
 
 const logger = getLogger('info');
 const router = express.Router();
