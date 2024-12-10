@@ -14,8 +14,9 @@ import logOrderRouter from './routes/logTokenAndOrderId.mjs';
 import setCartId from './routes/setCartId.mjs';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
+import * as connectRedis from 'connect-redis'; // Import the entire module
+import session from 'express-session';
 import { createClient } from 'redis';
-import * as connectRedis from 'connect-redis'; /
 
 export const redisClient = createClient({
     socket: {
@@ -39,9 +40,7 @@ try {
 }
 
 // Correctly initialize RedisStore
-const RedisStore = connectRedis.default
-    ? connectRedis.default(session) // Handle modern exports
-    : connectRedis(session);        // Handle older exports
+const RedisStore = connectRedis.default(session); // Explicitly call `.default`
 
 const app = express();
 const port = 3001;
