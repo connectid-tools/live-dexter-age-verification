@@ -48,48 +48,37 @@ async function validateAndStoreCartId(cartId) {
 
 router.use((req, res, next) => {
     const excludedRoutes = ['/set-cart-id']; // List of routes to bypass JWT validation
-    logger.info(`[Middleware] Received request for path: ${req.path}`);
-
-    // Log incoming headers and body for debugging
-    logger.info(`[Middleware] Headers: ${JSON.stringify(req.headers)}`);
-    logger.info(`[Middleware] Body: ${JSON.stringify(req.body)}`);
-
     if (excludedRoutes.includes(req.path)) {
         logger.info(`[Middleware] Bypassing JWT validation for route: ${req.path}`);
-        return next(); // Skip JWT validation for excluded routes
+        return next();
     }
-
-    const token = req.headers.authorization?.split(' ')[1]; // Extract token from Authorization header
+    const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
         logger.error('[Middleware] Authorization token is missing.');
-        logger.info(`[Middleware] Authorization header: ${req.headers.authorization}`);
         return res.status(401).json({ error: 'Authorization token is required.' });
     }
-
     try {
-        const decoded = jwt.verify(token, JWT_SECRET); // Verify and decode JWT
-        req.sessionData = decoded; // Attach session data to request object
-        logger.info(`[Middleware] Decoded JWT: ${JSON.stringify(decoded)}`);
+        const decoded = jwt.verify(token, JWT_SECRET);
+        req.sessionData = decoded;
         next();
     } catch (error) {
-        logger.error(`[Middleware] Invalid or expired token. Error: ${error.message}`);
-        return res.status(401).json({ error: 'Invalid or expired token.', details: error.message });
+        logger.error(`[Middleware] Invalid or expired token: ${error.message}`);
+        return res.status(401).json({ error: 'Invalid or expired token.' });
     }
 });
 
 // POST /set-cart-id Route
 // POST /set-cart-id Route
 router.post('/set-cart-id', async (req, res) => {
-    logger.info(`[POST /set-cart-id] Start - Received request with body: ${JSON.stringify(req.body)}`);
+    logger.info(`[POST /set-cart-id] Start - Headers: ${JSON.stringify(req.headers)}`);
+    logger.info(`[POST /set-cart-id] Cookies: ${JSON.stringify(req.cookies)}`);
 
     const { cartId } = req.body;
-
     if (!cartId) {
         logger.error('[POST /set-cart-id] Cart ID is missing.');
-        logger.info(`[POST /set-cart-id] Headers: ${JSON.stringify(req.headers)}`);
-        logger.info(`[POST /set-cart-id] Body: ${JSON.stringify(req.body)}`);
         return res.status(400).json({ error: 'Cart ID is required.' });
     }
+
 
     try {
         // Validate and store the CartID
