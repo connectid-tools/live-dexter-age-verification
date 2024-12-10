@@ -17,7 +17,6 @@ import session from 'express-session';
 import { createClient } from 'redis';
 import connectRedis from 'connect-redis';
 
-
 export const redisClient = createClient({
     socket: {
         host: process.env.REDIS_HOST,
@@ -40,6 +39,7 @@ try {
 const app = express();
 const port = 3001;
 
+// Correctly initialize RedisStore
 const RedisStore = connectRedis(session);
 
 app.use(
@@ -84,7 +84,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-
 // Routes
 app.use('/', indexRouter);
 app.use('/validate-cart', validateCartRouter);
@@ -93,7 +92,6 @@ app.use('/select-bank', selectBankRouter);
 app.use('/retrieve-tokens', retrieveTokensRouter);
 app.use('/log-order', logOrderRouter);
 app.use('/set-cart-id', setCartId);
-
 
 // Error Handling
 app.use(notFoundHandler);
@@ -114,10 +112,5 @@ app.use(errorHandler);
         console.error('Failed to start the server:', error);
     }
 })();
-
-// // Start Server
-// app.listen(port, () => {
-//     console.log(`Server listening on port ${port}`);
-// });
 
 export default app;
