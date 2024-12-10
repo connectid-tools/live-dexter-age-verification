@@ -13,7 +13,6 @@ import retrieveTokensRouter from './routes/retrieveTokens.mjs';
 import logOrderRouter from './routes/logTokenAndOrderId.mjs';
 import setCartId from './routes/setCartId.mjs';
 import cookieParser from 'cookie-parser';
-import session from 'express-session';
 import * as connectRedis from 'connect-redis'; // Import the entire module
 import session from 'express-session';
 import { createClient } from 'redis';
