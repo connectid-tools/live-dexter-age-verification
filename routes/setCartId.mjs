@@ -46,9 +46,6 @@ async function validateAndStoreCartId(cartId) {
     }
 }
 
-
-
-// POST /set-cart-id Route
 // POST /set-cart-id Route
 router.post('/', async (req, res) => {
     logger.info(`[POST /set-cart-id] Start - Received request with body: ${JSON.stringify(req.body)}`);
@@ -81,6 +78,16 @@ router.post('/', async (req, res) => {
         const sessionToken = jwt.sign({ cartId }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
 
         logger.info(`[POST /set-cart-id] Successfully generated JWT token: ${sessionToken}`);
+
+        // Set cookie with the cartId for session tracking
+        logger.info(`[POST /set-cart-id] Setting cookie for Cart ID.`);
+        res.cookie('cartId', cartId, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'None',
+            maxAge: EXPIRATION_TIME, // 1 hour
+            domain: process.env.STORE_DOMAIN || undefined, // Ensure the cookie domain is set correctly
+        });
 
         res.status(200).json({
             message: 'Cart ID validated and stored successfully.',

@@ -13,43 +13,30 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-very-secret-key';
 const EXPIRATION_TIME = 3600 * 1000; // 1 hour
 
 // Helper function to clean up expired cart IDs in Redis
+// Helper to clean up expired cart IDs
 async function cleanupExpiredCartIds() {
-    try {
-        logger.info('[Cleanup] Starting cleanup of expired cart IDs in Redis.');
-        const keys = await redisClient.keys('cartId:*'); // Fetch all keys related to cart IDs
-        logger.info(`[Cleanup] Found ${keys.length} keys to check for expiration.`);
-        for (const key of keys) {
-            const cartData = JSON.parse(await redisClient.get(key));
-            if (Date.now() - cartData.timestamp > EXPIRATION_TIME) {
-                await redisClient.del(key); // Delete expired cart ID
-                logger.info(`[Cleanup] Expired cart ID removed: ${key}`);
-            }
+    const keys = await redisClient.keys('session:*:cartData');
+    for (const key of keys) {
+        const data = JSON.parse(await redisClient.get(key));
+        if (Date.now() - data.timestamp > EXPIRATION_TIME) {
+            await redisClient.del(key);
+            logger.info(`Expired cart ID removed: ${key}`);
         }
-        logger.info('[Cleanup] Completed cleanup of expired cart IDs.');
-    } catch (error) {
-        logger.error(`[Cleanup] Failed to clean up expired cart IDs: ${error.message}`);
     }
 }
 
-// Middleware to load session cart IDs from Redis
+// Middleware to load cart IDs from Redis
 router.use(async (req, res, next) => {
-    logger.info(`[Middleware] Processing request. Path: ${req.path}, Session ID: ${req.sessionID}`);
-    if (!req.sessionID) {
-        logger.error('[Middleware] Missing Session ID.');
-        return res.status(400).json({ error: 'Session ID is required.' });
-    }
-
+    const redisKey = `session:${req.cookies.cartId}:cartData`;
     try {
-        const redisKey = `session:${req.sessionID}:cartIds`;
-        const cartIds = JSON.parse(await redisClient.get(redisKey)) || [];
-        logger.info(`[Middleware] Loaded cart IDs from Redis for Session ID ${req.sessionID}: ${JSON.stringify(cartIds)}`);
-        req.session.cartIds = cartIds;
+        req.session.cartData = JSON.parse(await redisClient.get(redisKey)) || null;
+        logger.info(`[Middleware] Loaded cart data for Cart ID ${req.cookies.cartId}: ${req.session.cartData}`);
     } catch (error) {
-        logger.error(`[Middleware] Failed to load cart IDs from Redis: ${error.message}`);
-        req.session.cartIds = [];
+        logger.error(`[Middleware] Failed to load cart data: ${error.message}`);
     }
     next();
 });
+
 
 // `/select-bank` route handler
 router.post('/', async (req, res) => {
