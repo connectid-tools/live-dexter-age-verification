@@ -18,6 +18,8 @@ router.post('/', async (req, res) => {
 
   try {
     const result = await restrictedItemsService.validateCart(cartId);
+    res.cookie('cartId', cartId, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 3600 * 1000 }); // 1 hour
+    
     res.status(200).json(result);
   } catch (error) {
     logger.error('Error validating cart:', error);
