@@ -48,23 +48,26 @@ const app = express();
 const port = 3001;
 
 // Initialize RedisStore
-const store = new RedisStore({ client: redisClient });
+// const store = new RedisStore({ client: redisClient });
 
-app.use(
-    session({
-        store,
-        secret: SESSION_SECRET || 'default-secret',
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-            secure: process.env.NODE_ENV === 'production', // Set true for HTTPS
-            httpOnly: true, // Prevent client-side access
-            sameSite: 'None', // Required for cross-origin requests
-            domain: 'sh-checkout-validator-qud6t.ondigitalocean.app', // Ensure this matches the backend domain
-            maxAge: 3600 * 1000, // 1 hour
-        },
-    })
-);
+// app.use(
+//     session({
+//         store,
+//         secret: SESSION_SECRET || 'default-secret',
+//         resave: false,
+//         saveUninitialized: false,
+//         cookie: {
+//             secure: true, // HTTPS
+//             httpOnly: true, // Client-side protection
+//             sameSite: 'None', // Cross-origin support
+//             domain: 'sh-checkout-validator-qud6t.ondigitalocean.app', // Match your domain
+//             maxAge: 3600 * 1000, // 1 hour
+//         },
+//     })
+// );
+
+
+
 
 // CORS Configuration
 const corsOptions = {
@@ -95,6 +98,41 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+
+app.use(async (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+
+    // Allow unauthenticated access for specific public routes
+    if (!token) {
+        if (['/', '/restricted-items', '/validate-cart'].includes(req.path)) {
+            return next();
+        }
+        return res.status(401).json({ error: 'Authorization token is required.' });
+    }
+
+    try {
+        // Validate the JWT token
+        const decoded = jwt.verify(token, JWT_SECRET || 'your-very-secret-key');
+        req.sessionData = decoded;
+
+        // Retrieve additional session data from Redis (if applicable)
+        const redisKey = `session:${decoded.cartId}`;
+        const redisSessionData = await redisClient.get(redisKey);
+
+        if (!redisSessionData) {
+            console.error('[JWT Validation] Session data not found in Redis.');
+            return res.status(401).json({ error: 'Invalid or expired session.' });
+        }
+
+        req.redisSessionData = JSON.parse(redisSessionData); // Attach Redis data to request
+
+        console.log(`[JWT Validation] Session valid. Redis data: ${redisSessionData}`);
+        next();
+    } catch (err) {
+        console.error('[JWT Validation] Invalid or expired token:', err.message);
+        return res.status(401).json({ error: 'Invalid or expired token.' });
+    }
+});
 
 // Routes
 app.use('/', indexRouter);

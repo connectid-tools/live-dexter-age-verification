@@ -3,28 +3,26 @@ import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from '../config.js';
 import { getLogger } from '../utils/logger.mjs';
 import { redisClient } from '../app.mjs'; // Import Redis client
+import jwt from 'jsonwebtoken';
 
 const logger = getLogger('info');
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
+const JWT_SECRET = process.env.JWT_SECRET || 'your-very-secret-key';
 const EXPIRATION_TIME = 3600 * 1000; // 1 hour
 
 // Helper function to clean up expired cart IDs in Redis
-async function cleanupExpiredCartIds(sessionId) {
-    const redisKey = `session:${sessionId}:cartIds`;
+async function cleanupExpiredCartIds() {
     try {
-        const cartIds = JSON.parse(await redisClient.get(redisKey)) || [];
-        const filteredCartIds = cartIds.filter(cart => Date.now() - cart.timestamp <= EXPIRATION_TIME);
-
-        // Update Redis with only valid cart IDs
-        await redisClient
-            .multi()
-            .set(redisKey, JSON.stringify(filteredCartIds))
-            .expire(redisKey, EXPIRATION_TIME / 1000)
-            .exec();
-
-        logger.info(`Cleaned up expired cart IDs for session ${sessionId}: ${JSON.stringify(filteredCartIds)}`);
+        const keys = await redisClient.keys('cartId:*'); // Fetch all keys related to cart IDs
+        for (const key of keys) {
+            const cartData = JSON.parse(await redisClient.get(key));
+            if (Date.now() - cartData.timestamp > EXPIRATION_TIME) {
+                await redisClient.del(key); // Delete expired cart ID
+                logger.info(`Expired cart ID removed: ${key}`);
+            }
+        }
     } catch (error) {
         logger.error(`Failed to clean up expired cart IDs: ${error.message}`);
     }
@@ -52,6 +50,12 @@ router.use(async (req, res, next) => {
 
 // `/select-bank` route handler
 router.post('/', async (req, res) => {
+    const token = req.headers.authorization?.split(' ')[1]; // Extract token from Authorization header
+    if (!token) {
+        logger.error('[POST /select-bank] Missing Authorization token.');
+        return res.status(401).json({ error: 'Authorization token is required.' });
+    }
+
     const requestId = Date.now();
     const essentialClaims = req.body.essentialClaims || [];
     const voluntaryClaims = req.body.voluntaryClaims || [];
@@ -70,21 +74,22 @@ router.post('/', async (req, res) => {
     }
 
     try {
+        const decoded = jwt.verify(token, JWT_SECRET); // Verify the JWT
+        const { cartId } = decoded;
+
         // Clean up expired cart IDs
-        await cleanupExpiredCartIds(req.sessionID);
+        await cleanupExpiredCartIds();
 
-        // Verify the cart ID is valid in the current session
-        if (!req.session.cartIds.includes(cartId)) {
-            const redisKey = `session:${req.sessionID}:cartIds`;
-            req.session.cartIds = JSON.parse(await redisClient.get(redisKey)) || [];
-            logger.info(`Re-fetched cart IDs from Redis: ${JSON.stringify(req.session.cartIds)}`);
-
-            if (!req.session.cartIds.includes(cartId)) {
-                logger.error(`[Request ${requestId}] Cart ID mismatch: '${cartId}' not found in session.`);
-                return res.status(400).json({ error: 'Invalid cartId for the current session' });
-            }
+        // Validate that the cart ID exists in Redis
+        const redisKey = `cartId:${cartId}`;
+        const cartData = await redisClient.get(redisKey);
+        if (!cartData) {
+            logger.error(`[POST /select-bank] Cart ID ${cartId} not found or expired.`);
+            return res.status(400).json({ error: 'Invalid or expired cart ID.' });
         }
 
+        logger.info(`[POST /select-bank] Cart ID ${cartId} is valid. Proceeding with authorization.`);
+        
         // Send the pushed authorization request
         const { authUrl, code_verifier, state, nonce, xFapiInteractionId } =
             await rpClient.sendPushedAuthorisationRequest(
