@@ -46,26 +46,26 @@ async function validateAndStoreCartId(cartId) {
     }
 }
 
-router.use((req, res, next) => {
-    const excludedRoutes = ['/set-cart-id']; // List of routes to bypass JWT validation
-    if (excludedRoutes.includes(req.path)) {
-        logger.info(`[Middleware] Bypassing JWT validation for route: ${req.path}`);
-        return next();
-    }
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) {
-        logger.error('[Middleware] Authorization token is missing.');
-        return res.status(401).json({ error: 'Authorization token is required.' });
-    }
-    try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        req.sessionData = decoded;
-        next();
-    } catch (error) {
-        logger.error(`[Middleware] Invalid or expired token: ${error.message}`);
-        return res.status(401).json({ error: 'Invalid or expired token.' });
-    }
-});
+// router.use((req, res, next) => {
+//     const excludedRoutes = ['/set-cart-id']; // List of routes to bypass JWT validation
+//     if (excludedRoutes.includes(req.path)) {
+//         logger.info(`[Middleware] Bypassing JWT validation for route: ${req.path}`);
+//         return next();
+//     }
+//     const token = req.headers.authorization?.split(' ')[1];
+//     if (!token) {
+//         logger.error('[Middleware] Authorization token is missing.');
+//         return res.status(401).json({ error: 'Authorization token is required.' });
+//     }
+//     try {
+//         const decoded = jwt.verify(token, JWT_SECRET);
+//         req.sessionData = decoded;
+//         next();
+//     } catch (error) {
+//         logger.error(`[Middleware] Invalid or expired token: ${error.message}`);
+//         return res.status(401).json({ error: 'Invalid or expired token.' });
+//     }
+// });
 
 // POST /set-cart-id Route
 // POST /set-cart-id Route
