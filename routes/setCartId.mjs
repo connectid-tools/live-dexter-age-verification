@@ -43,6 +43,12 @@ async function validateAndStoreCartId(cartId) {
 
 // Middleware to validate JWT and attach session data
 router.use((req, res, next) => {
+    const excludedRoutes = ['/set-cart-id']; // List of routes to bypass JWT validation
+    if (excludedRoutes.includes(req.path)) {
+        logger.info(`[Middleware] Bypassing JWT validation for route: ${req.path}`);
+        return next(); // Skip JWT validation for excluded routes
+    }
+
     const token = req.headers.authorization?.split(' ')[1]; // Extract token from Authorization header
     if (!token) {
         logger.error('[Middleware] Missing Authorization token.');
@@ -61,7 +67,7 @@ router.use((req, res, next) => {
 });
 
 // POST /set-cart-id Route
-router.post('/', async (req, res) => {
+router.post('/set-cart-id', async (req, res) => {
     logger.info(`[POST /set-cart-id] Received request with body: ${JSON.stringify(req.body)}`);
 
     const { cartId } = req.body;
