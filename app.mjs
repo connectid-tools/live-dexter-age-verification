@@ -86,6 +86,7 @@ app.use((req, res, next) => {
     console.log('Session ID:', req.sessionID);
     console.log('Cookies:', req.cookies);
     console.log('Session Data:', req.session);
+    console.log('Cart ID:', req.body?.cartId || req.cookies?.cartId || 'Cart ID not provided'); // Log cartId if available
     next();
 });
 
