@@ -14,6 +14,8 @@ import logOrderRouter from './routes/logTokenAndOrderId.mjs';
 import setCartId from './routes/setCartId.mjs';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
+import { createClient } from 'redis';
+import RedisStore from 'connect-redis';
 
 // Ensure all environment variables are loaded
 const {
