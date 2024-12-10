@@ -104,7 +104,7 @@ app.use(async (req, res, next) => {
 
     // Allow unauthenticated access for specific public routes
     if (!token) {
-        if (['/', '/restricted-items', '/validate-cart'].includes(req.path)) {
+        if (['/', '/restricted-items', '/validate-cart', '/set-cart-id'].includes(req.path)) {
             return next();
         }
         return res.status(401).json({ error: 'Authorization token is required.' });
