@@ -40,7 +40,7 @@ const app = express();
 const port = 3001;
 
 // Correctly initialize RedisStore
-const RedisStore = connectRedis(session);
+const RedisStore = connectRedis.default(session); // Access the default export
 
 app.use(
     session({
