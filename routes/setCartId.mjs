@@ -79,13 +79,21 @@ router.post('/', async (req, res) => {
 
         logger.info(`[POST /set-cart-id] Successfully generated JWT token: ${sessionToken}`);
 
+        // Set cookie with the cartId for session tracking
+        // logger.info(`[POST /set-cart-id] Setting cookie for Cart ID.`);
+        // res.cookie('cartId', cartId, {
+        //     httpOnly: false,
+        //     secure: true, // Only secure in production
+        //     sameSite: 'None', // Allows cross-origin cookies
+        //     maxAge: EXPIRATION_TIME, // 1 hour
+        //     domain: process.env.STORE_DOMAIN || undefined, // Set to match client domain
+        // });
+
         res.cookie('sessionToken', sessionToken, {
-            httpOnly: false, // Secure against XSS
-            secure: true, // Required for HTTPS
-            sameSite: 'None', // Allows cross-origin cookies
+            httpOnly: true,
+            secure: true, // Use HTTPS
+            sameSite: 'None',
             maxAge: 3600 * 1000, // 1 hour
-            domain: 'sh-checkout-validator-qud6t.ondigitalocean.app', // Match backend domain
-            path: '/', // Ensure it's accessible across all routes
         });
         res.status(200).json({ message: 'Cart ID validated and stored successfully.' });
         
