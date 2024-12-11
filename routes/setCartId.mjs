@@ -14,7 +14,7 @@ const BIGCOMMERCE_API_URL = 'https://api.bigcommerce.com/stores/pmsgmprrgp/v3';
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN; // BigCommerce API token
 const EXPIRATION_TIME = 3600 * 1000; // 1 hour in milliseconds
 const JWT_EXPIRATION = '1h'; // JWT expiration
-const ENCRYPTION_SECRET = '4beced985ddf9a778fc9e4656e315ce9c5bb645a3c5ba6887391fd469a74ce32';
+const ENCRYPTION_SECRET = Buffer.from('4beced985ddf9a778fc9e4656e315ce9c5bb645a3c5ba6887391fd469a74ce32', 'hex');
 if (ENCRYPTION_SECRET.length !== 32) {
     throw new Error(`Invalid encryption key length: ${ENCRYPTION_SECRET.length * 8} bits. Expected 256 bits.`);
 }
