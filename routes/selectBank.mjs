@@ -49,11 +49,11 @@ router.post('/', async (req, res) => {
     const requestId = Date.now();
     logger.info(`[Request ${requestId}] Processing /select-bank request. Body: ${JSON.stringify(req.body)}`);
 
-    const token = req.headers.authorization?.split(' ')[1]; // Extract token from Authorization header
-    if (!token) {
-        logger.error(`[Request ${requestId}] Missing Authorization token.`);
-        return res.status(401).json({ error: 'Authorization token is required.' });
-    }
+    // const token = req.headers.authorization?.split(' ')[1]; // Extract token from Authorization header
+    // if (!token) {
+    //     logger.error(`[Request ${requestId}] Missing Authorization token.`);
+    //     return res.status(401).json({ error: 'Authorization token is required.' });
+    // }
 
     const essentialClaims = req.body.essentialClaims || [];
     const voluntaryClaims = req.body.voluntaryClaims || [];
