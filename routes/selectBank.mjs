@@ -10,7 +10,7 @@ const logger = getLogger('info');
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
-const ENCRYPTION_SECRET = process.env.ENCRYPTION_SECRET || 'your-static-encryption-key'; // Match the key used in /set-cart-id
+const ENCRYPTION_SECRET = Buffer.from(process.env.ENCRYPTION_SECRET, 'hex'); // Must match the key from /set-cart-id
 const EXPIRATION_TIME = 3600 * 1000; // 1 hour
 
 // `/select-bank` route handler

@@ -15,8 +15,8 @@ const ACCESS_TOKEN = process.env.ACCESS_TOKEN; // BigCommerce API token
 const EXPIRATION_TIME = 3600 * 1000; // 1 hour in milliseconds
 const JWT_EXPIRATION = '1h'; // JWT expiration
 const ENCRYPTION_SECRET = process.env.ENCRYPTION_SECRET
-    ? Buffer.from(process.env.ENCRYPTION_SECRET, 'hex') // Use a pre-set key if available
-    : crypto.randomBytes(32); // Ensure 32 bytes
+    ? Buffer.from(process.env.ENCRYPTION_SECRET, 'hex') // Ensure it is a valid 64-char hex string
+    : crypto.randomBytes(32); // Generate a 32-byte key if not set
 
 // Helper function to validate and store a CartID
 async function validateAndStoreCartId(cartId) {
