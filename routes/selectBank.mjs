@@ -3,17 +3,14 @@ import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from '../config.js';
 import { getLogger } from '../utils/logger.mjs';
 import { redisClient } from '../app.mjs'; // Import Redis client
-import jwt from 'jsonwebtoken';
 
 const logger = getLogger('info');
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-very-secret-key';
 const EXPIRATION_TIME = 3600 * 1000; // 1 hour
 
 // Helper function to clean up expired cart IDs in Redis
-// Helper to clean up expired cart IDs
 async function cleanupExpiredCartIds() {
     const keys = await redisClient.keys('session:*:cartData');
     for (const key of keys) {
@@ -29,9 +26,9 @@ async function cleanupExpiredCartIds() {
 router.use(async (req, res, next) => {
     const redisKey = `session:${req.cookies.cartId}:cartData`;
 
-     // Log cookies
-     logger.info(`[Middleware] Cookies: ${JSON.stringify(req.cookies)}`);
-     logger.info(`[Middleware] Attempting to load Redis key: ${redisKey}`);
+    // Log cookies
+    logger.info(`[Middleware] Cookies: ${JSON.stringify(req.cookies)}`);
+    logger.info(`[Middleware] Attempting to load Redis key: ${redisKey}`);
      
     try {
         req.session.cartData = JSON.parse(await redisClient.get(redisKey)) || null;
@@ -42,18 +39,10 @@ router.use(async (req, res, next) => {
     next();
 });
 
-
-
 // `/select-bank` route handler
 router.post('/', async (req, res) => {
     const requestId = Date.now();
     logger.info(`[Request ${requestId}] Processing /select-bank request. Body: ${JSON.stringify(req.body)}`);
-
-    // const token = req.headers.authorization?.split(' ')[1]; // Extract token from Authorization header
-    // if (!token) {
-    //     logger.error(`[Request ${requestId}] Missing Authorization token.`);
-    //     return res.status(401).json({ error: 'Authorization token is required.' });
-    // }
 
     const essentialClaims = req.body.essentialClaims || [];
     const voluntaryClaims = req.body.voluntaryClaims || [];
@@ -74,10 +63,6 @@ router.post('/', async (req, res) => {
     }
 
     try {
-        logger.info(`[Request ${requestId}] Verifying Authorization token.`);
-        const decoded = jwt.verify(token, JWT_SECRET); // Verify the JWT
-        logger.info(`[Request ${requestId}] Decoded JWT: ${JSON.stringify(decoded)}`);
-
         // Clean up expired cart IDs
         await cleanupExpiredCartIds();
 
