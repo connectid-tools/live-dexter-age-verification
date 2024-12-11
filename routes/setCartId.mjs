@@ -106,10 +106,10 @@ router.post('/', async (req, res) => {
         logger.info(`[POST /set-cart-id] Setting encrypted JWT in cookie.`);
         res.cookie('sessionToken', sessionToken, {
             httpOnly: false,
-            secure: true, // Must be true for HTTPS
-            sameSite: 'None', // Ensure compatibility with cross-origin requests
-            maxAge: 3600 * 1000, // 1 hour
-            domain: 'store-pmsgmprrgp.mybigcommerce.com', // Must match the request domain
+            secure: true,
+            sameSite: 'None',
+            maxAge: 3600 * 1000,
+            domain: 'sh-checkout-validator-qud6t.ondigitalocean.app', // Match the server domain
         });
 
         res.status(200).json({
