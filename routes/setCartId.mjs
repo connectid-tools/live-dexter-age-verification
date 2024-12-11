@@ -14,7 +14,7 @@ const BIGCOMMERCE_API_URL = 'https://api.bigcommerce.com/stores/pmsgmprrgp/v3';
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN; // BigCommerce API token
 const EXPIRATION_TIME = 3600 * 1000; // 1 hour in milliseconds
 const JWT_EXPIRATION = '1h'; // JWT expiration
-const ENCRYPTION_SECRET = process.env.ENCRYPTION_SECRET
+const ENCRYPTION_SECRET = '8fb858ef20f1a6ff5db3f3ca3f0270976663dd1ecf92859ee426254fec64baf9'
     ? Buffer.from(process.env.ENCRYPTION_SECRET, 'hex') // Ensure it is a valid 64-char hex string
     : crypto.randomBytes(32); // Generate a 32-byte key if not set
 
