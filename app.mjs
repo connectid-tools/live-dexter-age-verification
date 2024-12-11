@@ -17,7 +17,6 @@ import session from 'express-session';
 import { createClient } from 'redis';
 import RedisStore from 'connect-redis';
 
-
 // Ensure all environment variables are loaded
 const {
     REDIS_HOST,

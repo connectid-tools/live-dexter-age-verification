@@ -3,80 +3,93 @@ import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from '../config.js';
 import { getLogger } from '../utils/logger.mjs';
 import { redisClient } from '../app.mjs'; // Import Redis client
-import { jwtDecrypt } from 'jose';
-
+import jwt from 'jsonwebtoken';
 
 const logger = getLogger('info');
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
-const hexKey = '4beced985ddf9a778fc9e4656e315ce9c5bb645a3c5ba6887391fd469a74ce32';
-const bufferKey = Buffer.from(hexKey, 'hex');
-
-console.log('Hex Key Length:', hexKey.length); // Logs: 64
-console.log('Buffer Key Length:', bufferKey.length); // Logs: 32
-
-const ENCRYPTION_SECRET = Buffer.from(
-    '4beced985ddf9a778fc9e4656e315ce9c5bb645a3c5ba6887391fd469a74ce32',
-    'hex'
-); // Ensure this matches exactly
-console.log('Encryption Key Length:', ENCRYPTION_SECRET.length); // Should log 32
-
+const JWT_SECRET = process.env.JWT_SECRET || 'your-very-secret-key';
 const EXPIRATION_TIME = 3600 * 1000; // 1 hour
+
+// Helper function to clean up expired cart IDs in Redis
+// Helper to clean up expired cart IDs
+async function cleanupExpiredCartIds() {
+    const keys = await redisClient.keys('session:*:cartData');
+    for (const key of keys) {
+        const data = JSON.parse(await redisClient.get(key));
+        if (Date.now() - data.timestamp > EXPIRATION_TIME) {
+            await redisClient.del(key);
+            logger.info(`Expired cart ID removed: ${key}`);
+        }
+    }
+}
+
+// Middleware to load cart IDs from Redis
+router.use(async (req, res, next) => {
+    const redisKey = `session:${req.cookies.cartId}:cartData`;
+
+     // Log cookies
+     logger.info(`[Middleware] Cookies: ${JSON.stringify(req.cookies)}`);
+     logger.info(`[Middleware] Attempting to load Redis key: ${redisKey}`);
+     
+    try {
+        req.session.cartData = JSON.parse(await redisClient.get(redisKey)) || null;
+        logger.info(`[Middleware] Loaded cart data for Cart ID ${req.cookies.cartId}: ${req.session.cartData}`);
+    } catch (error) {
+        logger.error(`[Middleware] Failed to load cart data: ${error.message}`);
+    }
+    next();
+});
+
+
 
 // `/select-bank` route handler
 router.post('/', async (req, res) => {
     const requestId = Date.now();
     logger.info(`[Request ${requestId}] Processing /select-bank request. Body: ${JSON.stringify(req.body)}`);
 
-    // Retrieve the sessionToken from the body, headers, or cookies
-    const sessionToken = req.body.sessionToken || req.headers.authorization?.split(' ')[1] || req.cookies.sessionToken;
-     // Log the session token received
-     logger.info(`[Request ${requestId}] Received session token from body: ${sessionToken}`);
-
-    if (!sessionToken) {
-        logger.error(`[Request ${requestId}] Missing session token.`);
-        return res.status(401).json({ error: 'Session token is required.' });
+    const token = req.headers.authorization?.split(' ')[1]; // Extract token from Authorization header
+    if (!token) {
+        logger.error(`[Request ${requestId}] Missing Authorization token.`);
+        return res.status(401).json({ error: 'Authorization token is required.' });
     }
 
     const essentialClaims = req.body.essentialClaims || [];
     const voluntaryClaims = req.body.voluntaryClaims || [];
     const purpose = req.body.purpose || config.data.purpose;
     const authServerId = req.body.authorisationServerId;
+    const cartId = req.body.cartId;
 
-    logger.info(`[Request ${requestId}] Received parameters: authServerId=${authServerId}, essentialClaims=${JSON.stringify(essentialClaims)}, voluntaryClaims=${JSON.stringify(voluntaryClaims)}`);
+    logger.info(`[Request ${requestId}] Received parameters: authServerId=${authServerId}, cartId=${cartId}, essentialClaims=${JSON.stringify(essentialClaims)}, voluntaryClaims=${JSON.stringify(voluntaryClaims)}`);
 
     // Validate required fields
     if (!authServerId) {
         logger.error(`[Request ${requestId}] Missing 'authorisationServerId'.`);
         return res.status(400).json({ error: 'authorisationServerId parameter is required' });
     }
+    if (!cartId) {
+        logger.error(`[Request ${requestId}] Missing 'cartId'.`);
+        return res.status(400).json({ error: 'cartId parameter is required' });
+    }
 
     try {
-        logger.info(`[Request ${requestId}] Session token before decryption: ${sessionToken}`);
-        const { payload } = await jwtDecrypt(sessionToken, new TextEncoder().encode(ENCRYPTION_SECRET));
-        console.log('ENCRYPTION_SECRET Length:', ENCRYPTION_SECRET.length); // Should log 32
-        logger.info(`[Request ${requestId}] Decrypted payload: ${JSON.stringify(payload)}`);
+        logger.info(`[Request ${requestId}] Verifying Authorization token.`);
+        const decoded = jwt.verify(token, JWT_SECRET); // Verify the JWT
+        logger.info(`[Request ${requestId}] Decoded JWT: ${JSON.stringify(decoded)}`);
 
-        const cartId = payload.cartId;
-
-        if (!cartId) {
-            logger.error(`[Request ${requestId}] Cart ID missing in decrypted session token.`);
-            return res.status(400).json({ error: 'Cart ID is required.' });
-        }
-
-        logger.info(`[Request ${requestId}] Decrypted Cart ID: ${cartId}`);
+        // Clean up expired cart IDs
+        await cleanupExpiredCartIds();
 
         // Validate that the cart ID exists in Redis
         const redisKey = `session:${cartId}:cartData`;
+
         logger.info(`[Request ${requestId}] Checking Redis for Cart ID: ${cartId}`);
         const cartData = await redisClient.get(redisKey);
-
         if (!cartData) {
             logger.error(`[Request ${requestId}] Cart ID ${cartId} not found or expired.`);
             return res.status(400).json({ error: 'Invalid or expired cart ID.' });
         }
-
         logger.info(`[Request ${requestId}] Cart ID ${cartId} is valid. Redis Data: ${cartData}`);
 
         // Send the pushed authorization request
@@ -99,10 +112,9 @@ router.post('/', async (req, res) => {
 
         return res.json({ authUrl });
     } catch (error) {
-        logger.error(`[Request ${requestId}] Error during token decryption or PAR process: ${error.message}`);
+        logger.error(`[Request ${requestId}] Error during PAR request: ${error.stack || error.message}`);
         return res.status(500).json({ error: 'Internal server error', details: error.message });
     }
 });
-
 
 export default router;

@@ -1341,10 +1341,10 @@ jose@^4.15.9:
   resolved "https://registry.npmjs.org/jose/-/jose-4.15.9.tgz"
   integrity sha512-1vUQX+IdDMVPj4k8kOxgUqlcK518yluMuGZwqlr44FS1ppZB/5GWh4rZG89erpOBOJjU/OBsnCVFfapsRz6nEA==
 
-jose@^5.8.0, jose@^5.9.6:
-  version "5.9.6"
-  resolved "https://registry.npmjs.org/jose/-/jose-5.9.6.tgz"
-  integrity sha512-AMlnetc9+CV9asI19zHmrgS/WYsWUwCn2R7RzlbJWD7F9eWYUTGyBmU9o6PxngtLGOiDGPRu+Uc4fhKzbpteZQ==
+jose@^5.8.0:
+  version "5.9.2"
+  resolved "https://registry.npmjs.org/jose/-/jose-5.9.2.tgz"
+  integrity sha512-ILI2xx/I57b20sd7rHZvgiiQrmp2mcotwsAH+5ajbpFQbrYVQdNHYlQhoA5cFb78CgtBOxtC05TeA+mcgkuCqQ==
 
 js-stringify@^1.0.1:
   version "1.0.2"
