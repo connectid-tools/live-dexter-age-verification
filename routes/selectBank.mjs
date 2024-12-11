@@ -40,41 +40,26 @@ router.use(async (req, res, next) => {
 });
 
 // `/select-bank` route handler
-// `/select-bank` route handler
 router.post('/', async (req, res) => {
     const requestId = Date.now();
     logger.info(`[Request ${requestId}] Processing /select-bank request. Body: ${JSON.stringify(req.body)}`);
-
-    // Retrieve session token from the cookie
-    const sessionToken = req.cookies.sessionToken;
-
-    if (!sessionToken) {
-        logger.error(`[Request ${requestId}] Missing session token.`);
-        return res.status(401).json({ error: 'Unauthorized: No session token provided.' });
-    }
-
-    let cartId;
-    try {
-        // Verify the JWT and extract the cartId
-        const decoded = jwt.verify(sessionToken, JWT_SECRET);
-        cartId = decoded.cartId;
-        logger.info(`[Request ${requestId}] Session token verified. Cart ID: ${cartId}`);
-    } catch (error) {
-        logger.error(`[Request ${requestId}] Invalid or expired session token.`);
-        return res.status(401).json({ error: 'Unauthorized: Invalid or expired session token.' });
-    }
 
     const essentialClaims = req.body.essentialClaims || [];
     const voluntaryClaims = req.body.voluntaryClaims || [];
     const purpose = req.body.purpose || config.data.purpose;
     const authServerId = req.body.authorisationServerId;
+    const cartId = req.body.cartId;
 
-    logger.info(`[Request ${requestId}] Received parameters: authServerId=${authServerId}, essentialClaims=${JSON.stringify(essentialClaims)}, voluntaryClaims=${JSON.stringify(voluntaryClaims)}`);
+    logger.info(`[Request ${requestId}] Received parameters: authServerId=${authServerId}, cartId=${cartId}, essentialClaims=${JSON.stringify(essentialClaims)}, voluntaryClaims=${JSON.stringify(voluntaryClaims)}`);
 
     // Validate required fields
     if (!authServerId) {
         logger.error(`[Request ${requestId}] Missing 'authorisationServerId'.`);
         return res.status(400).json({ error: 'authorisationServerId parameter is required' });
+    }
+    if (!cartId) {
+        logger.error(`[Request ${requestId}] Missing 'cartId'.`);
+        return res.status(400).json({ error: 'cartId parameter is required' });
     }
 
     try {
@@ -122,12 +107,12 @@ router.post('/', async (req, res) => {
         res.cookie('code_verifier', code_verifier, { path: '/', sameSite: 'none', secure: true, httpOnly: true, maxAge: 5 * 60 * 1000 });
         res.cookie('authorisation_server_id', authServerId, { path: '/', sameSite: 'none', secure: true, httpOnly: true, maxAge: 5 * 60 * 1000 });
 
+
         return res.json({ authUrl, state, nonce, code_verifier, authorisationServerId: authServerId });
-    } catch (error) {
+        } catch (error) {
         logger.error(`[Request ${requestId}] Error during PAR request: ${error.stack || error.message}`);
         return res.status(500).json({ error: 'Internal server error', details: error.message });
     }
 });
-
 
 export default router;
