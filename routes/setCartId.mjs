@@ -91,7 +91,9 @@ router.post('/', async (req, res) => {
         .setIssuedAt()
         .setExpirationTime(JWT_EXPIRATION)
         .encrypt(ENCRYPTION_SECRET);
-    
+        
+        console.log('ENCRYPTION_SECRET Length:', ENCRYPTION_SECRET.length); // Should log 32
+
 
         logger.info(`[POST /set-cart-id] Successfully encrypted JWT token.`);
 

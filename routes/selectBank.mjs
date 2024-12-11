@@ -51,7 +51,10 @@ router.post('/', async (req, res) => {
     try {
         logger.info(`[Request ${requestId}] Decrypting session token.`);
         const { payload } = await jwtDecrypt(sessionToken, new TextEncoder().encode(ENCRYPTION_SECRET));
+        console.log('ENCRYPTION_SECRET Length:', ENCRYPTION_SECRET.length); // Should log 32
+
         const cartId = payload.cartId;
+        
 
         if (!cartId) {
             logger.error(`[Request ${requestId}] Cart ID missing in decrypted session token.`);
