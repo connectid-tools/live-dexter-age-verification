@@ -4,6 +4,8 @@ import fetch from 'node-fetch';
 import { getLogger } from '../utils/logger.mjs';
 import { redisClient } from '../app.mjs'; // Import the shared Redis client
 import { EncryptJWT } from 'jose';
+import crypto from 'crypto';
+
 
 const logger = getLogger('info');
 const router = express.Router();
