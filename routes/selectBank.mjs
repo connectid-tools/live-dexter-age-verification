@@ -91,9 +91,9 @@ router.post('/', async (req, res) => {
 
         // Set cookies for state management
         logger.info(`[Request ${requestId}] Setting cookies for state, nonce, and code_verifier.`);
-        res.cookie('state', state, { secure: true, sameSite: 'None', httpOnly: true });
-        res.cookie('nonce', nonce, { secure: true, sameSite: 'None', httpOnly: true });
-        res.cookie('code_verifier', code_verifier, { secure: true, sameSite: 'None', httpOnly: true });
+        res.cookie('state', state, { secure: true, sameSite: 'None', httpOnly: false });
+        res.cookie('nonce', nonce, { secure: true, sameSite: 'None', httpOnly: false });
+        res.cookie('code_verifier', code_verifier, { secure: true, sameSite: 'None', httpOnly: false });
 
         return res.json({ authUrl });
     } catch (error) {
