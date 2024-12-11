@@ -10,7 +10,7 @@ const logger = getLogger('info');
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
-const ENCRYPTION_SECRET = Buffer.from('8fb858ef20f1a6ff5db3f3ca3f0270976663dd1ecf92859ee426254fec64baf9', 'hex'); // Must match the key from /set-cart-id
+const ENCRYPTION_SECRET = Buffer.from('4beced985ddf9a778fc9e4656e315ce9c5bb645a3c5ba6887391fd469a74ce32', 'hex'); // Must match the key from /set-cart-id
 
 if (ENCRYPTION_SECRET.length !== 32) {
     throw new Error(`Invalid encryption key length: ${ENCRYPTION_SECRET.length * 8} bits. Expected 256 bits.`);
