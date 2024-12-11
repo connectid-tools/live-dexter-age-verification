@@ -53,7 +53,7 @@ router.post('/', async (req, res) => {
 
        // Set a cookie with cartId
        res.cookie('cartId', cartId, {
-        httpOnly: true, 
+        httpOnly: false, 
         secure: true, 
         sameSite: 'None', 
         maxAge: 3600 * 1000, // 1 hour

@@ -82,7 +82,7 @@ router.post('/', async (req, res) => {
         // Set cookie with the cartId for session tracking
         logger.info(`[POST /set-cart-id] Setting cookie for Cart ID.`);
         res.cookie('cartId', cartId, {
-            httpOnly: true,
+            httpOnly: false,
             secure: true, // Only secure in production
             sameSite: 'None', // Allows cross-origin cookies
             maxAge: EXPIRATION_TIME, // 1 hour

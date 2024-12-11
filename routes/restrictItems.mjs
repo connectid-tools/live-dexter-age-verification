@@ -18,7 +18,7 @@ router.post('/', async (req, res) => {
 
   try {
     const result = await restrictedItemsService.validateCart(cartId);
-    res.cookie('cartId', cartId, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 3600 * 1000, domain: 'sh-checkout-validator-qud6t.ondigitalocean.app' }); // 1 hour
+    res.cookie('cartId', cartId, { httpOnly: false, secure: true, sameSite: 'None', maxAge: 3600 * 1000, domain: 'sh-checkout-validator-qud6t.ondigitalocean.app' }); // 1 hour
     
     res.status(200).json(result);
   } catch (error) {

@@ -58,7 +58,7 @@ app.use(
         saveUninitialized: false,
         cookie: {
             secure: process.env.NODE_ENV === 'production', // Set true for HTTPS
-            httpOnly: true, // Protect from client-side access
+            httpOnly: false, // Protect from client-side access
             sameSite: 'None', // Adjust for cross-origin cookies
             maxAge: 3600 * 1000, // 1 hour
         },
