@@ -79,16 +79,6 @@ router.post('/', async (req, res) => {
 
         logger.info(`[POST /set-cart-id] Successfully generated JWT token: ${sessionToken}`);
 
-        // Set cookie with the cartId for session tracking
-        // logger.info(`[POST /set-cart-id] Setting cookie for Cart ID.`);
-        // res.cookie('cartId', cartId, {
-        //     httpOnly: false,
-        //     secure: true, // Only secure in production
-        //     sameSite: 'None', // Allows cross-origin cookies
-        //     maxAge: EXPIRATION_TIME, // 1 hour
-        //     domain: process.env.STORE_DOMAIN || undefined, // Set to match client domain
-        // });
-
         res.cookie('sessionToken', sessionToken, {
             httpOnly: true, // Secure against XSS
             secure: true, // Required for HTTPS
@@ -97,15 +87,6 @@ router.post('/', async (req, res) => {
             domain: 'sh-checkout-validator-qud6t.ondigitalocean.app', // Match backend domain
             path: '/', // Ensure it's accessible across all routes
         });
-
-            //       //  // Set a cookie with cartId
-            // res.cookie('cartId', cartId, {
-            //     httpOnly: false, 
-            //     secure: true, 
-            //     sameSite: 'None', 
-            //     maxAge: 3600 * 1000, // 1 hour
-            //     domian: `${process.env.STORE_DOMAIN}`
-            // });
         res.status(200).json({ message: 'Cart ID validated and stored successfully.' });
         
 
