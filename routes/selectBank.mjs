@@ -5,6 +5,7 @@ import { getLogger } from '../utils/logger.mjs';
 import { redisClient } from '../app.mjs'; // Import Redis client
 import { jwtDecrypt } from 'jose';
 
+
 const logger = getLogger('info');
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);

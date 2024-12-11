@@ -4,7 +4,7 @@ import fetch from 'node-fetch';
 import { getLogger } from '../utils/logger.mjs';
 import { redisClient } from '../app.mjs'; // Import the shared Redis client
 import { EncryptJWT } from 'jose';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 
 
 const logger = getLogger('info');
@@ -14,7 +14,9 @@ const BIGCOMMERCE_API_URL = 'https://api.bigcommerce.com/stores/pmsgmprrgp/v3';
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN; // BigCommerce API token
 const EXPIRATION_TIME = 3600 * 1000; // 1 hour in milliseconds
 const JWT_EXPIRATION = '1h'; // JWT expiration
-const ENCRYPTION_SECRET = crypto.randomBytes(32); // Static encryption key
+const ENCRYPTION_SECRET = process.env.ENCRYPTION_SECRET
+    ? Buffer.from(process.env.ENCRYPTION_SECRET, 'hex') // Use a pre-set key if available
+    : crypto.randomBytes(32); // Ensure 32 bytes
 
 // Helper function to validate and store a CartID
 async function validateAndStoreCartId(cartId) {
