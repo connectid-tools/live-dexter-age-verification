@@ -10,7 +10,13 @@ const logger = getLogger('info');
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
-const ENCRYPTION_SECRET = '4beced985ddf9a778fc9e4656e315ce9c5bb645a3c5ba6887391fd469a74ce32';
+const hexKey = '4beced985ddf9a778fc9e4656e315ce9c5bb645a3c5ba6887391fd469a74ce32';
+const bufferKey = Buffer.from(hexKey, 'hex');
+
+console.log('Hex Key Length:', hexKey.length); // Logs: 64
+console.log('Buffer Key Length:', bufferKey.length); // Logs: 32
+
+const ENCRYPTION_SECRET = Buffer.from('4beced985ddf9a778fc9e4656e315ce9c5bb645a3c5ba6887391fd469a74ce32', 'hex');
 if (ENCRYPTION_SECRET.length !== 32) {
     throw new Error(`Invalid encryption key length: ${ENCRYPTION_SECRET.length * 8} bits. Expected 256 bits.`);
 }
