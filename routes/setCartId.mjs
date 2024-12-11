@@ -109,7 +109,7 @@ router.post('/', async (req, res) => {
             secure: true, // Must be true for HTTPS
             sameSite: 'None', // Ensure compatibility with cross-origin requests
             maxAge: 3600 * 1000, // 1 hour
-            domain: 'sh-checkout-validator-qud6t.ondigitalocean.app', // Must match the request domain
+            domain: 'store-pmsgmprrgp.mybigcommerce.com', // Must match the request domain
         });
 
         res.status(200).json({
