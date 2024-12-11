@@ -31,7 +31,9 @@ router.post('/', async (req, res) => {
 
     // Retrieve the sessionToken from the body, headers, or cookies
     const sessionToken = req.body.sessionToken || req.headers.authorization?.split(' ')[1] || req.cookies.sessionToken;
-    
+     // Log the session token received
+     logger.info(`[Request ${requestId}] Received session token from body: ${sessionToken}`);
+
     if (!sessionToken) {
         logger.error(`[Request ${requestId}] Missing session token.`);
         return res.status(401).json({ error: 'Session token is required.' });
