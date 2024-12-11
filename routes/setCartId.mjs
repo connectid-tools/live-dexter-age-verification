@@ -80,14 +80,14 @@ router.post('/', async (req, res) => {
         logger.info(`[POST /set-cart-id] Successfully generated JWT token: ${sessionToken}`);
 
         // Set cookie with the cartId for session tracking
-        logger.info(`[POST /set-cart-id] Setting cookie for Cart ID.`);
-        res.cookie('cartId', cartId, {
-            httpOnly: false,
-            secure: true, // Only secure in production
-            sameSite: 'None', // Allows cross-origin cookies
-            maxAge: EXPIRATION_TIME, // 1 hour
-            domain: process.env.STORE_DOMAIN || undefined, // Set to match client domain
-        });
+        // logger.info(`[POST /set-cart-id] Setting cookie for Cart ID.`);
+        // res.cookie('cartId', cartId, {
+        //     httpOnly: false,
+        //     secure: true, // Only secure in production
+        //     sameSite: 'None', // Allows cross-origin cookies
+        //     maxAge: EXPIRATION_TIME, // 1 hour
+        //     domain: process.env.STORE_DOMAIN || undefined, // Set to match client domain
+        // });
 
         res.status(200).json({
             message: 'Cart ID validated and stored successfully.',
