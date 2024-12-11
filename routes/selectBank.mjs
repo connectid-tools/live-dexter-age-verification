@@ -29,7 +29,9 @@ router.post('/', async (req, res) => {
     const requestId = Date.now();
     logger.info(`[Request ${requestId}] Processing /select-bank request. Body: ${JSON.stringify(req.body)}`);
 
-    const sessionToken = req.cookies.sessionToken; // Retrieve the encrypted JWT from the cookie
+    // Retrieve the sessionToken from the body, headers, or cookies
+    const sessionToken = req.body.sessionToken || req.headers.authorization?.split(' ')[1] || req.cookies.sessionToken;
+    
     if (!sessionToken) {
         logger.error(`[Request ${requestId}] Missing session token.`);
         return res.status(401).json({ error: 'Session token is required.' });
@@ -49,15 +51,12 @@ router.post('/', async (req, res) => {
     }
 
     try {
-        logger.info(`[Request ${requestId}] Session token before decryption: ${sessionToken}`);        const { payload } = await jwtDecrypt(sessionToken, new TextEncoder().encode(ENCRYPTION_SECRET));
+        logger.info(`[Request ${requestId}] Session token before decryption: ${sessionToken}`);
+        const { payload } = await jwtDecrypt(sessionToken, new TextEncoder().encode(ENCRYPTION_SECRET));
         console.log('ENCRYPTION_SECRET Length:', ENCRYPTION_SECRET.length); // Should log 32
         logger.info(`[Request ${requestId}] Decrypted payload: ${JSON.stringify(payload)}`);
 
         const cartId = payload.cartId;
-        
-        logger.info(`[Request ${requestId}] Received session token from cookie: ${req.cookies.sessionToken}`);
-        logger.info(`[Request ${requestId}] Received session token from Authorization header: ${req.headers.authorization}`);
-
 
         if (!cartId) {
             logger.error(`[Request ${requestId}] Cart ID missing in decrypted session token.`);
@@ -102,5 +101,6 @@ router.post('/', async (req, res) => {
         return res.status(500).json({ error: 'Internal server error', details: error.message });
     }
 });
+
 
 export default router;
