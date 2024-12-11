@@ -55,7 +55,9 @@ router.post('/', async (req, res) => {
 
         const cartId = payload.cartId;
         
-        console.log('Received Token from Cookie:', req.cookies.sessionToken);
+        logger.info(`[Request ${requestId}] Received session token from cookie: ${req.cookies.sessionToken}`);
+        logger.info(`[Request ${requestId}] Received session token from Authorization header: ${req.headers.authorization}`);
+
 
         if (!cartId) {
             logger.error(`[Request ${requestId}] Cart ID missing in decrypted session token.`);
