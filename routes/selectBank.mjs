@@ -11,6 +11,11 @@ const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
 const ENCRYPTION_SECRET = Buffer.from(process.env.ENCRYPTION_SECRET, 'hex'); // Must match the key from /set-cart-id
+
+if (ENCRYPTION_SECRET.length !== 32) {
+    throw new Error(`Invalid encryption key length: ${ENCRYPTION_SECRET.length * 8} bits. Expected 256 bits.`);
+}
+
 const EXPIRATION_TIME = 3600 * 1000; // 1 hour
 
 // `/select-bank` route handler
