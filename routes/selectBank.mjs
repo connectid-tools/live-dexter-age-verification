@@ -79,7 +79,7 @@ router.post('/', async (req, res) => {
 
         // Send the pushed authorization request
         logger.info(`[Request ${requestId}] Sending Pushed Authorization Request (PAR) to auth server: ${authServerId}`);
-        
+
         const {
             authUrl,
             code_verifier,
@@ -108,8 +108,8 @@ router.post('/', async (req, res) => {
         res.cookie('authorisation_server_id', authServerId, { path: '/', sameSite: 'none', secure: true, httpOnly: true, maxAge: 5 * 60 * 1000 });
 
 
-        return res.json({ authUrl });
-    } catch (error) {
+        return res.json({ authUrl, state, nonce, code_verifier, authorisationServerId: authServerId });
+        } catch (error) {
         logger.error(`[Request ${requestId}] Error during PAR request: ${error.stack || error.message}`);
         return res.status(500).json({ error: 'Internal server error', details: error.message });
     }
