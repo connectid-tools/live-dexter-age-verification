@@ -61,6 +61,8 @@ async function validateAndStoreCartId(cartId) {
     }
 }
 
+
+
 // POST /set-cart-id Route
 router.post('/', async (req, res) => {
     logger.info(`[POST /set-cart-id] Start - Received request with body: ${JSON.stringify(req.body)}`);
@@ -84,6 +86,8 @@ router.post('/', async (req, res) => {
 
         logger.info(`[POST /set-cart-id] Successfully stored Cart ID in Redis.`);
 
+        
+        
         // Encrypt the JWT token
         logger.info(`[POST /set-cart-id] Encrypting JWT token for Cart ID: ${cartId}`);
         const sessionToken = await new EncryptJWT({ cartId })
@@ -91,8 +95,9 @@ router.post('/', async (req, res) => {
         .setIssuedAt()
         .setExpirationTime(JWT_EXPIRATION)
         .encrypt(ENCRYPTION_SECRET);
-        
+
         console.log('ENCRYPTION_SECRET Length:', ENCRYPTION_SECRET.length); // Should log 32
+        console.log('Generated Token:', sessionToken);
 
 
         logger.info(`[POST /set-cart-id] Successfully encrypted JWT token.`);

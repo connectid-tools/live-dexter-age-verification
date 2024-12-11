@@ -49,12 +49,13 @@ router.post('/', async (req, res) => {
     }
 
     try {
-        logger.info(`[Request ${requestId}] Decrypting session token.`);
-        const { payload } = await jwtDecrypt(sessionToken, new TextEncoder().encode(ENCRYPTION_SECRET));
+        logger.info(`[Request ${requestId}] Session token before decryption: ${sessionToken}`);        const { payload } = await jwtDecrypt(sessionToken, new TextEncoder().encode(ENCRYPTION_SECRET));
         console.log('ENCRYPTION_SECRET Length:', ENCRYPTION_SECRET.length); // Should log 32
+        logger.info(`[Request ${requestId}] Decrypted payload: ${JSON.stringify(payload)}`);
 
         const cartId = payload.cartId;
         
+        console.log('Received Token from Cookie:', req.cookies.sessionToken);
 
         if (!cartId) {
             logger.error(`[Request ${requestId}] Cart ID missing in decrypted session token.`);
