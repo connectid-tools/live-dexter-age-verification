@@ -110,10 +110,11 @@ router.post('/', async (req, res) => {
             sameSite: 'None',
             maxAge: 3600 * 1000,
             domain: 'sh-checkout-validator-qud6t.ondigitalocean.app', // Match the server domain
-        });
+        })        
 
         res.status(200).json({
             message: 'Cart ID validated and stored successfully.',
+            sessionToken, // Include the encrypted token
         });
     } catch (error) {
         logger.error(`[POST /set-cart-id] Error processing Cart ID: ${error.message}`);
