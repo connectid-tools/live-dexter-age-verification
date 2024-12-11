@@ -69,7 +69,7 @@ app.use(
 // CORS Configuration
 const corsOptions = {
     origin: function (origin, callback) {
-        const allowedOrigins = [`https://${STORE_DOMAIN}, https://${ENDPOINT_DOMAIN} `];
+        const allowedOrigins = [`https://${STORE_DOMAIN}`];
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
