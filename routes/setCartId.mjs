@@ -21,10 +21,14 @@ const bufferKey = Buffer.from(hexKey, 'hex');
 console.log('Hex Key Length:', hexKey.length); // Logs: 64
 console.log('Buffer Key Length:', bufferKey.length); // Logs: 32
 
-const ENCRYPTION_SECRET = Buffer.from('4beced985ddf9a778fc9e4656e315ce9c5bb645a3c5ba6887391fd469a74ce32', 'hex');
-if (ENCRYPTION_SECRET.length !== 32) {
-    throw new Error(`Invalid encryption key length: ${ENCRYPTION_SECRET.length * 8} bits. Expected 256 bits.`);
-}
+const ENCRYPTION_SECRET = Buffer.from(
+    '4beced985ddf9a778fc9e4656e315ce9c5bb645a3c5ba6887391fd469a74ce32',
+    'hex'
+); // Ensure this matches exactly
+
+console.log('ENCRYPTION_SECRET Length:', ENCRYPTION_SECRET.length); // Should log 32
+
+
 
     
 // Helper function to validate and store a CartID
@@ -83,10 +87,11 @@ router.post('/', async (req, res) => {
         // Encrypt the JWT token
         logger.info(`[POST /set-cart-id] Encrypting JWT token for Cart ID: ${cartId}`);
         const sessionToken = await new EncryptJWT({ cartId })
-            .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
-            .setIssuedAt()
-            .setExpirationTime(JWT_EXPIRATION)
-            .encrypt(ENCRYPTION_SECRET);
+        .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
+        .setIssuedAt()
+        .setExpirationTime(JWT_EXPIRATION)
+        .encrypt(ENCRYPTION_SECRET);
+    
 
         logger.info(`[POST /set-cart-id] Successfully encrypted JWT token.`);
 
