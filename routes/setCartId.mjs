@@ -77,18 +77,17 @@ router.post('/', async (req, res) => {
 
         logger.info(`[POST /set-cart-id] Successfully encrypted JWT token.`);
 
-        // Set cookie for cartId
-        logger.info(`[POST /set-cart-id] Setting cookie for Cart ID.`);
-        res.cookie('cartId', cartId, {
+        // Set cookie for the encrypted JWT
+        logger.info(`[POST /set-cart-id] Setting encrypted JWT in cookie.`);
+        res.cookie('sessionToken', sessionToken, {
             httpOnly: true,
             secure: true, // Ensure this is true in production
             sameSite: 'None',
-            maxAge: EXPIRATION_TIME,
+            maxAge: EXPIRATION_TIME, // 1 hour
         });
 
         res.status(200).json({
             message: 'Cart ID validated and stored successfully.',
-            sessionToken, // Return the encrypted token
         });
     } catch (error) {
         logger.error(`[POST /set-cart-id] Error processing Cart ID: ${error.message}`);

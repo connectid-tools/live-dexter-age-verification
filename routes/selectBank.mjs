@@ -9,7 +9,7 @@ const logger = getLogger('info');
 const router = express.Router();
 const rpClient = new RelyingPartyClientSdk(config);
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-very-secret-key';
+const ENCRYPTION_SECRET = process.env.ENCRYPTION_SECRET || 'your-static-encryption-key'; // Match the key used in /set-cart-id
 const EXPIRATION_TIME = 3600 * 1000; // 1 hour
 
 // `/select-bank` route handler
@@ -17,41 +17,36 @@ router.post('/', async (req, res) => {
     const requestId = Date.now();
     logger.info(`[Request ${requestId}] Processing /select-bank request. Body: ${JSON.stringify(req.body)}`);
 
-    const token = req.headers.authorization?.split(' ')[1]; // Extract token from Authorization header
-    if (!token) {
-        logger.error(`[Request ${requestId}] Missing Authorization token.`);
-        return res.status(401).json({ error: 'Authorization token is required.' });
+    const sessionToken = req.cookies.sessionToken; // Retrieve the encrypted JWT from the cookie
+    if (!sessionToken) {
+        logger.error(`[Request ${requestId}] Missing session token.`);
+        return res.status(401).json({ error: 'Session token is required.' });
     }
 
     const essentialClaims = req.body.essentialClaims || [];
     const voluntaryClaims = req.body.voluntaryClaims || [];
     const purpose = req.body.purpose || config.data.purpose;
     const authServerId = req.body.authorisationServerId;
-    const cartId = req.body.cartId;
 
-    logger.info(`[Request ${requestId}] Received parameters: authServerId=${authServerId}, cartId=${cartId}, essentialClaims=${JSON.stringify(essentialClaims)}, voluntaryClaims=${JSON.stringify(voluntaryClaims)}`);
+    logger.info(`[Request ${requestId}] Received parameters: authServerId=${authServerId}, essentialClaims=${JSON.stringify(essentialClaims)}, voluntaryClaims=${JSON.stringify(voluntaryClaims)}`);
 
     // Validate required fields
     if (!authServerId) {
         logger.error(`[Request ${requestId}] Missing 'authorisationServerId'.`);
         return res.status(400).json({ error: 'authorisationServerId parameter is required' });
     }
-    if (!cartId) {
-        logger.error(`[Request ${requestId}] Missing 'cartId'.`);
-        return res.status(400).json({ error: 'cartId parameter is required' });
-    }
 
     try {
-        logger.info(`[Request ${requestId}] Decrypting Authorization token.`);
-        const { payload } = await jwtDecrypt(token, new TextEncoder().encode(JWT_SECRET));
-        const decryptedCartId = payload.cartId;
+        logger.info(`[Request ${requestId}] Decrypting session token.`);
+        const { payload } = await jwtDecrypt(sessionToken, new TextEncoder().encode(ENCRYPTION_SECRET));
+        const cartId = payload.cartId;
 
-        if (decryptedCartId !== cartId) {
-            logger.error(`[Request ${requestId}] Cart ID in token (${decryptedCartId}) does not match provided Cart ID (${cartId}).`);
-            return res.status(400).json({ error: 'Cart ID mismatch.' });
+        if (!cartId) {
+            logger.error(`[Request ${requestId}] Cart ID missing in decrypted session token.`);
+            return res.status(400).json({ error: 'Cart ID is required.' });
         }
 
-        logger.info(`[Request ${requestId}] Decrypted JWT cartId: ${decryptedCartId}`);
+        logger.info(`[Request ${requestId}] Decrypted Cart ID: ${cartId}`);
 
         // Validate that the cart ID exists in Redis
         const redisKey = `session:${cartId}:cartData`;
