@@ -89,10 +89,20 @@ router.post('/', async (req, res) => {
         //     domain: process.env.STORE_DOMAIN || undefined, // Set to match client domain
         // });
 
-        res.status(200).json({
-            message: 'Cart ID validated and stored successfully.',
-            sessionToken, // Return the token to the client
+        res.cookie('sessionToken', sessionToken, {
+            httpOnly: true,
+            secure: true, // Use HTTPS
+            sameSite: 'None',
+            maxAge: 3600 * 1000, // 1 hour
         });
+        res.status(200).json({ message: 'Cart ID validated and stored successfully.' });
+        
+
+        // res.status(200).json({
+        //     message: 'Cart ID validated and stored successfully.',
+        //     sessionToken, // Return the token to the client
+        // });
+        
     } catch (error) {
         logger.error(`[POST /set-cart-id] Error processing Cart ID: ${error.message}`);
         res.status(500).json({ error: 'Internal server error', details: error.message });
