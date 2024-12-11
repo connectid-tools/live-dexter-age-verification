@@ -90,11 +90,12 @@ router.post('/', async (req, res) => {
         // });
 
         res.cookie('sessionToken', sessionToken, {
-            httpOnly: false,
-            secure: true, // Use HTTPS
+            httpOnly: true,
+            secure: true,
             sameSite: 'None',
-            maxAge: 3600 * 1000, // 1 hour
-            domain: process.env.STORE_DOMAIN, // Set to match client domain
+            maxAge: 3600 * 1000,
+            domain: 'sh-checkout-validator-qud6t.ondigitalocean.app',
+        });
 
             //       //  // Set a cookie with cartId
             // res.cookie('cartId', cartId, {
