@@ -79,21 +79,34 @@ router.post('/', async (req, res) => {
 
         // Send the pushed authorization request
         logger.info(`[Request ${requestId}] Sending Pushed Authorization Request (PAR) to auth server: ${authServerId}`);
-        const { authUrl, code_verifier, state, nonce, xFapiInteractionId } =
-            await rpClient.sendPushedAuthorisationRequest(
-                authServerId,
-                essentialClaims,
-                voluntaryClaims,
-                purpose
-            );
+        
+        const {
+            authUrl,
+            code_verifier,
+            state,
+            nonce,
+            xFapiInteractionId,
+        } = await rpClient.sendPushedAuthorisationRequest(
+            authServerId,
+            essentialClaims,
+            voluntaryClaims,
+            purpose
+        );
 
-        logger.info(`[Request ${requestId}] PAR request successful. Authorization URL: ${authUrl}`);
+        logger.info(`[Request ${requestId}] PAR request successful. Received response:`);
+        logger.info(`- authUrl: ${authUrl}`);
+        logger.info(`- state: ${state}`);
+        logger.info(`- nonce: ${nonce}`);
+        logger.info(`- code_verifier: ${code_verifier}`);
+        logger.info(`- xFapiInteractionId: ${xFapiInteractionId}`);
 
         // Set cookies for state management
         logger.info(`[Request ${requestId}] Setting cookies for state, nonce, and code_verifier.`);
-        res.cookie('state', state, { secure: true, sameSite: 'None', httpOnly: false });
-        res.cookie('nonce', nonce, { secure: true, sameSite: 'None', httpOnly: false });
-        res.cookie('code_verifier', code_verifier, { secure: true, sameSite: 'None', httpOnly: false });
+        res.cookie('state', state, { path: '/', sameSite: 'none', secure: true, httpOnly: true, maxAge: 5 * 60 * 1000 }); // 5 minutes
+        res.cookie('nonce', nonce, { path: '/', sameSite: 'none', secure: true, httpOnly: true, maxAge: 5 * 60 * 1000 });
+        res.cookie('code_verifier', code_verifier, { path: '/', sameSite: 'none', secure: true, httpOnly: true, maxAge: 5 * 60 * 1000 });
+        res.cookie('authorisation_server_id', authServerId, { path: '/', sameSite: 'none', secure: true, httpOnly: true, maxAge: 5 * 60 * 1000 });
+
 
         return res.json({ authUrl });
     } catch (error) {
