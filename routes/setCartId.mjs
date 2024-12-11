@@ -90,11 +90,21 @@ router.post('/', async (req, res) => {
         // });
 
         res.cookie('sessionToken', sessionToken, {
-            httpOnly: true,
+            httpOnly: false,
             secure: true, // Use HTTPS
             sameSite: 'None',
             maxAge: 3600 * 1000, // 1 hour
             domain: process.env.STORE_DOMAIN, // Set to match client domain
+
+            //       //  // Set a cookie with cartId
+            // res.cookie('cartId', cartId, {
+            //     httpOnly: false, 
+            //     secure: true, 
+            //     sameSite: 'None', 
+            //     maxAge: 3600 * 1000, // 1 hour
+            //     domian: `${process.env.STORE_DOMAIN}`
+            // });
+        
     });
         res.status(200).json({ message: 'Cart ID validated and stored successfully.' });
         
