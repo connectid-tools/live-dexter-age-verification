@@ -80,7 +80,7 @@ router.post('/', async (req, res) => {
         logger.info(`[POST /set-cart-id] Successfully generated JWT token: ${sessionToken}`);
 
         res.cookie('sessionToken', sessionToken, {
-            httpOnly: true, // Secure against XSS
+            httpOnly: false, // Secure against XSS
             secure: true, // Required for HTTPS
             sameSite: 'None', // Allows cross-origin cookies
             maxAge: 3600 * 1000, // 1 hour
