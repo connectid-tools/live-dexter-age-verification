@@ -90,11 +90,12 @@ router.post('/', async (req, res) => {
         // });
 
         res.cookie('sessionToken', sessionToken, {
-            httpOnly: true,
-            secure: true,
-            sameSite: 'None',
-            maxAge: 3600 * 1000,
-            domain: 'sh-checkout-validator-qud6t.ondigitalocean.app',
+            httpOnly: true, // Secure against XSS
+            secure: true, // Required for HTTPS
+            sameSite: 'None', // Allows cross-origin cookies
+            maxAge: 3600 * 1000, // 1 hour
+            domain: 'sh-checkout-validator-qud6t.ondigitalocean.app', // Match backend domain
+            path: '/', // Ensure it's accessible across all routes
         });
 
             //       //  // Set a cookie with cartId
@@ -105,8 +106,6 @@ router.post('/', async (req, res) => {
             //     maxAge: 3600 * 1000, // 1 hour
             //     domian: `${process.env.STORE_DOMAIN}`
             // });
-        
-    });
         res.status(200).json({ message: 'Cart ID validated and stored successfully.' });
         
 
