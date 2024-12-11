@@ -94,7 +94,8 @@ router.post('/', async (req, res) => {
             secure: true, // Use HTTPS
             sameSite: 'None',
             maxAge: 3600 * 1000, // 1 hour
-        });
+            domain: process.env.STORE_DOMAIN, // Set to match client domain
+    });
         res.status(200).json({ message: 'Cart ID validated and stored successfully.' });
         
 
