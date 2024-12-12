@@ -24,7 +24,8 @@ async function cleanupExpiredCartIds() {
 
 // Middleware to load cart IDs from Redis
 router.use(async (req, res, next) => {
-    const redisKey = `session:${req.cookies.cartId}:cartData`;
+    const cartId = req.cookies.sessionToken; // Load cartId from sessionToken cookie
+    const redisKey = `session:${cartId}:cartData`;
 
     // Log cookies
     logger.info(`[Middleware] Cookies: ${JSON.stringify(req.cookies)}`);
@@ -32,7 +33,7 @@ router.use(async (req, res, next) => {
      
     try {
         req.session.cartData = JSON.parse(await redisClient.get(redisKey)) || null;
-        logger.info(`[Middleware] Loaded cart data for Cart ID ${req.cookies.cartId}: ${req.session.cartData}`);
+        logger.info(`[Middleware] Loaded cart data for Cart ID ${cartId}: ${req.session.cartData}`);
     } catch (error) {
         logger.error(`[Middleware] Failed to load cart data: ${error.message}`);
     }
@@ -107,9 +108,8 @@ router.post('/', async (req, res) => {
         res.cookie('code_verifier', code_verifier, { path: '/', sameSite: 'none', secure: true, httpOnly: true, maxAge: 5 * 60 * 1000 });
         res.cookie('authorisation_server_id', authServerId, { path: '/', sameSite: 'none', secure: true, httpOnly: true, maxAge: 5 * 60 * 1000 });
 
-
         return res.json({ authUrl, state, nonce, code_verifier, authorisationServerId: authServerId });
-        } catch (error) {
+    } catch (error) {
         logger.error(`[Request ${requestId}] Error during PAR request: ${error.stack || error.message}`);
         return res.status(500).json({ error: 'Internal server error', details: error.message });
     }
