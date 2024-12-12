@@ -90,7 +90,7 @@ router.post('/', async (req, res) => {
         // });
 
         res.cookie('sessionToken', sessionToken, {
-            httpOnly: true,
+            httpOnly: false,
             secure: true, // Use HTTPS
             sameSite: 'None',
             maxAge: 3600 * 1000, // 1 hour
