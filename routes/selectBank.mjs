@@ -3,8 +3,6 @@ import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from '../config.js';
 import { getLogger } from '../utils/logger.mjs';
 import { redisClient } from '../app.mjs'; // Import Redis client
-import jwt from 'jsonwebtoken'; // Import JWT library
-import { JWT_SECRET } from '../constants.mjs';
 
 const logger = getLogger('info');
 const router = express.Router();
@@ -44,37 +42,27 @@ router.use(async (req, res, next) => {
 // `/select-bank` route handler
 router.post('/', async (req, res) => {
     const requestId = Date.now();
-    logger.info(`[Request ${requestId}] Processing /select-bank request`);
+    logger.info(`[Request ${requestId}] Processing /select-bank request. Body: ${JSON.stringify(req.body)}`);
+
+    const essentialClaims = req.body.essentialClaims || [];
+    const voluntaryClaims = req.body.voluntaryClaims || [];
+    const purpose = req.body.purpose || config.data.purpose;
+    const authServerId = req.body.authorisationServerId;
+    const cartId = req.body.cartId;
+
+    logger.info(`[Request ${requestId}] Received parameters: authServerId=${authServerId}, cartId=${cartId}, essentialClaims=${JSON.stringify(essentialClaims)}, voluntaryClaims=${JSON.stringify(voluntaryClaims)}`);
+
+    // Validate required fields
+    if (!authServerId) {
+        logger.error(`[Request ${requestId}] Missing 'authorisationServerId'.`);
+        return res.status(400).json({ error: 'authorisationServerId parameter is required' });
+    }
+    if (!cartId) {
+        logger.error(`[Request ${requestId}] Missing 'cartId'.`);
+        return res.status(400).json({ error: 'cartId parameter is required' });
+    }
 
     try {
-        const sessionToken = req.body.sessionToken;
-        if (!sessionToken) {
-            throw new Error('No session token provided');
-        }
-
-        // Verify JWT
-        const decoded = jwt.verify(sessionToken, JWT_SECRET);
-        const cartId = decoded.cartId;
-
-        if (!cartId) {
-            throw new Error('Invalid session token structure');
-        }
-
-        logger.info(`[Request ${requestId}] Session token verified. Cart ID: ${cartId}`);
-
-        const essentialClaims = req.body.essentialClaims || [];
-        const voluntaryClaims = req.body.voluntaryClaims || [];
-        const purpose = req.body.purpose || config.data.purpose;
-        const authServerId = req.body.authorisationServerId;
-
-        logger.info(`[Request ${requestId}] Received parameters: authServerId=${authServerId}, essentialClaims=${JSON.stringify(essentialClaims)}, voluntaryClaims=${JSON.stringify(voluntaryClaims)}`);
-
-        // Validate required fields
-        if (!authServerId) {
-            logger.error(`[Request ${requestId}] Missing 'authorisationServerId'.`);
-            return res.status(400).json({ error: 'authorisationServerId parameter is required' });
-        }
-
         // Clean up expired cart IDs
         await cleanupExpiredCartIds();
 
@@ -119,10 +107,11 @@ router.post('/', async (req, res) => {
         res.cookie('code_verifier', code_verifier, { path: '/', sameSite: 'none', secure: true, httpOnly: true, maxAge: 5 * 60 * 1000 });
         res.cookie('authorisation_server_id', authServerId, { path: '/', sameSite: 'none', secure: true, httpOnly: true, maxAge: 5 * 60 * 1000 });
 
+
         return res.json({ authUrl, state, nonce, code_verifier, authorisationServerId: authServerId });
-    } catch (error) {
-        logger.error(`[Request ${requestId}] Auth error: ${error.message}`);
-        return res.status(401).json({ error: 'Unauthorized: ' + error.message });
+        } catch (error) {
+        logger.error(`[Request ${requestId}] Error during PAR request: ${error.stack || error.message}`);
+        return res.status(500).json({ error: 'Internal server error', details: error.message });
     }
 });
 

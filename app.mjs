@@ -80,22 +80,15 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-app.use(cors({
-    origin: 'https://connectid-demo-k3.mybigcommerce.com',
-    credentials: true,
-    methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
-// app.use((req, res, next) => {
-//     console.log('--- Incoming Request ---');
-//     console.log('Path:', req.path);
-//     console.log('Session ID:', req.sessionID);
-//     console.log('Cart ID:', req.body?.cartId || req.cookies?.cartId || 'Cart ID not provided'); // Log cartId if available
-//     console.log('Cookies:', req.cookies);
-//     console.log('Session Data:', req.session);
-//     next();
-// });
+app.use((req, res, next) => {
+    console.log('--- Incoming Request ---');
+    console.log('Path:', req.path);
+    console.log('Session ID:', req.sessionID);
+    console.log('Cart ID:', req.body?.cartId || req.cookies?.cartId || 'Cart ID not provided'); // Log cartId if available
+    console.log('Cookies:', req.cookies);
+    console.log('Session Data:', req.session);
+    next();
+});
 
 
 

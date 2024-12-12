@@ -3,9 +3,8 @@ import express from 'express';
 import fetch from 'node-fetch';
 import { getLogger } from '../utils/logger.mjs';
 import { redisClient } from '../app.mjs'; // Import the shared Redis client
-import { JWT_SECRET } from '../constants.mjs';
 
-// const JWT_SECRET = process.env.JWT_SECRET || 'your-very-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || 'your-very-secret-key';
 const JWT_EXPIRATION = '1h'; // Token validity duration
 const logger = getLogger('info');
 const router = express.Router();
@@ -55,6 +54,8 @@ router.post('/', async (req, res) => {
 
     if (!cartId) {
         logger.error('[POST /set-cart-id] Cart ID is missing.');
+        logger.info(`[POST /set-cart-id] Headers: ${JSON.stringify(req.headers)}`);
+        logger.info(`[POST /set-cart-id] Body: ${JSON.stringify(req.body)}`);
         return res.status(400).json({ error: 'Cart ID is required.' });
     }
 
@@ -73,24 +74,25 @@ router.post('/', async (req, res) => {
         logger.info(`[POST /set-cart-id] Stored validated Cart ID: ${cartId} in Redis.`);
 
         // Generate JWT token
+        logger.info(`[POST /set-cart-id] Generating JWT token for Cart ID: ${cartId}`);
         const sessionToken = jwt.sign({ cartId }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
-        logger.info(`[POST /set-cart-id] Generated sessionToken: ${sessionToken}`);
 
-        // Set cookie with the session token for session tracking
-        res.cookie('sessionToken', sessionToken, {
+        logger.info(`[POST /set-cart-id] Successfully generated JWT token: ${sessionToken}`);
+
+        // Set cookie with the cartId for session tracking
+        logger.info(`[POST /set-cart-id] Setting cookie for Cart ID.`);
+        res.cookie('cartId', cartId, {
             httpOnly: false,
-            secure: true, // Always use secure in cross-domain
-            sameSite: 'None', // Required for cross-domain
-            maxAge: 3600 * 1000, // 1 hour
-            domain: 'connectid-demo-k3.mybigcommerce.com', // Set to match client domain
-            path: '/', // Make cookie available across the entire site
+            secure: true, // Only secure in production
+            sameSite: 'None', // Allows cross-origin cookies
+            maxAge: EXPIRATION_TIME, // 1 hour
+            domain: process.env.STORE_DOMAIN || undefined, // Set to match client domain
         });
 
-        // Set CORS headers
-        res.header('Access-Control-Allow-Origin', 'https://connectid-demo-k3.mybigcommerce.com');
-        res.header('Access-Control-Allow-Credentials', 'true');
-
-        res.status(200).json({ message: 'Cart ID validated and stored successfully.', sessionToken });
+        res.status(200).json({
+            message: 'Cart ID validated and stored successfully.',
+            sessionToken, // Return the token to the client
+        });
     } catch (error) {
         logger.error(`[POST /set-cart-id] Error processing Cart ID: ${error.message}`);
         res.status(500).json({ error: 'Internal server error', details: error.message });

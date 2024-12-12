@@ -50,14 +50,15 @@ router.post('/', async (req, res) => {
 
  
   try {
-      //  // Set a cookie with cartId
-      //  res.cookie('cartId', cartId, {
-      //   httpOnly: false, 
-      //   secure: true, 
-      //   sameSite: 'None', 
-      //   maxAge: 3600 * 1000, // 1 hour
-      //   domian: `${process.env.STORE_DOMAIN}`
-      // });
+
+       // Set a cookie with cartId
+       res.cookie('cartId', cartId, {
+        httpOnly: false, 
+        secure: true, 
+        sameSite: 'None', 
+        maxAge: 3600 * 1000, // 1 hour
+        domian: `${process.env.STORE_DOMAIN}`
+      });
   
     // Initialize restricted SKUs if not already loaded
     if (!restrictedSKUs || restrictedSKUs.size === 0) {
