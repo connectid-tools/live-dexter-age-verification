@@ -81,7 +81,7 @@ router.post('/', async (req, res) => {
             secure: process.env.NODE_ENV === 'production', // Use HTTPS in production
             sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
             maxAge: 3600 * 1000, // 1 hour
-            domain: 'sh-checkout-validator-qud6t.ondigitalocean.app', // Set to match client domain
+            domain: 'connectid-demo-k3.mybigcommerce.com', // Set to match client domain
             path: '/', // Make cookie available across the entire site
         });
 
