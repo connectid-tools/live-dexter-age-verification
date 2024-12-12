@@ -45,8 +45,8 @@ router.post('/', async (req, res) => {
     const requestId = Date.now();
     logger.info(`[Request ${requestId}] Processing /select-bank request. Body: ${JSON.stringify(req.body)}`);
 
-    // Retrieve session token from the cookie
-    const sessionToken = req.cookies.sessionToken;
+    // Retrieve session token from the request body
+    const sessionToken = req.body.sessionToken;
 
     if (!sessionToken) {
         logger.error(`[Request ${requestId}] Missing session token.`);
