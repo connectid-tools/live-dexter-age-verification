@@ -3,7 +3,6 @@ import express from 'express';
 import fetch from 'node-fetch';
 import { getLogger } from '../utils/logger.mjs';
 import { redisClient } from '../app.mjs'; // Import the shared Redis client
-import { JWT_SECRET } from '../constants.mjs';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-very-secret-key';
 const JWT_EXPIRATION = '1h'; // Token validity duration
