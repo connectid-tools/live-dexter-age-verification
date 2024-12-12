@@ -89,7 +89,7 @@ router.post('/', async (req, res) => {
             path: '/', // Make cookie available across the entire site
         });
 
-        res.status(200).json({ message: 'Cart ID validated and stored successfully.' });
+        res.status(200).json({ message: 'Cart ID validated and stored successfully.', sessionToken });
     } catch (error) {
         logger.error(`[POST /set-cart-id] Error processing Cart ID: ${error.message}`);
         res.status(500).json({ error: 'Internal server error', details: error.message });
