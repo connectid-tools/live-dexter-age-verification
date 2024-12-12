@@ -3,6 +3,7 @@ import RelyingPartyClientSdk from '@connectid-tools/rp-nodejs-sdk';
 import { config } from '../config.js';
 import { getLogger } from '../utils/logger.mjs';
 import { redisClient } from '../app.mjs'; // Import Redis client
+import jwt from 'jsonwebtoken'; // Import JWT library
 
 const logger = getLogger('info');
 const router = express.Router();
@@ -39,7 +40,6 @@ router.use(async (req, res, next) => {
     next();
 });
 
-// `/select-bank` route handler
 // `/select-bank` route handler
 router.post('/', async (req, res) => {
     const requestId = Date.now();
