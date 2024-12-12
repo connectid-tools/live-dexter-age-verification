@@ -54,8 +54,6 @@ router.post('/', async (req, res) => {
 
     if (!cartId) {
         logger.error('[POST /set-cart-id] Cart ID is missing.');
-        logger.info(`[POST /set-cart-id] Headers: ${JSON.stringify(req.headers)}`);
-        logger.info(`[POST /set-cart-id] Body: ${JSON.stringify(req.body)}`);
         return res.status(400).json({ error: 'Cart ID is required.' });
     }
 
@@ -74,10 +72,8 @@ router.post('/', async (req, res) => {
         logger.info(`[POST /set-cart-id] Stored validated Cart ID: ${cartId} in Redis.`);
 
         // Generate JWT token
-        logger.info(`[POST /set-cart-id] Generating JWT token for Cart ID: ${cartId}`);
         const sessionToken = jwt.sign({ cartId }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
-
-        logger.info(`[POST /set-cart-id] Successfully generated JWT token: ${sessionToken}`);
+        logger.info(`[POST /set-cart-id] Generated sessionToken: ${sessionToken}`);
 
         // Set cookie with the session token for session tracking
         res.cookie('sessionToken', sessionToken, {
@@ -85,7 +81,7 @@ router.post('/', async (req, res) => {
             secure: process.env.NODE_ENV === 'production', // Use HTTPS in production
             sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
             maxAge: 3600 * 1000, // 1 hour
-            domain: 'https://sh-checkout-validator-qud6t.ondigitalocean.app/', // Set to match client domain
+            domain: 'sh-checkout-validator-qud6t.ondigitalocean.app', // Set to match client domain
             path: '/', // Make cookie available across the entire site
         });
 
