@@ -80,6 +80,13 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+app.use(cors({
+    origin: 'https://connectid-demo-k3.mybigcommerce.com',
+    credentials: true,
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 // app.use((req, res, next) => {
 //     console.log('--- Incoming Request ---');
 //     console.log('Path:', req.path);

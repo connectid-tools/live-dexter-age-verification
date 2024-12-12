@@ -3,6 +3,7 @@ import express from 'express';
 import fetch from 'node-fetch';
 import { getLogger } from '../utils/logger.mjs';
 import { redisClient } from '../app.mjs'; // Import the shared Redis client
+import { JWT_SECRET } from '../constants.mjs';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-very-secret-key';
 const JWT_EXPIRATION = '1h'; // Token validity duration
@@ -78,12 +79,16 @@ router.post('/', async (req, res) => {
         // Set cookie with the session token for session tracking
         res.cookie('sessionToken', sessionToken, {
             httpOnly: false,
-            secure: process.env.NODE_ENV === 'production', // Use HTTPS in production
-            sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+            secure: true, // Always use secure in cross-domain
+            sameSite: 'None', // Required for cross-domain
             maxAge: 3600 * 1000, // 1 hour
             domain: 'connectid-demo-k3.mybigcommerce.com', // Set to match client domain
             path: '/', // Make cookie available across the entire site
         });
+
+        // Set CORS headers
+        res.header('Access-Control-Allow-Origin', 'https://connectid-demo-k3.mybigcommerce.com');
+        res.header('Access-Control-Allow-Credentials', 'true');
 
         res.status(200).json({ message: 'Cart ID validated and stored successfully.', sessionToken });
     } catch (error) {
