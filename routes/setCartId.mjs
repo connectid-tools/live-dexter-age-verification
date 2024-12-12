@@ -79,31 +79,17 @@ router.post('/', async (req, res) => {
 
         logger.info(`[POST /set-cart-id] Successfully generated JWT token: ${sessionToken}`);
 
-        // Set cookie with the cartId for session tracking
-        // logger.info(`[POST /set-cart-id] Setting cookie for Cart ID.`);
-        // res.cookie('cartId', cartId, {
-        //     httpOnly: false,
-        //     secure: true, // Only secure in production
-        //     sameSite: 'None', // Allows cross-origin cookies
-        //     maxAge: EXPIRATION_TIME, // 1 hour
-        //     domain: process.env.STORE_DOMAIN || undefined, // Set to match client domain
-        // });
-
+        // Set cookie with the session token for session tracking
         res.cookie('sessionToken', sessionToken, {
             httpOnly: false,
-            secure: true, // Use HTTPS
-            sameSite: 'None',
+            secure: process.env.NODE_ENV === 'production', // Use HTTPS in production
+            sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
             maxAge: 3600 * 1000, // 1 hour
             domain: process.env.STORE_DOMAIN, // Set to match client domain
-    });
-        res.status(200).json({ message: 'Cart ID validated and stored successfully.' });
-        
+            path: '/', // Make cookie available across the entire site
+        });
 
-        // res.status(200).json({
-        //     message: 'Cart ID validated and stored successfully.',
-        //     sessionToken, // Return the token to the client
-        // });
-        
+        res.status(200).json({ message: 'Cart ID validated and stored successfully.' });
     } catch (error) {
         logger.error(`[POST /set-cart-id] Error processing Cart ID: ${error.message}`);
         res.status(500).json({ error: 'Internal server error', details: error.message });
